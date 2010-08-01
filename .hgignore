@@ -1,0 +1,6 @@
+syntax: glob
+xyzzy.ncb
+xyzzy.suo
+Debug
+Release
+*.vcproj.*.user

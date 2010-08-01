@@ -31,11 +31,11 @@ int
 main ()
 {
   HDC hdc = GetDC (0);
-  LOGFONT lf;
+  LOGFONTA lf;
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = HEIGHT;
   strcpy (lf.lfFaceName, FACE);
-  HGDIOBJ of = SelectObject (hdc, CreateFontIndirect (&lf));
+  HGDIOBJ of = SelectObject (hdc, CreateFontIndirectA (&lf));
 
   ABC abc[UNICODE_SMLCDM_MAX - UNICODE_SMLCDM_MIN + 1];
   if (!GetCharABCWidthsW (hdc, UNICODE_SMLCDM_MIN, UNICODE_SMLCDM_MAX, abc))

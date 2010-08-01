@@ -22,15 +22,15 @@ int
 main ()
 {
   HDC hdc = GetDC (0);
-  LOGFONT lf;
+  LOGFONTA lf;
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = 16;
   lf.lfCharSet = SHIFTJIS_CHARSET;
   strcpy (lf.lfFaceName, "‚l‚r –¾’©");
-  HGDIOBJ of = SelectObject (hdc, CreateFontIndirect (&lf));
+  HGDIOBJ of = SelectObject (hdc, CreateFontIndirectA (&lf));
 
   SIZE sz0;
-  GetTextExtentPoint32 (hdc, "‚ ", 2, &sz0);
+  GetTextExtentPoint32A (hdc, "‚ ", 2, &sz0);
 
   u_char width[SZ / 8];
   memset (width, 255, sizeof width);

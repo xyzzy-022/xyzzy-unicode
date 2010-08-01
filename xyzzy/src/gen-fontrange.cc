@@ -4,6 +4,7 @@
 #define REQ_RANGE_MIN 0x0080
 #define REQ_RANGE_MAX 0x33ff
 
+/*
 typedef struct tagWCRANGE {
   WCHAR  wcLow;
   USHORT cGlyphs;
@@ -17,7 +18,6 @@ typedef struct tagGLYPHSET {
   WCRANGE  ranges[1];
 } GLYPHSET, *PGLYPHSET;
 
-/*
 DWORD GetFontUnicodeRanges(
   HDC hdc,         // handle to DC
   LPGLYPHSET lpgs  // glyph set
@@ -51,7 +51,7 @@ int
 main ()
 {
   GETFONTUNICODERANGES GetFontUnicodeRanges =
-    (GETFONTUNICODERANGES)GetProcAddress (GetModuleHandle ("GDI32"), "GetFontUnicodeRanges");
+    (GETFONTUNICODERANGES)GetProcAddress (GetModuleHandleA ("GDI32"), "GetFontUnicodeRanges");
   if (!GetFontUnicodeRanges)
     {
       fprintf (stderr, "Cannot get GetFontUnicodeRanges (w2k only).\n");
@@ -64,18 +64,18 @@ main ()
 
   HDC hdc = GetDC (0);
 
-  LOGFONT lf;
+  LOGFONTA lf;
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = 16;
   strcpy (lf.lfFaceName, "Courier New");
-  HGDIOBJ of = SelectObject (hdc, CreateFontIndirect (&lf));
+  HGDIOBJ of = SelectObject (hdc, CreateFontIndirectA (&lf));
   DWORD r = GetFontUnicodeRanges (hdc, g);
   if (r)
     print (hdc, g, "courier_new_range");
   DeleteObject (SelectObject (hdc, of));
 
   strcpy (lf.lfFaceName, "ÇlÇr ÉSÉVÉbÉN");
-  of = SelectObject (hdc, CreateFontIndirect (&lf));
+  of = SelectObject (hdc, CreateFontIndirectA (&lf));
   r = GetFontUnicodeRanges (hdc, g);
   if (r)
     print (hdc, g, "ms_gothic_range");
