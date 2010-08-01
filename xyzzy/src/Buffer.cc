@@ -472,8 +472,8 @@ Buffer::unlink_list () const
 void
 create_default_buffers ()
 {
-  Buffer *bp = Buffer::create_buffer (make_string ("*scratch*"), Qnil, Qnil);
-  Buffer::create_buffer (make_string (" *Minibuf0*"), Qnil, Qnil);
+  Buffer *bp = Buffer::create_buffer (make_string (_T("*scratch*")), Qnil, Qnil);
+  Buffer::create_buffer (make_string (_T(" *Minibuf0*")), Qnil, Qnil);
   selected_window ()->set_buffer (bp);
 }
 
@@ -540,7 +540,7 @@ Buffer::coerce_to_buffer (lisp object)
 }
 
 Buffer *
-Buffer::make_internal_buffer (const char *bufname)
+Buffer::make_internal_buffer (const TCHAR *bufname)
 {
   lisp name = make_string (bufname);
   Buffer *bp = Buffer::find_buffer (name, 1, 0);
@@ -707,25 +707,25 @@ Fcreate_file_buffer (lisp name)
                                 Fdirectory_namestring (filename))->lbp;
 }
 
-char *
-Buffer::buffer_name (char *b, char *be) const
+TCHAR *
+Buffer::buffer_name (TCHAR *b, TCHAR *be) const
 {
   b = w2s (b, be, lbuffer_name);
   if (b >= be - 1 || b_version == 1)
     return b;
-  char t[64];
-  sprintf (t, "<%d>", b_version);
+  TCHAR t[64];
+  _stprintf (t, _T("<%d>"), b_version);
   return stpncpy (b, t, be - b);
 }
 
-char *
-Buffer::quoted_buffer_name (char *b, char *be, int qc, int qe) const
+TCHAR *
+Buffer::quoted_buffer_name (TCHAR *b, TCHAR *be, int qc, int qe) const
 {
   b = w2s_quote (b, be, lbuffer_name, qc, qe);
   if (b >= be - 1 || b_version == 1)
     return b;
-  char t[64];
-  sprintf (t, "<%d>", b_version);
+  TCHAR t[64];
+  _stprintf (t, _T("<%d>"), b_version);
   return stpncpy (b, t, be - b);
 }
 
@@ -902,7 +902,7 @@ Fdelete_buffer (lisp buffer)
       bp->erase ();
       bp->lfile_name = Qnil;
       bp->lalternate_file_name = Qnil;
-      Frename_buffer (make_string ("*scratch*"), bp->lbp);
+      Frename_buffer (make_string (_T("*scratch*")), bp->lbp);
       if (bp->read_only_p ())
         bp->set_local_variable (Vbuffer_read_only, Qnil);
       suppress_gc sgc;
@@ -931,8 +931,8 @@ Fbuffer_name (lisp buffer)
 
   Char buf[BUFFER_NAME_MAX * 2];
   bcopy (xstring_contents (bp->lbuffer_name), buf, xstring_length (bp->lbuffer_name));
-  char v[64];
-  sprintf (v, "<%d>", bp->b_version);
+  TCHAR v[64];
+  _stprintf (v, _T("<%d>"), bp->b_version);
   Char *be = s2w (buf + xstring_length (bp->lbuffer_name), v);
   return make_string (buf, be - buf);
 }
@@ -1266,8 +1266,8 @@ Fkill_xyzzy ()
   return Qnil;
 }
 
-char *
-Buffer::store_title (lisp x, char *b, char *be) const
+TCHAR *
+Buffer::store_title (lisp x, TCHAR *b, TCHAR *be) const
 {
   if (x == lbuffer_name)
     return buffer_name (b, be);
@@ -1280,7 +1280,7 @@ Buffer::refresh_title_bar () const
   lisp fmt = symbol_value (Vtitle_bar_format, this);
   if (stringp (fmt))
     {
-      char buf[512 + 10];
+      TCHAR buf[512 + 10];
       buffer_info binfo (0, this, 0, 0);
       *binfo.format (fmt, buf, buf + 512) = 0;
       SetWindowText (app.toplev, buf);
@@ -1295,12 +1295,16 @@ Buffer::refresh_title_bar () const
       else
         x = lbuffer_name;
 
+#ifdef UNICODE
+      int l = (xstring_length (x) + _tcslen (TitleBarString) + 32);
+#else
       int l = (xstring_length (x) * 2 + strlen (TitleBarString) + 32);
-      char *b = (char *)alloca (l);
+#endif
+      TCHAR *b = (TCHAR *)alloca (l * sizeof TCHAR);
       if (xsymbol_value (Vtitle_bar_text_order) != Qnil)
-        strcpy (stpcpy (store_title (x, b, b + l), " - "), TitleBarString);
+        _tcscpy (stpcpy (store_title (x, b, b + l), _T(" - ")), TitleBarString);
       else
-        store_title (x, stpcpy (stpcpy (b, TitleBarString), " - "), b + l);
+        store_title (x, stpcpy (stpcpy (b, TitleBarString), _T(" - ")), b + l);
 
       SetWindowText (app.toplev, b);
     }

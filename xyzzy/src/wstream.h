@@ -16,7 +16,7 @@ public:
   void add (Char);
   void fill (int, int);
   void fill (Char, int);
-  void add (const char *);
+  void add (const TCHAR *);
   void add (const Char *, int);
   void add (wStream &);
   int columns () const;

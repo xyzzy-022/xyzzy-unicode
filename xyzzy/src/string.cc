@@ -41,12 +41,13 @@ update_column (int column, Char c, int size)
 }
 
 size_t
-s2wl (const char *string)
+s2wl (const TCHAR *string)
 {
   size_t l = 0;
-  const u_char *s = (const u_char *)string;
+  const _TUCHAR *s = (const _TUCHAR *)string;
   while (*s)
     {
+#ifndef UNICODE
       if (SJISP (*s))
         {
           if (!s[1])
@@ -58,18 +59,20 @@ s2wl (const char *string)
           s += 2;
         }
       else
+#endif
         s++;
     }
-  return s - (const u_char *)string - l;
+  return s - (const _TUCHAR *)string - l;
 }
 
 Char *
-s2w (Char *b, size_t size, const char **string)
+s2w (Char *b, size_t size, const TCHAR **string)
 {
   Char *be = b + size;
-  const u_char *s = (const u_char *)*string;
+  const _TUCHAR *s = (const _TUCHAR *)*string;
   while (b < be && *s)
     {
+#ifndef UNICODE
       if (SJISP (*s))
         {
           if (!s[1])
@@ -81,18 +84,20 @@ s2w (Char *b, size_t size, const char **string)
           s += 2;
         }
       else
+#endif
         *b++ = *s++;
     }
-  *string = (const char *)s;
+  *string = (const TCHAR *)s;
   return b;
 }
 
 Char *
-s2w (Char *b, const char *string)
+s2w (Char *b, const TCHAR *string)
 {
-  const u_char *s = (const u_char *)string;
+  const _TUCHAR *s = (const _TUCHAR *)string;
   while (*s)
     {
+#ifndef UNICODE
       if (SJISP (*s))
         {
           if (!s[1])
@@ -104,13 +109,14 @@ s2w (Char *b, const char *string)
           s += 2;
         }
       else
+#endif
         *b++ = *s++;
     }
   return b;
 }
 
 Char *
-s2w (const char *string, size_t size)
+s2w (const TCHAR *string, size_t size)
 {
   Char *b = (Char *)xmalloc (sizeof (Char) * size);
   s2w (b, string);
@@ -156,83 +162,95 @@ a2w (const char *string, size_t size)
 size_t
 w2sl (const Char *s, size_t size)
 {
+#ifdef UNICODE
+  return size;
+#else
   size_t l = 0;
   for (const Char *se = s + size; s < se; s++)
     if (DBCP (*s))
       l++;
   return size + l;
+#endif
 }
 
-char *
-w2s (char *b, const Char *s, size_t size)
+TCHAR *
+w2s (TCHAR *b, const Char *s, size_t size)
 {
   for (const Char *se = s + size; s < se; s++)
     {
+#ifndef UNICODE
       if (DBCP (*s))
         *b++ = *s >> 8;
-      *b++ = char (*s);
+#endif
+      *b++ = TCHAR (*s);
     }
   *b = 0;
   return b;
 }
 
-char *
+TCHAR *
 w2s (const Char *s, size_t size)
 {
-  char *b = (char *)xmalloc (w2sl (s, size) + 1);
+  TCHAR *b = (TCHAR *)xmalloc ((w2sl (s, size) + 1) * sizeof TCHAR);
   w2s (b, s, size);
   return b;
 }
 
-char *
-w2s (char *b, char *be, const Char *s, size_t size)
+TCHAR *
+w2s (TCHAR *b, TCHAR *be, const Char *s, size_t size)
 {
   be--;
   for (const Char *se = s + size; s < se && b < be; s++)
     {
+#ifndef UNICODE
       if (DBCP (*s))
         {
           if (b == be - 1)
             break;
           *b++ = *s >> 8;
         }
-      *b++ = char (*s);
+#endif
+      *b++ = TCHAR (*s);
     }
   *b = 0;
   return b;
 }
 
-char *
-w2s_quote (char *b, char *be, const Char *s, size_t size, int qc, int qe)
+TCHAR *
+w2s_quote (TCHAR *b, TCHAR *be, const Char *s, size_t size, int qc, int qe)
 {
   be--;
   for (const Char *se = s + size; s < se && b < be; s++)
     {
+#ifndef UNICODE
       if (DBCP (*s))
         {
           if (b == be - 1)
             break;
           *b++ = *s >> 8;
         }
-      else if (*s == qc)
+      else
+#endif
+      if (*s == qc)
         {
           if (b == be - 1)
             break;
           *b++ = qe;
         }
-      *b++ = char (*s);
+      *b++ = TCHAR (*s);
     }
   *b = 0;
   return b;
 }
 
 size_t
-s2wl (const char *string, const char *se, int zero_term)
+s2wl (const TCHAR *string, const TCHAR *se, int zero_term)
 {
   size_t l = 0;
-  const u_char *s = (const u_char *)string;
-  while (s < (const u_char *)se && (!zero_term || *s))
+  const _TUCHAR *s = (const _TUCHAR *)string;
+  while (s < (const _TUCHAR *)se && (!zero_term || *s))
     {
+#ifndef UNICODE
       if (SJISP (*s))
         {
           if (s + 1 >= (const u_char *)se || (zero_term && !s[1]))
@@ -244,17 +262,19 @@ s2wl (const char *string, const char *se, int zero_term)
           s += 2;
         }
       else
+#endif
         s++;
     }
-  return s - (const u_char *)string - l;
+  return s - (const _TUCHAR *)string - l;
 }
 
 Char *
-s2w (Char *b, const char *string, const char *se, int zero_term)
+s2w (Char *b, const TCHAR *string, const TCHAR *se, int zero_term)
 {
-  const u_char *s = (const u_char *)string;
-  while (s < (const u_char *)se && (!zero_term || *s))
+  const _TUCHAR *s = (const _TUCHAR *)string;
+  while (s < (const _TUCHAR *)se && (!zero_term || *s))
     {
+#ifndef UNICODE
       if (SJISP (*s))
         {
           if (s + 1 >= (const u_char *)se || (zero_term && !s[1]))
@@ -266,22 +286,25 @@ s2w (Char *b, const char *string, const char *se, int zero_term)
           s += 2;
         }
       else
+#endif
         *b++ = *s++;
     }
   return b;
 }
 
 void
-w2s_chunk (char *b, char *be, const Char *s, size_t size)
+w2s_chunk (TCHAR *b, TCHAR *be, const Char *s, size_t size)
 {
   for (const Char *se = s + size; s < se && b < be; s++)
     {
+#ifndef UNICODE
       if (DBCP (*s))
         {
           if (b == be - 1)
             break;
           *b++ = *s >> 8;
         }
+#endif
       *b++ = char (*s);
     }
   if (b < be)
@@ -289,7 +312,7 @@ w2s_chunk (char *b, char *be, const Char *s, size_t size)
 }
 
 lisp
-make_string (const char *string)
+make_string (const TCHAR *string)
 {
   lisp p = make_simple_string ();
   size_t size = s2wl (string);
@@ -299,7 +322,7 @@ make_string (const char *string)
 }
 
 lisp
-make_string (const char *string, size_t size)
+make_string (const TCHAR *string, size_t size)
 {
   lisp p = make_simple_string ();
   Char *b = (Char *)xmalloc (size * sizeof (Char));
@@ -310,10 +333,14 @@ make_string (const char *string, size_t size)
 }
 
 lisp
-make_string_simple (const char *string, size_t size)
+make_string_simple (const TCHAR *string, size_t size)
 {
   lisp p = make_simple_string ();
+#ifdef UNICODE
+  xstring_contents (p) = (Char *)xstrdup (string);
+#else
   xstring_contents (p) = a2w (string, size);
+#endif
   xstring_length (p) = size;
   return p;
 }
@@ -767,7 +794,7 @@ Fstring_trim (lisp char_bag, lisp string)
   int start = left_trim (string, char_bag);
   int end = right_trim (string, char_bag);
   if (start >= end)
-    return make_string ("");
+    return make_string (_T(""));
   return ((!start && end == xstring_length (string))
           ? string
           : subseq_string (string, make_fixnum (start), make_fixnum (end)));
@@ -1004,19 +1031,19 @@ Fparse_integer (lisp string, lisp keys)
 }
 
 int WINAPI
-abbreviate_string (HDC hdc, char *buf, int maxpxl, int is_pathname)
+abbreviate_string (HDC hdc, TCHAR *buf, int maxpxl, int is_pathname)
 {
   SIZE sz;
-  int l = strlen (buf);
+  int l = _tcslen (buf);
   GetTextExtentPoint32 (hdc, buf, l, &sz);
   if (sz.cx <= maxpxl)
     return 0;
 
-  GetTextExtentPoint32 (hdc, "...", 3, &sz);
+  GetTextExtentPoint32 (hdc, _T("..."), 3, &sz);
   maxpxl = (maxpxl - sz.cx);
 
-  char *lb, *le;
-  char *rb, *re;
+  TCHAR *lb, *le;
+  TCHAR *rb, *re;
 
   if (is_pathname)
     {
@@ -1034,11 +1061,11 @@ abbreviate_string (HDC hdc, char *buf, int maxpxl, int is_pathname)
 
           int pxl = sz.cx;
           int dev = 0;
-          if (alpha_char_p (*lb & 255) && lb[1] == ':')
+          if (alpha_char_p (*lb & 255) && lb[1] == _T(':'))
             dev = dir_separator_p (lb[2]) ? 3 : 2;
           else if (dir_separator_p (*lb) && dir_separator_p (lb[1]))
             {
-              char *sl = find_slash (lb + 2);
+              TCHAR *sl = find_slash (lb + 2);
               if (sl)
                 sl = find_slash (sl + 1);
               if (sl && sl < rb)
@@ -1055,9 +1082,9 @@ abbreviate_string (HDC hdc, char *buf, int maxpxl, int is_pathname)
 
           while (rb > le)
             {
-              char c = *rb;
+              TCHAR c = *rb;
               *rb = 0;
-              char *slash = find_last_slash (buf);
+              TCHAR *slash = find_last_slash (buf);
               *rb = c;
               if (!slash)
                 break;
@@ -1080,7 +1107,7 @@ abbreviate_string (HDC hdc, char *buf, int maxpxl, int is_pathname)
                   if (re - rb + 3 > l)
                     return 0;
                   *re = 0;
-                  strcpy (stpcpy (buf, rb), "...");
+                  _tcscpy (stpcpy (buf, rb), _T("..."));
                   return 1;
                 }
             }
@@ -1106,13 +1133,13 @@ done:
   if ((le - lb) + (re - rb) + 3 > l)
     return 0;
 
-  strcpy (le, "...");
-  strcpy (le + 3, rb);
+  _tcscpy (le, _T("..."));
+  _tcscpy (le + 3, rb);
   return 1;
 }
 
 static int
-abbrev_string (char *buf, int maxl, int pathname_p)
+abbrev_string (TCHAR *buf, int maxl, int pathname_p)
 {
   HDC hdc (GetDC (0));
   HGDIOBJ of (SelectObject (hdc, sysdep.ui_font ()));
@@ -1131,8 +1158,8 @@ Fabbreviate_display_string (lisp string, lisp maxlen, lisp pathname_p)
   check_string (string);
   int l = fixnum_value (maxlen);
   if (l <= 0)
-    return make_string ("");
-  char *buf = (char *)alloca (xstring_length (string) * 2 + 1);
+    return make_string (_T(""));
+  TCHAR *buf = (TCHAR *)alloca ((xstring_length (string) * 2 + 1) * sizeof TCHAR);
   w2s (buf, string);
   if (!abbrev_string (buf, l, pathname_p && pathname_p != Qnil))
     return string;

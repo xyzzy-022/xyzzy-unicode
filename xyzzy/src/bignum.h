@@ -61,7 +61,7 @@ struct bignum_rep
   int is_long () const;
   int is_ulong () const;
   int fmtwidth (u_long) const;
-  char *to_ascii (char *, int, int, int, const char *) const;
+  TCHAR *to_ascii (TCHAR *, int, int, int, const TCHAR *) const;
 };
 
 struct bignum_rep_short: public bignum_rep

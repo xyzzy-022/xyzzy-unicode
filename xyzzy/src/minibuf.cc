@@ -5,8 +5,8 @@ static int minibuffer_recursive_level;
 static Buffer *
 create_minibuffer ()
 {
-  char b[32];
-  sprintf (b, " *Minibuf%d*", minibuffer_recursive_level);
+  TCHAR b[32];
+  _stprintf (b, _T(" *Minibuf%d*"), minibuffer_recursive_level);
   return Buffer::make_internal_buffer (b);
 }
 
@@ -359,7 +359,7 @@ class completion
   void set_target (lisp);
   void set_prefix (lisp);
   void adjust_prefix (lisp);
-  int complete_filename (const char *, lisp, lisp);
+  int complete_filename (const TCHAR *, lisp, lisp);
   lisp split_pathname ();
   int complete_UNC (lisp &);
 public:
@@ -575,11 +575,11 @@ completion::complete_buffer_name ()
 }
 
 int
-completion::complete_filename (const char *path, lisp show_dots, lisp ignores)
+completion::complete_filename (const TCHAR *path, lisp show_dots, lisp ignores)
 {
   int ignored = 0;
 
-  WIN32_FIND_DATA *fd = (WIN32_FIND_DATA *)alloca (sizeof *fd + 2);
+  WIN32_FIND_DATA *fd = (WIN32_FIND_DATA *)alloca (sizeof *fd + 2 * sizeof TCHAR);
   HANDLE h = WINFS::FindFirstFile (path, fd);
   if (h == INVALID_HANDLE_VALUE)
     {
@@ -593,13 +593,13 @@ completion::complete_filename (const char *path, lisp show_dots, lisp ignores)
   do
     {
 #ifndef PATHNAME_ESCAPE_TILDE
-      if (*fd->cFileName == '~' && !fd->cFileName[1])
+      if (*fd->cFileName == _T('~') && !fd->cFileName[1])
         continue;
 #endif
-      if (show_dots == Qnil && *fd->cFileName == '.')
+      if (show_dots == Qnil && *fd->cFileName == _T('.'))
         continue;
       if (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        strcat (fd->cFileName, "/");
+        _tcscat (fd->cFileName, _T("/"));
       else if (c_type == Kdirectory_name)
         continue;
 
@@ -725,10 +725,14 @@ completion::complete_filename ()
 
   if (!complete_UNC (directory))
     {
+#ifdef UNICODE
+      TCHAR *path = (TCHAR *)alloca ((xstring_length (directory) + 10) * sizeof TCHAR);
+#else
       char *path = (char *)alloca (2 * xstring_length (directory) + 10);
+#endif
       w2s (path, directory);
       map_sl_to_backsl (path);
-      strcat (path, "*");
+      _tcscat (path, _T("*"));
 
       if (complete_filename (path, show_dots, ignores) && c_item == Qnil)
         complete_filename (path, show_dots, Qnil);

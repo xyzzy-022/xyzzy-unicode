@@ -51,8 +51,8 @@ struct Sysdep
     };
 
   windows_type wintype;
-  const char *windows_name;
-  const char *windows_short_name;
+  const TCHAR *windows_name;
+  const TCHAR *windows_short_name;
 
   HFONT hfont_ruler;
   SIZE ruler_ext;
@@ -68,8 +68,8 @@ public:
   HFONT ui_font90 ();
   HFONT ui_font270 ();
 
-  char curdir[PATH_MAX];
-  char host_name[MAX_COMPUTERNAME_LENGTH + 1];
+  TCHAR curdir[PATH_MAX];
+  TCHAR host_name[MAX_COMPUTERNAME_LENGTH + 1];
 
   __int64 perf_freq;
   int perf_counter_present_p;
@@ -81,7 +81,7 @@ public:
   void load_settings ();
   void load_cursors ();
 
-  static DWORD get_dll_version (const char *);
+  static DWORD get_dll_version (const TCHAR *);
 
 #define PACK_VERSION(MAJ, MIN) MAKELONG ((MIN), (MAJ))
   enum

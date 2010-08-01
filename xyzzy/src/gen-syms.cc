@@ -2776,7 +2776,7 @@ printc (int c)
 {
   if (soffset == 72)
     {
-      printf ("\"\n\"");
+      printf ("\")\n_T(\"");
       soffset = 0;
     }
   soffset++;
@@ -2805,16 +2805,16 @@ print_string ()
   printf ("#define EXTERN /* empty */\n");
   printf ("#include \"ed.h\"\n");
   printf ("#include \"symtable.h\"\n\n");
-  printf ("static const char SS[] = \n\"");
+  printf ("static const TCHAR SS[] = \n_T(\"");
   do_all (print_string);
-  printf ("\";\n\n");
+  printf ("\");\n\n");
   soffset = 0;
 }
 
 static void
 putq (const char *p)
 {
-  putchar ('"');
+  printf ("_T(\"");
   while (*p)
     {
       if ((*p & 0xff) < ' ')
@@ -2828,7 +2828,7 @@ putq (const char *p)
             putchar (*p++);
         }
     }
-  putchar ('"');
+  printf ("\")");
 }
 
 static void

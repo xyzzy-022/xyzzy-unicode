@@ -2111,7 +2111,7 @@ load_file (lisp filename, lisp realname, lisp if_does_not_exist,
       if (stringp (filename)
           && (xstring_length (filename) < 3
               || !streq (xstring_contents (filename) + xstring_length (filename) - 3,
-                         3, ".lc")))
+                         3, _T(".lc"))))
         b = a2w (b, "LOADING");
       else
         b = a2w (b, "loading");

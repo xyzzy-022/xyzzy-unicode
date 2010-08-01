@@ -26,6 +26,9 @@ _i2w_helper (wchar_t *w, const Char *p, int l)
 
 #define USES_CONVERSION int _convert; _convert
 
+#define A2A(a) (a)
+#define W2W(w) (w)
+
 #define A2W(a) \
   (_convert = (strlen (a) + 1),\
    _a2w_helper ((wchar_t *)alloca (_convert * sizeof (wchar_t)), (a), _convert))
@@ -34,8 +37,27 @@ _i2w_helper (wchar_t *w, const Char *p, int l)
   (_convert = (wcslen (w) + 1) * 2,\
    _w2a_helper ((char *)alloca (_convert), (w), _convert))
 
+
+#ifdef UNICODE
+#define T2A W2A
+#define T2W W2W
+#define A2T A2W
+#define W2T W2W
+#else
+#define T2A A2A
+#define T2W A2W
+#define A2T A2A
+#define W2T W2A
+#endif
+
+#ifdef UNICODE
+#define I2W(x) \
+  (wmemcpy ((wchar_t *)alloca ((xstring_length (x) + 1) * sizeof (wchar_t)), \
+            (wchar_t *)xstring_contents (x), xstring_length (x)))
+#else
 #define I2W(x) \
   (_i2w_helper ((wchar_t *)alloca ((xstring_length (x) + 1) * sizeof (wchar_t)), \
                 xstring_contents (x), xstring_length (x)))
+#endif
 
 #endif /* _oleconv_h_ */

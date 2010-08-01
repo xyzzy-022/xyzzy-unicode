@@ -17,6 +17,8 @@ typedef unsigned char u_char;
 
 #endif /* not __XYZZY__ */
 
+#ifndef UNICODE
+
 #include <io.h>
 #include "arc-if.h"
 #include "archiver.h"
@@ -1248,4 +1250,51 @@ Farchiver_dll_config_dialog (lisp dll, lisp mode)
   return boole (p && Archiver::config_dialog (*p, get_active_window (),
                                               mode && mode != Qnil));
 }
+
+#else
+
+lisp
+Fextract_archive (lisp lpath, lisp ldir, lisp lfiles)
+{
+  file_error (Euncompress_not_supported, lpath);
+}
+
+lisp
+Fdelete_file_in_archive (lisp lpath, lisp lfiles)
+{
+  file_error (Eremove_not_supported, lpath);
+}
+
+lisp
+Fcreate_archive (lisp larcname, lisp lfiles, lisp ldir)
+{
+  file_error (Ecompress_not_supported, larcname);
+}
+
+lisp
+Fconvert_to_SFX (lisp larcname, lisp lopt)
+{
+  FEarchiver_error (ARC_ERROR_NOT_ARC_FILE, larcname);
+}
+
+lisp
+Flist_archive (lisp larcname, lisp file_name_only)
+{
+  FEarchiver_error (ARC_ERROR_NOT_ARC_FILE, larcname);
+}
+
+lisp
+Farchiver_dll_version (lisp dll)
+{
+  return Qnil;
+}
+
+lisp
+Farchiver_dll_config_dialog (lisp dll, lisp mode)
+{
+  return Qnil;
+}
+
+#endif /* UNICODE */
+
 #endif /* __XYZZY__ */

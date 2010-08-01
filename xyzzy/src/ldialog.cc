@@ -79,8 +79,12 @@ Dialog::send_ltext (int id, int msg, WPARAM wparam, lisp init, dlg_txtwidth *dt)
     init = xchar_encoding_display_name (init);
   if (stringp (init))
     {
+#ifdef UNICODE
+      TCHAR *b = (TCHAR *)alloca ((xstring_length (init) + 1) * sizeof TCHAR);
+#else
       char *b = (char *)alloca (xstring_length (init) * 2 + 1);
-      char *be = w2s (b, init);
+#endif
+      TCHAR *be = w2s (b, init);
       if (dt)
         {
           SIZE sz;
@@ -91,7 +95,7 @@ Dialog::send_ltext (int id, int msg, WPARAM wparam, lisp init, dlg_txtwidth *dt)
       return SendDlgItemMessage (d_hwnd, id, msg, wparam, LPARAM (b));
     }
   else
-    return SendDlgItemMessage (d_hwnd, id, msg, wparam, LPARAM (""));
+    return SendDlgItemMessage (d_hwnd, id, msg, wparam, LPARAM (_T("")));
 }
 
 void
@@ -138,7 +142,7 @@ get_window_text (HWND dlg, int id)
 {
   HWND hwnd = GetDlgItem (dlg, id);
   int l = max (0L, SendMessage (hwnd, WM_GETTEXTLENGTH, 0, 0)) + 2;
-  char *b = (char *)alloca (l);
+  TCHAR *b = (TCHAR *)alloca (l * sizeof TCHAR);
   *b = 0;
   GetWindowText (hwnd, b, l);
   if (*b)
@@ -281,9 +285,9 @@ Dialog::edit_command (dlgctrl *c, UINT msg)
     case EN_KILLFOCUS:
     case EN_CHANGE:
       {
-        char buf[10];
+        TCHAR buf[10];
         *buf = 0;
-        GetDlgItemText (d_hwnd, c->id (), buf, sizeof buf);
+        GetDlgItemText (d_hwnd, c->id (), buf, _countof (buf));
         if (safe_find_keyword (Knon_null, c->keyword ()) != Qnil)
           enable_windows (c, *buf);
         if (*buf)
@@ -294,7 +298,7 @@ Dialog::edit_command (dlgctrl *c, UINT msg)
 }
 
 lisp
-Dialog::check_result_type (dlgctrl *c, const char *s)
+Dialog::check_result_type (dlgctrl *c, const TCHAR *s)
 {
   lisp kwd = c->keyword ();
   lisp type = safe_find_keyword (Ktype, kwd);
@@ -319,7 +323,7 @@ Dialog::edit_result (dlgctrl *c)
 {
   HWND hwnd = GetDlgItem (d_hwnd, c->id ());
   int l = max (0L, SendMessage (hwnd, WM_GETTEXTLENGTH, 0, 0)) + 2;
-  char *b = (char *)alloca (l);
+  TCHAR *b = (TCHAR *)alloca (l * sizeof TCHAR);
   GetWindowText (hwnd, b, l);
   lisp kwd = c->keyword ();
   lisp non_null = safe_find_keyword (Knon_null, kwd);
@@ -331,7 +335,7 @@ Dialog::edit_result (dlgctrl *c)
 inline void
 Dialog::edit_invalidate (class dlgctrl *c)
 {
-  SetDlgItemText (d_hwnd, c->id (), "");
+  SetDlgItemText (d_hwnd, c->id (), _T(""));
 }
 
 inline void
@@ -380,10 +384,14 @@ Dialog::link_command (dlgctrl *c, UINT msg)
   lisp lurl = safe_find_keyword (Kurl, c->keyword ());
   if (!stringp (lurl))
     return;
+#ifdef UNICODE
+  TCHAR *url = (TCHAR *)alloca ((xstring_length (lurl) + 1) * sizeof TCHAR);
+#else
   char *url = (char *)alloca (xstring_length (lurl) * 2 + 1);
+#endif
   w2s (url, lurl);
   Fbegin_wait_cursor ();
-  ShellExecute (get_active_window (), "open", url, 0, 0, SW_SHOWNORMAL);
+  ShellExecute (get_active_window (), _T("open"), url, 0, 0, SW_SHOWNORMAL);
   Fend_wait_cursor ();
 }
 
@@ -538,7 +546,11 @@ lisp
 Dialog::make_lb_string (int id, int getlen, int gettext, int idx)
 {
   int l = max (0L, SendDlgItemMessage (d_hwnd, id, getlen, idx, 0)) + 2;
+#ifdef UNICODE
+  TCHAR *b = (TCHAR *)alloca (l * sizeof TCHAR);
+#else
   char *b = (char *)alloca (l * 2);
+#endif
   if (SendDlgItemMessage (d_hwnd, id, gettext, idx, LPARAM (b)) == LB_ERR)
     *b = 0;
   return make_string (b);
@@ -668,8 +680,8 @@ Dialog::combobox_command (dlgctrl *c, UINT msg)
     case CBN_KILLFOCUS:
     case CBN_EDITCHANGE:
       {
-        char buf[10];
-        if (SendDlgItemMessage (d_hwnd, c->id (), WM_GETTEXT, sizeof buf, LPARAM (buf)) >= 0)
+        TCHAR buf[10];
+        if (SendDlgItemMessage (d_hwnd, c->id (), WM_GETTEXT, _countof (buf), LPARAM (buf)) >= 0)
           {
             if (safe_find_keyword (Knon_null, c->keyword ()) != Qnil)
               enable_windows (c, *buf);
@@ -729,7 +741,7 @@ Dialog::combobox_result (dlgctrl *c)
   else
     {
       int l = max (0L, SendDlgItemMessage (d_hwnd, id, WM_GETTEXTLENGTH, 0, 0)) + 2;
-      char *b = (char *)alloca (l);
+      TCHAR *b = (TCHAR *)alloca (l * sizeof TCHAR);
       *b = 0;
 
       if (SendDlgItemMessage (d_hwnd, id, WM_GETTEXT, l, LPARAM (b)) >= 0)
@@ -756,7 +768,7 @@ Dialog::combobox_invalidate (class dlgctrl *c)
 {
   int id = c->id ();
   if ((c->style () & 3) != CBS_DROPDOWNLIST)
-    SetDlgItemText (d_hwnd, id, "");
+    SetDlgItemText (d_hwnd, id, _T(""));
   SendDlgItemMessage (d_hwnd, id, CB_SETCURSEL, WPARAM (-1), 0);
 }
 
@@ -785,8 +797,8 @@ Dialog::spin_init (dlgctrl *c, lisp init)
           HWND hwnd = HWND (SendDlgItemMessage (d_hwnd, id, UDM_GETBUDDY, 0, 0));
           if (hwnd)
             {
-              char b[32];
-              sprintf (b, "%d", val);
+              TCHAR b[32];
+              _stprintf (b, _T("%d"), val);
               SetWindowText (hwnd, b);
             }
         }
@@ -930,48 +942,51 @@ column_valid_p (lisp columns)
 }
 
 static void
-item_string (lisp item, char *buf, int size)
+item_string (lisp item, TCHAR *buf, int size)
 {
   if (symbolp (item))
     item = xsymbol_name (item);
   if (stringp (item))
     {
-      char *b0 = buf, *b = buf, *be = buf + size - 2;
+      TCHAR *b0 = buf, *b = buf, *be = buf + size - 2;
       const Char *p = xstring_contents (item), *pe = p + xstring_length (item);
       for (; p < pe && b < be; p++)
         {
           Char c = *p;
+#ifndef UNICODE
           if (DBCP (c))
             {
               *b++ = char (c >> 8);
               *b++ = char (c);
             }
-          else if (c == '\n')
+          else
+#endif
+          if (c == _T('\n'))
             {
-              *b++ = '\\';
-              *b++ = 'n';
+              *b++ = _T('\\');
+              *b++ = _T('n');
               b0 = b;
             }
-          else if (c == '\t')
+          else if (c == _T('\t'))
             {
               int col = b - b0;
               int goal = ((col + app.default_tab_columns) / app.default_tab_columns
                           * app.default_tab_columns);
               for (int n = min (goal - col, be - b); n > 0; n--)
-                *b++ = ' ';
+                *b++ = _T(' ');
             }
           else if (c == CC_DEL)
             {
-              *b++ = '^';
-              *b++ = '?';
+              *b++ = _T('^');
+              *b++ = _T('?');
             }
-          else if (c < ' ')
+          else if (c < _T(' '))
             {
-              *b++ = '^';
-              *b++ = c + '@';
+              *b++ = _T('^');
+              *b++ = c + _T('@');
             }
           else
-            *b++ = char (c);
+            *b++ = TCHAR (c);
         }
       *b = 0;
     }
@@ -979,7 +994,7 @@ item_string (lisp item, char *buf, int size)
     {
       Buffer *bp = xbuffer_bp (item);
       if (!bp)
-        strcpy (buf, "#<deleted buffer>");
+        _tcscpy (buf, _T("#<deleted buffer>"));
       else
         bp->buffer_name (buf, buf + size - 2);
     }
@@ -987,7 +1002,7 @@ item_string (lisp item, char *buf, int size)
     {
       long v;
       if (safe_fixnum_value (item, &v))
-        sprintf (buf, "%ld", v);
+        _stprintf (buf, _T("%ld"), v);
       else
         *buf = 0;
     }
@@ -996,9 +1011,9 @@ item_string (lisp item, char *buf, int size)
 static void
 draw_item (HDC hdc, const RECT &r, int x, lisp item, int right)
 {
-  char buf[2048];
-  item_string (item, buf, sizeof buf);
-  int l = strlen (buf);
+  TCHAR buf[2048];
+  item_string (item, buf, _countof (buf));
+  int l = _tcslen (buf);
   if (right)
     {
       SIZE size;
@@ -1056,14 +1071,14 @@ Dialog::draw_item (int id, DRAWITEMSTRUCT *dis)
           if (cr.right < r.right)
             {
               cr.right = r.right;
-              ExtTextOut (dis->hDC, cr.left, cr.top, ETO_OPAQUE, &cr, "", 0, 0);
+              ExtTextOut (dis->hDC, cr.left, cr.top, ETO_OPAQUE, &cr, _T(""), 0, 0);
             }
         }
       else
         ::draw_item (dis->hDC, r, r.left, consp (item) ? xcar (item) : item, 0);
     }
   else
-    ExtTextOut (dis->hDC, r.left, r.top, ETO_OPAQUE, &r, "", 0, 0);
+    ExtTextOut (dis->hDC, r.left, r.top, ETO_OPAQUE, &r, _T(""), 0, 0);
 
   if (dis->itemState & ODS_FOCUS)
     DrawFocusRect (dis->hDC, &r);
@@ -1072,7 +1087,7 @@ Dialog::draw_item (int id, DRAWITEMSTRUCT *dis)
 }
 
 static int
-lb_match_p (int ch, const u_char *b)
+lb_match_p (int ch, const _TUCHAR *b)
 {
   for (; *b; b++)
     {
@@ -1087,9 +1102,9 @@ lb_match_p (int ch, const u_char *b)
 static int
 lb_match_p (int ch, lisp item)
 {
-  char buf[2048];
-  item_string (item, buf, sizeof buf);
-  return lb_match_p (ch, (const u_char *)buf);
+  TCHAR buf[2048];
+  item_string (item, buf, _countof (buf));
+  return lb_match_p (ch, (const _TUCHAR *)buf);
 }
 
 static int
@@ -1123,7 +1138,11 @@ static int
 lb_match_p (HWND hwnd, int index, int ch)
 {
   int l = max (0L, SendMessage (hwnd, LB_GETTEXTLEN, index, 0)) + 2;
+#ifdef UNICODE
+  _TUCHAR *b = (_TUCHAR *)alloca (l * sizeof _TUCHAR);
+#else
   u_char *b = (u_char *)alloca (l * 2);
+#endif
   if (SendMessage (hwnd, LB_GETTEXT, index, LPARAM (b)) == LB_ERR)
     return 0;
   return lb_match_p (ch, b);
@@ -1291,7 +1310,7 @@ ldialog_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 inline WORD *
 Dialog::store_unicode (WORD *w, lisp string)
 {
-  return i2w (string, w) + 1;
+  return (WORD *)(i2w (string, (wchar_t *)w) + 1);
 }
 
 lisp
@@ -1316,14 +1335,14 @@ PropSheetFont::find_font (const DLGTEMPLATE *tmpl)
   if (!(tmpl->style & DS_SETFONT))
     return;
   const WORD *w = (const WORD *)(tmpl + 1);
-  w += *w == 0xffff ? 2 : 1 + wcslen (w);
-  w += *w == 0xffff ? 2 : 1 + wcslen (w);
-  w += 1 + wcslen (w);
+  w += *w == 0xffff ? 2 : 1 + wcslen ((wchar_t *)w);
+  w += *w == 0xffff ? 2 : 1 + wcslen ((wchar_t *)w);
+  w += 1 + wcslen ((wchar_t *)w);
   point = short (*w++);
-  int l = wcslen (w);
+  int l = wcslen ((wchar_t *)w);
   if (l < LF_FACESIZE)
     {
-      wcscpy (face, w);
+      wcscpy (face, (wchar_t *)w);
       face_len = l;
     }
 }
@@ -1334,7 +1353,7 @@ PropSheetFont::load ()
   if (!face_len)
     {
       face_len = -1;
-      HINSTANCE hinst = GetModuleHandle ("COMCTL32.DLL");
+      HINSTANCE hinst = GetModuleHandle (_T("COMCTL32.DLL"));
       if (hinst)
         {
           const DLGTEMPLATE *tmpl = (DLGTEMPLATE *)
@@ -1368,13 +1387,13 @@ PropSheetFont::change_font (const DLGTEMPLATE *rtmpl, DWORD size)
   WORD *w = (WORD *)(tmpl + 1);
   const WORD *r0 = (const WORD *)(rtmpl + 1);
   const WORD *r = r0;
-  r += *r == 0xffff ? 2 : 1 + wcslen (r);
-  r += *r == 0xffff ? 2 : 1 + wcslen (r);
-  r += 1 + wcslen (r);
+  r += *r == 0xffff ? 2 : 1 + wcslen ((wchar_t *)r);
+  r += *r == 0xffff ? 2 : 1 + wcslen ((wchar_t *)r);
+  r += 1 + wcslen ((wchar_t *)r);
   memcpy (w, r0, sizeof (WORD) * (r - r0));
   w += r - r0;
   if (rtmpl->style & DS_SETFONT)
-    r += 2 + wcslen (r + 1);
+    r += 2 + wcslen ((wchar_t *)(r + 1));
   *w++ = PropSheetFont::point;
   memcpy (w, PropSheetFont::face, sizeof (WCHAR) * (PropSheetFont::face_len + 1));
   w += PropSheetFont::face_len + 1;
@@ -1384,7 +1403,7 @@ PropSheetFont::change_font (const DLGTEMPLATE *rtmpl, DWORD size)
 }
 
 HGLOBAL
-PropSheetFont::change_font (const char *id)
+PropSheetFont::change_font (const TCHAR *id)
 {
   if (!PropSheetFont::load ())
     return 0;
@@ -1957,12 +1976,16 @@ Fproperty_sheet (lisp pages, lisp caption, lisp lstart_page)
 
   protect_gc gcpro2 (gcprov, lpages);
 
-  char *b;
+  TCHAR *b;
   if (!caption || caption == Qnil)
-    b = "";
+    b = _T("");
   else
     {
+#ifdef UNICODE
+      b = (TCHAR *)alloca ((xstring_length (caption) + 1) * sizeof TCHAR);
+#else
       b = (char *)alloca (2 * xstring_length (caption) + 1);
+#endif
       w2s (b, caption);
     }
 

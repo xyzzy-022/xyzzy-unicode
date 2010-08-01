@@ -5,7 +5,7 @@
 #include "conf.h"
 
 int preview_page_window::wndclass_initialized;
-const char preview_page_window::PageClassName[] = "PreviewPage";
+const TCHAR preview_page_window::PageClassName[] = _T("PreviewPage");
 
 const preview_page_window::ids2scale preview_page_window::ids2scales[] =
 {
@@ -722,7 +722,7 @@ preview_page_window::create (HWND hwnd, const RECT &r)
     return 0;
 
   if (!CreateWindowEx (sysdep.Win4p () ? WS_EX_CLIENTEDGE : 0,
-                       PageClassName, "",
+                       PageClassName, _T(""),
                        (WS_HSCROLL | WS_VSCROLL | WS_VISIBLE | WS_CHILD
                         | WS_CLIPSIBLINGS | WS_TABSTOP
                         | (sysdep.Win4p () ? 0 : WS_BORDER)),
@@ -761,8 +761,8 @@ preview_dialog::set_scale_combo ()
         SendDlgItemMessage (p_hwnd, IDC_SCALE, CB_SETCURSEL, i, 0);
         return;
       }
-  char b[64];
-  sprintf (b, "%d%%", p_page.get_scale ());
+  TCHAR b[64];
+  _stprintf (b, _T("%d%%"), p_page.get_scale ());
   SetDlgItemText (p_hwnd, IDC_SCALE, b);
 }
 
@@ -790,9 +790,9 @@ preview_dialog::init_dialog (HWND)
 
   for (int i = 0; i < numberof (preview_page_window::ids2scales); i++)
     {
-      char b[128];
+      TCHAR b[128];
       LoadString (app.hinst, preview_page_window::ids2scales[i].ids,
-                  b, sizeof b);
+                  b, _countof (b));
       UINT idx = SendDlgItemMessage (p_hwnd, IDC_SCALE, CB_ADDSTRING, 0, LPARAM (b));
       SendDlgItemMessage (p_hwnd, IDC_SCALE, CB_SETITEMDATA,
                           idx, preview_page_window::ids2scales[i].scale);
@@ -866,22 +866,22 @@ preview_dialog::scale_command (int code)
 
     case CBN_KILLFOCUS:
       {
-        char buf[128];
-        GetDlgItemText (p_hwnd, IDC_SCALE, buf, sizeof buf);
+        TCHAR buf[128];
+        GetDlgItemText (p_hwnd, IDC_SCALE, buf, _countof (buf));
         int i = SendDlgItemMessage (p_hwnd, IDC_SCALE, CB_FINDSTRINGEXACT,
                                     WPARAM (-1), LPARAM (buf));
         if (i != CB_ERR)
           return 1;
-        for (char *b = buf; *b == ' '; b++)
+        for (TCHAR *b = buf; *b == _T(' '); b++)
           ;
-        char *be;
-        long v = strtol (b, &be, 10);
+        TCHAR *be;
+        long v = _tcstol (b, &be, 10);
         if (v > 0 && be != b)
           {
-            for (; *be == ' '; be++)
+            for (; *be == _T(' '); be++)
               ;
-            if (*be == '%')
-              for (be++; *be == ' '; be++)
+            if (*be == _T('%'))
+              for (be++; *be == _T(' '); be++)
                 ;
             if (!*be)
               p_page.set_scale (v, 1);
@@ -926,9 +926,9 @@ preview_dialog::quit ()
 inline void
 preview_dialog::update_page (int page, int total)
 {
-  char b[128];
+  TCHAR b[128];
   //  sprintf (b, "ページ %d/%d", page, total);
-  sprintf (b, "ページ %d", page);
+  _stprintf (b, _T("ページ %d"), page);
   SendMessage (p_hwnd_sw, SB_SETTEXT, 0, LPARAM (b));
 }
 

@@ -85,10 +85,11 @@ Fsi_make_string_chunk (lisp string)
 {
   check_string (string);
   int l = w2sl (xstring_contents (string), xstring_length (string));
+  int size = (l + 1) * sizeof TCHAR;
   lisp chunk = make_chunk ();
   xchunk_type (chunk) = Qnil;
-  xchunk_size (chunk) = l + 1;
-  char *b = (char *)xmalloc (l + 1);
+  xchunk_size (chunk) = size;
+  TCHAR *b = (TCHAR *)xmalloc (size);
   xchunk_data (chunk) = b;
   xchunk_owner (chunk) = chunk;
   w2s (b, xstring_contents (string), xstring_length (string));
@@ -269,16 +270,16 @@ Fsi_unpack_string (lisp chunk, lisp loffset, lisp lsize, lisp lzero_term)
 {
   check_chunk (chunk);
   char *p0 = (char *)xchunk_data (chunk);
-  char *p = p0 + unsigned_long_value (loffset);
-  if (p < p0 || p > p0 + xchunk_size (chunk))
+  TCHAR *p = (TCHAR *)(p0 + unsigned_long_value (loffset));
+  if (p < (TCHAR *)p0 || p > (TCHAR *)(p0 + xchunk_size (chunk)))
     FErange_error (loffset);
-  char *pe;
+  TCHAR *pe;
   if (!lsize || lsize == Qnil)
-    pe = p0 + xchunk_size (chunk);
+    pe = (TCHAR *)(p0 + xchunk_size (chunk));
   else
     {
       pe = p + fixnum_value (lsize);
-      if (pe < p || pe > p0 + xchunk_size (chunk))
+      if (pe < p || pe > (TCHAR *)(p0 + xchunk_size (chunk)))
         FErange_error (lsize);
     }
   int zero_term = !lzero_term || lzero_term != Qnil;
@@ -379,16 +380,16 @@ Fsi_pack_string (lisp chunk, lisp loffset, lisp value, lisp lsize)
   check_chunk (chunk);
   check_string (value);
   char *p0 = (char *)xchunk_data (chunk);
-  char *p = p0 + unsigned_long_value (loffset);
-  if (p < p0 || p > p0 + xchunk_size (chunk))
+  TCHAR *p = (TCHAR *)(p0 + unsigned_long_value (loffset));
+  if (p < (TCHAR *)p0 || p > (TCHAR *)(p0 + xchunk_size (chunk)))
     FErange_error (loffset);
-  char *pe;
+  TCHAR *pe;
   if (!lsize || lsize == Qnil)
-    pe = p0 + xchunk_size (chunk);
+    pe = (TCHAR *)(p0 + xchunk_size (chunk));
   else
     {
       pe = p + fixnum_value (lsize);
-      if (pe < p || pe > p0 + xchunk_size (chunk))
+      if (pe < p || pe > (TCHAR *)(p0 + xchunk_size (chunk)))
         FErange_error (lsize);
     }
   w2s (p, pe, xstring_contents (value), xstring_length (value));

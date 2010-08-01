@@ -3,6 +3,8 @@
 
 # include "comm-arc.h"
 
+# ifndef UNICODE
+
 #define COMMARC_EMULATE_FNS
 
 #define METHOD_INDEX(NAME) AI_ ## NAME ## _INDEX
@@ -210,5 +212,7 @@ class SevenZipInterface: public ArchiverInterface
 public:
   SevenZipInterface () : ArchiverInterface ("7-zip32.dll", "SevenZip") {}
 };
+
+# endif /* UNICODE */
 
 #endif

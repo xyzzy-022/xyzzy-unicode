@@ -25,11 +25,11 @@
 # define M_PI 3.141592653589793
 #endif
 
-const char Application::ToplevelClassName[] = "　";
-const char Application::FrameClassName[] = "  ";
-const char Application::ClientClassName[] = "   ";
-const char Application::ModelineClassName[] = "    ";
-const char FunctionKeyClassName[] = "     ";
+const TCHAR Application::ToplevelClassName[] = _T("　");
+const TCHAR Application::FrameClassName[] = _T("  ");
+const TCHAR Application::ClientClassName[] = _T("   ");
+const TCHAR Application::ModelineClassName[] = _T("    ");
+const TCHAR FunctionKeyClassName[] = _T("     ");
 
 Application app;
 
@@ -74,22 +74,22 @@ Application::~Application ()
 }
 
 static lisp
-make_path (const char *s, int append_slash = 1)
+make_path (const TCHAR *s, int append_slash = 1)
 {
-  Char *b = (Char *)alloca ((strlen (s) + 1) * sizeof (Char));
+  Char *b = (Char *)alloca ((_tcslen (s) + 1) * sizeof (Char));
   Char *be = s2w (b, s);
   map_backsl_to_sl (b, be - b);
-  if (append_slash && be != b && be[-1] != '/')
-    *be++ = '/';
+  if (append_slash && be != b && be[-1] != _T('/'))
+    *be++ = _T('/');
   return make_string (b, be - b);
 }
 
 static void
 init_module_dir ()
 {
-  char path[PATH_MAX];
-  GetModuleFileName (0, path, sizeof path);
-  char *p = jrindex (path, '\\');
+  TCHAR path[PATH_MAX];
+  GetModuleFileName (0, path, _countof (path));
+  TCHAR *p = jrindex (path, _T('\\'));
   if (p)
     p[1] = 0;
   xsymbol_value (Qmodule_dir) = make_path (path);
@@ -104,20 +104,20 @@ init_current_dir ()
 static void
 init_windows_dir ()
 {
-  char path[PATH_MAX];
-  GetWindowsDirectory (path, sizeof path);
+  TCHAR path[PATH_MAX];
+  GetWindowsDirectory (path, _countof (path));
   xsymbol_value (Qwindows_dir) = make_path (path);
 
-  GetSystemDirectory (path, sizeof path);
+  GetSystemDirectory (path, _countof (path));
   xsymbol_value (Qsystem_dir) = make_path (path);
 }
 
 static int
-init_home_dir (const char *path)
+init_home_dir (const TCHAR *path)
 {
-  char home[PATH_MAX], *tem;
-  int l = WINFS::GetFullPathName (path, sizeof home, home, &tem);
-  if (!l || l >= sizeof home)
+  TCHAR home[PATH_MAX], *tem;
+  int l = WINFS::GetFullPathName (path, _countof (home), home, &tem);
+  if (!l || l >= _countof (home))
     return 0;
   DWORD f = WINFS::GetFileAttributes (home);
   if (f == -1 || !(f & FILE_ATTRIBUTE_DIRECTORY))
@@ -129,31 +129,31 @@ init_home_dir (const char *path)
 static void
 init_home_dir ()
 {
-  char path[PATH_MAX];
-  static const char xyzzyhome[] = "XYZZYHOME";
-  static const char cfgInit[] = "init";
+  TCHAR path[PATH_MAX];
+  static const TCHAR xyzzyhome[] = _T("XYZZYHOME");
+  static const TCHAR cfgInit[] = _T("init");
 
-  if (read_conf (cfgInit, "homeDir", path, sizeof path)
+  if (read_conf (cfgInit, _T("homeDir"), path, _countof (path))
       && init_home_dir (path))
     return;
 
   for (int i = 0; i <= 5; i += 5)
     {
-      char *e = getenv (xyzzyhome + i);
+      TCHAR *e = _tgetenv (xyzzyhome + i);
       if (e && init_home_dir (e))
         return;
     }
 
-  char *drive = getenv ("HOMEDRIVE");
-  char *dir = getenv ("HOMEPATH");
-  if (drive && dir && strlen (drive) + strlen (dir) < sizeof path - 1)
+  TCHAR *drive = _tgetenv (_T("HOMEDRIVE"));
+  TCHAR *dir = _tgetenv (_T("HOMEPATH"));
+  if (drive && dir && _tcslen (drive) + _tcslen (dir) < _countof (path) - 1)
     {
-      strcpy (stpcpy (path, drive), dir);
+      _tcscpy (stpcpy (path, drive), dir);
       if (init_home_dir (path))
         return;
     }
 
-  if (read_conf (cfgInit, "logDir", path, sizeof path)
+  if (read_conf (cfgInit, _T("logDir"), path, _countof (path))
       && init_home_dir (path))
     return;
 
@@ -163,7 +163,7 @@ init_home_dir ()
 static void
 init_load_path ()
 {
-  lisp l = make_string ("lisp");
+  lisp l = make_string (_T("lisp"));
   xsymbol_value (Vload_path) = Qnil;
   if (Fequalp (xsymbol_value (Qmodule_dir),
                xsymbol_value (Qdefault_dir)) == Qnil)
@@ -176,21 +176,21 @@ init_load_path ()
            xsymbol_value (Vload_path));
 
   xsymbol_value (Vload_path) =
-    xcons (Fmerge_pathnames (make_string ("site-lisp"),
+    xcons (Fmerge_pathnames (make_string (_T("site-lisp")),
                              xsymbol_value (Qmodule_dir)),
            xsymbol_value (Vload_path));
 }
 
 static void
-init_user_config_path (const char *config_path)
+init_user_config_path (const TCHAR *config_path)
 {
   if (!config_path)
-    config_path = getenv ("XYZZYCONFIGPATH");
+    config_path = _tgetenv (_T("XYZZYCONFIGPATH"));
   if (config_path)
     {
-      char path[PATH_MAX], *tem;
-      int l = WINFS::GetFullPathName (config_path, sizeof path, path, &tem);
-      if (l && l < sizeof path)
+      TCHAR path[PATH_MAX], *tem;
+      int l = WINFS::GetFullPathName (config_path, _countof (path), path, &tem);
+      if (l && l < _countof (path))
         {
           DWORD a = WINFS::GetFileAttributes (path);
           if (a != DWORD (-1) && a & FILE_ATTRIBUTE_DIRECTORY)
@@ -201,16 +201,16 @@ init_user_config_path (const char *config_path)
         }
     }
 
-  char *path = (char *)alloca (w2sl (xsymbol_value (Qmodule_dir))
-                               + w2sl (xsymbol_value (Vuser_name))
-                               + 32);
-  char *p = stpcpy (w2s (path, xsymbol_value (Qmodule_dir)), "usr");
+  TCHAR *path = (TCHAR *)alloca ((w2sl (xsymbol_value (Qmodule_dir))
+                                  + w2sl (xsymbol_value (Vuser_name))
+                                  + 32) * sizeof TCHAR);
+  TCHAR *p = stpcpy (w2s (path, xsymbol_value (Qmodule_dir)), _T("usr"));
   WINFS::CreateDirectory (path, 0);
-  *p++ = '/';
+  *p++ = _T('/');
   p = w2s (p, xsymbol_value (Vuser_name));
   WINFS::CreateDirectory (path, 0);
-  *p++ = '/';
-  strcpy (p, sysdep.windows_short_name);
+  *p++ = _T('/');
+  _tcscpy (p, sysdep.windows_short_name);
   WINFS::CreateDirectory (path, 0);
   DWORD a = WINFS::GetFileAttributes (path);
   if (a != DWORD (-1) && a & FILE_ATTRIBUTE_DIRECTORY)
@@ -220,14 +220,14 @@ init_user_config_path (const char *config_path)
 }
 
 static void
-init_user_inifile_path (const char *ini_file)
+init_user_inifile_path (const TCHAR *ini_file)
 {
   if (!ini_file)
-    ini_file = getenv ("XYZZYINIFILE");
+    ini_file = _tgetenv (_T("XYZZYINIFILE"));
   if (ini_file && find_slash (ini_file))
     {
-      char path[PATH_MAX], *tem;
-      int l = WINFS::GetFullPathName (ini_file, sizeof path, path, &tem);
+      TCHAR path[PATH_MAX], *tem;
+      int l = WINFS::GetFullPathName (ini_file, _countof (path), path, &tem);
       if (l && l < sizeof path)
         {
           HANDLE h = CreateFile (path, GENERIC_READ, 0, 0, OPEN_ALWAYS,
@@ -242,11 +242,11 @@ init_user_inifile_path (const char *ini_file)
     }
 
   if (!ini_file)
-    ini_file = "xyzzy.ini";
+    ini_file = _T("xyzzy.ini");
 
-  char *path = (char *)alloca (w2sl (xsymbol_value (Quser_config_path))
-                               + strlen (ini_file) + 32);
-  strcpy (w2s (path, xsymbol_value (Quser_config_path)), ini_file);
+  TCHAR *path = (TCHAR *)alloca ((w2sl (xsymbol_value (Quser_config_path))
+                                  + _tcslen (ini_file) + 32) * sizeof TCHAR);
+  _tcscpy (w2s (path, xsymbol_value (Quser_config_path)), ini_file);
   app.ini_file_path = xstrdup (path);
 }
 
@@ -256,17 +256,17 @@ init_dump_path ()
   if (!*app.dump_image)
     {
       int l = GetModuleFileName (0, app.dump_image, PATH_MAX);
-      char *e = app.dump_image + l;
-      if (l > 4 && !_stricmp (e - 4, ".exe"))
+      TCHAR *e = app.dump_image + l;
+      if (l > 4 && !_tcsicmp (e - 4, _T(".exe")))
         e -= 3;
       else
-        *e++ = '.';
-      strcpy (e, sysdep.windows_short_name);
+        *e++ = _T('.');
+      _tcscpy (e, sysdep.windows_short_name);
     }
 }
 
 static void
-init_env_symbols (const char *config_path, const char *ini_file)
+init_env_symbols (const TCHAR *config_path, const TCHAR *ini_file)
 {
   xsymbol_value (Vfeatures) = xcons (Kxyzzy, xcons (Kieee_floating_point, Qnil));
   xsymbol_value (Qdump_image_path) = make_path (app.dump_image, 0);
@@ -438,7 +438,7 @@ init_symbol_value_once ()
   xsymbol_value (Qsoftware_version_display_string) =
     make_string (DisplayVersionString);
 
-  xsymbol_value (Qtemporary_string) = make_string_simple ("", 0);
+  xsymbol_value (Qtemporary_string) = make_string_simple (_T(""), 0);
 
   xsymbol_value (Vversion_control) = Qt;
   xsymbol_value (Vkept_old_versions) = make_fixnum (2);
@@ -546,14 +546,14 @@ init_command_line (int ac)
 {
   lisp p = Qnil;
   for (int i = __argc - 1; i >= ac; i--)
-    p = xcons (make_string (__argv[i]), p);
+    p = xcons (make_string (__targv[i]), p);
   xsymbol_value (Vsi_command_line_args) = p;
 }
 
 void
 report_out_of_memory ()
 {
-  MessageBox (0, "メモリが不足しています", TitleBarString, MB_OK | MB_ICONHAND);
+  MessageBox (0, _T("メモリが不足しています"), TitleBarString, MB_OK | MB_ICONHAND);
 }
 
 static inline int
@@ -566,22 +566,22 @@ check_dump_key ()
 static int
 init_lisp_objects ()
 {
-  const char *config_path = 0, *ini_file = 0;
+  const TCHAR *config_path = 0, *ini_file = 0;
   *app.dump_image = 0;
 
   for (int ac = 1; ac < __argc - 1; ac += 2)
-    if (!strcmp (__argv[ac], "-image"))
+    if (!_tcscmp (__targv[ac], _T("-image")))
       {
-        char *tem;
-        int l = WINFS::GetFullPathName (__argv[ac + 1], sizeof app.dump_image,
+        TCHAR *tem;
+        int l = WINFS::GetFullPathName (__targv[ac + 1], _countof (app.dump_image),
                                         app.dump_image, &tem);
-        if (!l || l >= sizeof app.dump_image)
+        if (!l || l >= _countof (app.dump_image))
           *app.dump_image = 0;
       }
-    else if (!strcmp (__argv[ac], "-config"))
-      config_path = __argv[ac + 1];
-    else if (!strcmp (__argv[ac], "-ini"))
-      ini_file = __argv[ac + 1];
+    else if (!_tcscmp (__targv[ac], _T("-config")))
+      config_path = __targv[ac + 1];
+    else if (!_tcscmp (__targv[ac], _T("-ini")))
+      ini_file = __targv[ac + 1];
     else
       break;
 
@@ -635,7 +635,7 @@ init_editor_objects ()
 lisp
 Fsi_startup ()
 {
-  return Fsi_load_library (make_string ("startup"), Qnil);
+  return Fsi_load_library (make_string (_T("startup")), Qnil);
 }
 
 static int
@@ -801,8 +801,8 @@ init_app (HINSTANCE hinst, int passed_cmdshow, int &ole_initialized)
     }
 
   if (*sysdep.host_name)
-    strcpy (stpcpy (TitleBarString + strlen (TitleBarString), "@"),
-            sysdep.host_name);
+    _tcscpy (stpcpy (TitleBarString + _tcslen (TitleBarString), _T("@")),
+             sysdep.host_name);
 
   if (!init_lisp_objects ())
     return 0;

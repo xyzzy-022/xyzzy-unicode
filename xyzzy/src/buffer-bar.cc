@@ -20,14 +20,14 @@ buffer_bar::current () const
   return i >= 0 ? nth (i) : 0;
 }
 
-char *
-buffer_bar::set_buffer_name (const Buffer *bp, char *buf, int size)
+TCHAR *
+buffer_bar::set_buffer_name (const Buffer *bp, TCHAR *buf, int size)
 {
-  char *b = buf;
+  TCHAR *b = buf;
   if (bp->b_modified)
     {
-      *b++ = '*';
-      *b++ = ' ';
+      *b++ = _T('*');
+      *b++ = _T(' ');
     }
   bp->buffer_name (b, buf + size - 2);
   return buf;
@@ -38,8 +38,8 @@ buffer_bar::insert (const Buffer *bp, int i)
 {
   TC_ITEM ti;
   ti.mask = TCIF_TEXT | TCIF_PARAM;
-  char buf[BUFFER_NAME_MAX * 2 + 32];
-  ti.pszText = set_buffer_name (bp, buf, sizeof buf);
+  TCHAR buf[BUFFER_NAME_MAX * 2 + 32];
+  ti.pszText = set_buffer_name (bp, buf, _countof (buf));
   ti.lParam = LPARAM (bp);
   return insert_item (i, ti);
 }
@@ -49,8 +49,8 @@ buffer_bar::modify (const Buffer *bp, int i)
 {
   TC_ITEM ti;
   ti.mask = TCIF_TEXT | TCIF_PARAM;
-  char buf[BUFFER_NAME_MAX * 2 + 32];
-  ti.pszText = set_buffer_name (bp, buf, sizeof buf);
+  TCHAR buf[BUFFER_NAME_MAX * 2 + 32];
+  ti.pszText = set_buffer_name (bp, buf, _countof (buf));
   ti.lParam = LPARAM (bp);
   return set_item (i, ti);
 }
@@ -146,8 +146,8 @@ void
 buffer_bar::draw_item (const draw_item_struct &dis)
 {
   Buffer *bp = (Buffer *)dis.data;
-  char buf[BUFFER_NAME_MAX * 2 + 32];
-  set_buffer_name (bp, buf, sizeof buf);
+  TCHAR buf[BUFFER_NAME_MAX * 2 + 32];
+  set_buffer_name (bp, buf, _countof (buf));
 
   if (bp->b_modified)
     bp->b_buffer_bar_modified |= Buffer::BUFFER_BAR_LAST_MODIFIED_FLAG;
@@ -159,7 +159,7 @@ buffer_bar::draw_item (const draw_item_struct &dis)
   bp->b_buffer_bar_fg = fg;
   bp->b_buffer_bar_bg = bg;
 
-  tab_bar::draw_item (dis, buf, strlen (buf), fg, bg);
+  tab_bar::draw_item (dis, buf, _tcslen (buf), fg, bg);
 }
 
 void

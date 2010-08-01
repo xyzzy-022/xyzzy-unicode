@@ -1,7 +1,7 @@
 #ifndef _ofn_h_
 #define _ofn_h_
 
-struct tagOFN: public tagOFNA
+struct tagOFN: public OPENFILENAME
 {
 #ifndef OPENFILENAME_SIZE_VERSION_400
   void *pvReserved;

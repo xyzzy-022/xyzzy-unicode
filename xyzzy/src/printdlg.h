@@ -12,23 +12,23 @@ protected:
   BOOL ok (UINT);
   BOOL cancel (UINT);
   BOOL clicked (UINT, int) const;
-  BOOL range_command (UINT, int, UINT, LONG, const char *) const;
+  BOOL range_command (UINT, int, UINT, LONG, const TCHAR *) const;
 
   int notice (UINT id, UINT ids) const
     {return print_engine::notice (m_hwnd, id, ids);}
   int notice (UINT id, UINT ids, int arg) const
     {return print_engine::notice (m_hwnd, id, ids, arg);}
-  void set_margin_text (UINT, LONG, const char *) const;
-  void set_margin (UINT, UINT, LONG, int, int, int, const char *) const;
-  LONG parse_margin_text (UINT, const char *) const;
+  void set_margin_text (UINT, LONG, const TCHAR *) const;
+  void set_margin (UINT, UINT, LONG, int, int, int, const TCHAR *) const;
+  LONG parse_margin_text (UINT, const TCHAR *) const;
   void init_margin (int) const;
   void enable_linenums (int) const;
   void enable_pages (int) const;
   void update_ncopies () const;
   int get_int (UINT, BOOL *, BOOL, int) const;
-  int check_margin_text (UINT, LONG &, LONG, LONG, const char *) const;
+  int check_margin_text (UINT, LONG &, LONG, LONG, const TCHAR *) const;
   void add_lang () const;
-  BOOL notify_spin (NMHDR *, const char *);
+  BOOL notify_spin (NMHDR *, const TCHAR *);
   BOOL print_setup ();
   int preview ();
   BOOL set_font ();
@@ -43,14 +43,14 @@ protected:
   void check_proportional_font () const;
   BOOL wndproc (UINT, WPARAM, LPARAM);
   static BOOL CALLBACK wndproc (HWND, UINT, WPARAM, LPARAM);
-  void init_history (UINT, const char *);
+  void init_history (UINT, const TCHAR *);
   int history_command (UINT, UINT, UINT, UINT);
   void move_btn_focus (UINT, UINT);
   int add_history (UINT, UINT, UINT, UINT);
   int delete_history (UINT, UINT, UINT, UINT);
-  void save_history (UINT, const char *);
-  int find_history (UINT, const char *);
-  static int find_menu_text (HMENU, int, char *, int);
+  void save_history (UINT, const TCHAR *);
+  int find_history (UINT, const TCHAR *);
+  static int find_menu_text (HMENU, int, TCHAR *, int);
   int format_popup (UINT, class subclass_combo &);
 
 private:

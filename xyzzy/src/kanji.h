@@ -9,7 +9,7 @@
 # define DCE_UTF16LE   0x20
 # define DCE_UTF16BE   0x40
 
-int check_kanji2 (const char *, u_int);
+int check_kanji2 (const TCHAR *, u_int);
 lisp detect_char_encoding (const char *, int, int);
 
 #endif

@@ -1,6 +1,6 @@
 #include "ed.h"
 
-static const char csPopupList[] = "PopupList";
+static const TCHAR csPopupList[] = _T("PopupList");
 static WNDPROC org_wndproc;
 static ATOM popup_list_atom;
 static HWND hwnd_popup;
@@ -34,7 +34,11 @@ call_callback (HWND hwnd)
   if (l < 0)
     return 0;
 
+#ifdef UNICODE
+  TCHAR *buf = (TCHAR *)alloca ((l + 1) * sizeof TCHAR);
+#else
   char *buf = (char *)alloca (l * 2 + 1);
+#endif
   if (CallWindowProc (org_wndproc, hwnd, LB_GETTEXT, n, LPARAM (buf)) < 0)
     return 0;
 
@@ -117,7 +121,7 @@ define_wndclass ()
 {
   WNDCLASS wc;
 
-  if (!GetClassInfo (0, "ListBox", &wc))
+  if (!GetClassInfo (0, _T("ListBox"), &wc))
     return 0;
 
   org_wndproc = wc.lpfnWndProc;
@@ -152,7 +156,7 @@ Fpopup_list (lisp list, lisp callback, lisp lpoint)
   if (!popup_list_atom)
     popup_list_atom = define_wndclass ();
 
-  hwnd_popup = CreateWindowEx (WS_EX_DLGMODALFRAME, csPopupList, "",
+  hwnd_popup = CreateWindowEx (WS_EX_DLGMODALFRAME, csPopupList, _T(""),
                                WS_POPUP | WS_VSCROLL, 0, 0, 0, 0,
                                app.toplev, 0, app.hinst, 0);
 
@@ -168,8 +172,8 @@ Fpopup_list (lisp list, lisp callback, lisp lpoint)
   for (p = list; consp (p); p = xcdr (p))
     {
       lisp s = xcar (p);
-      char b[1024];
-      int l = w2s (b, b + sizeof b, xstring_contents (s), xstring_length (s)) - b;
+      TCHAR b[1024];
+      int l = w2s (b, b + _countof (b), xstring_contents (s), xstring_length (s)) - b;
       SendMessage (hwnd_popup, LB_ADDSTRING, 0, LPARAM (b));
       SIZE ext;
       GetTextExtentPoint32 (hdc, b, l, &ext);

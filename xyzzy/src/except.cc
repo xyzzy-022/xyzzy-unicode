@@ -1,5 +1,6 @@
 #include "ed.h"
 #include "except.h"
+#include "oleconv.h"
 
 #define MAX_LISP_CALL_STACK_DEPTH 64
 
@@ -13,14 +14,14 @@ static lisp_call_stack lisp_call_stack_buf[MAX_LISP_CALL_STACK_DEPTH];
 
 const Win32Exception::known_exception Win32Exception::known_excep[] =
 {
-  {EXCEPTION_ACCESS_VIOLATION, "Access violation"},
-  {EXCEPTION_DATATYPE_MISALIGNMENT, "Data type misalignment"},
-  {EXCEPTION_ARRAY_BOUNDS_EXCEEDED, "Array bounds exceeded"},
-  {EXCEPTION_FLT_DIVIDE_BY_ZERO, "Floating point divide by zero"},
-  {EXCEPTION_INT_DIVIDE_BY_ZERO, "Integer divide by zero"},
-  {EXCEPTION_ILLEGAL_INSTRUCTION, "Illegal instruction"},
-  {EXCEPTION_STACK_OVERFLOW, "Stack overflow"},
-  {EXCEPTION_IN_PAGE_ERROR, "In page error"},
+  {EXCEPTION_ACCESS_VIOLATION, _T("Access violation")},
+  {EXCEPTION_DATATYPE_MISALIGNMENT, _T("Data type misalignment")},
+  {EXCEPTION_ARRAY_BOUNDS_EXCEEDED, _T("Array bounds exceeded")},
+  {EXCEPTION_FLT_DIVIDE_BY_ZERO, _T("Floating point divide by zero")},
+  {EXCEPTION_INT_DIVIDE_BY_ZERO, _T("Integer divide by zero")},
+  {EXCEPTION_ILLEGAL_INSTRUCTION, _T("Illegal instruction")},
+  {EXCEPTION_STACK_OVERFLOW, _T("Stack overflow")},
+  {EXCEPTION_IN_PAGE_ERROR, _T("In page error")},
 };
 
 EXCEPTION_RECORD Win32Exception::r;
@@ -64,7 +65,7 @@ se_handler (u_int code, EXCEPTION_POINTERS *ep)
 }
 
 static int
-get_section_name (void *base, void *p, char *buf, int size)
+get_section_name (void *base, void *p, TCHAR *buf, int size)
 {
   DWORD nread;
   IMAGE_DOS_HEADER dos;
@@ -98,8 +99,9 @@ get_section_name (void *base, void *p, char *buf, int size)
       if (rva >= sec.VirtualAddress
           && rva < sec.VirtualAddress + max (sec.SizeOfRawData, sec.Misc.VirtualSize))
         {
+          USES_CONVERSION;
           int l = min ((int)sizeof sec.Name, size - 1);
-          memcpy (buf, sec.Name, l);
+          memcpy (buf, A2T ((char *)sec.Name), l * sizeof TCHAR);
           buf[l] = 0;
           return 1;
         }
@@ -108,21 +110,21 @@ get_section_name (void *base, void *p, char *buf, int size)
 }
 
 int
-get_module_base_name (HMODULE h, LPSTR buf, DWORD size)
+get_module_base_name (HMODULE h, LPTSTR buf, DWORD size)
 {
   if (!GetModuleFileName (h, buf, size))
     return 0;
-  char *p = jrindex (buf, '\\');
+  TCHAR *p = jrindex (buf, _T('\\'));
   if (p)
-    strcpy (buf, p + 1);
-  int l = strlen (buf);
-  if (l >= 4 && !_stricmp (buf + l - 4, ".dll"))
+    _tcscpy (buf, p + 1);
+  int l = _tcslen (buf);
+  if (l >= 4 && !_tcsicmp (buf + l - 4, _T(".dll")))
     buf[l - 4] = 0;
   return 1;
 }
 
 static int
-get_module_name (DWORD addr, MEMORY_BASIC_INFORMATION *bi, char *buf)
+get_module_name (DWORD addr, MEMORY_BASIC_INFORMATION *bi, TCHAR *buf)
 {
   switch (bi->AllocationProtect & ~(PAGE_GUARD | PAGE_NOCACHE))
     {
@@ -140,20 +142,20 @@ get_module_name (DWORD addr, MEMORY_BASIC_INFORMATION *bi, char *buf)
       return 0;
     }
 
-  char path[512];
-  if (!get_module_base_name (HMODULE (bi->AllocationBase), path, sizeof path))
+  TCHAR path[512];
+  if (!get_module_base_name (HMODULE (bi->AllocationBase), path, _countof (path)))
     return 0;
 
-  strcpy (buf, path);
+  _tcscpy (buf, path);
   if (get_section_name (bi->AllocationBase,
                         bi->BaseAddress,
-                        path, sizeof path))
-    strcpy (stpcpy (buf + strlen (buf), "!"), path);
+                        path, _countof (path)))
+    _tcscpy (stpcpy (buf + _tcslen (buf), _T("!")), path);
   return 1;
 }
 
 static int
-find_module_name (void *addr, char *buf)
+find_module_name (void *addr, TCHAR *buf)
 {
   SYSTEM_INFO si;
   GetSystemInfo (&si);
@@ -184,13 +186,13 @@ print_modules (FILE *fp, DWORD addr, MEMORY_BASIC_INFORMATION *bi)
       return;
     }
 
-  char path[MAX_PATH + IMAGE_SIZEOF_SHORT_NAME + 2];
+  TCHAR path[MAX_PATH + IMAGE_SIZEOF_SHORT_NAME + 2];
   if (!get_module_base_name (HMODULE (bi->AllocationBase), path, MAX_PATH))
     return;
-  char *p = path + lstrlen (path);
-  if (get_section_name (bi->AllocationBase, bi->BaseAddress, p + 1, path + sizeof path - p - 1))
-    *p = '!';
-  fprintf (fp, "%08x - %08x: %s\n", addr, addr + bi->RegionSize, path);
+  TCHAR *p = path + lstrlen (path);
+  if (get_section_name (bi->AllocationBase, bi->BaseAddress, p + 1, path + _countof (path) - p - 1))
+    *p = _T('!');
+  _ftprintf (fp, _T("%08x - %08x: %s\n"), addr, addr + bi->RegionSize, path);
 }
 
 static void
@@ -208,41 +210,41 @@ print_module_allocation (FILE *fp)
       if (addr < oaddr)
         break;
     }
-  putc ('\n', fp);
+  _puttc (_T('\n'), fp);
 }
 
 #ifdef _M_IX86
 static void
 x86_print_registers (FILE *fp, const CONTEXT &c)
 {
-  fprintf (fp, "Registers:\n");
-  fprintf (fp, "EAX: %08x  EBX: %08x  ECX: %08x  EDX: %08x  ESI: %08x\n",
+  _ftprintf (fp, _T("Registers:\n"));
+  _ftprintf (fp, _T("EAX: %08x  EBX: %08x  ECX: %08x  EDX: %08x  ESI: %08x\n"),
            c.Eax, c.Ebx, c.Ecx, c.Edx, c.Esi);
-  fprintf (fp, "EDI: %08x  ESP: %08x  EBP: %08x  EIP: %08x  EFL: %08x\n",
+  _ftprintf (fp, _T("EDI: %08x  ESP: %08x  EBP: %08x  EIP: %08x  EFL: %08x\n"),
            c.Edi, c.Esp, c.Ebp, c.Eip, c.EFlags);
-  fprintf (fp, "CS: %04x  DS: %04x  ES: %04x  SS: %04x  FS: %04x  GS: %04x\n\n",
+  _ftprintf (fp, _T("CS: %04x  DS: %04x  ES: %04x  SS: %04x  FS: %04x  GS: %04x\n\n"),
            c.SegCs, c.SegDs, c.SegEs, c.SegSs, c.SegFs, c.SegGs);
 
   DWORD eip = c.Eip - 16;
   for (int j = 0; j < 2; j++)
     {
-      fprintf (fp, "%08x:", eip);
+      _ftprintf (fp, _T("%08x:"), eip);
       for (int i = 0; i < 16; i++, eip++)
         {
           if (IsBadReadPtr ((void *)eip, 1))
-            fprintf (fp, " ??");
+            _ftprintf (fp, _T(" ??"));
           else
-            fprintf (fp, " %02x", *(u_char *)eip);
+            _ftprintf (fp, _T(" %02x"), *(u_char *)eip);
         }
-      putc ('\n', fp);
+      _puttc ('\n', fp);
     }
-  putc ('\n', fp);
+  _puttc ('\n', fp);
 }
 
 static void
 x86_stack_dump (FILE *fp, const CONTEXT &c)
 {
-  fprintf (fp, "Stack dump:\n");
+  _ftprintf (fp, _T("Stack dump:\n"));
   DWORD esp = c.Esp, ebp = c.Ebp;
 
   for (int i = 0; i < 64; i++)
@@ -253,9 +255,9 @@ x86_stack_dump (FILE *fp, const CONTEXT &c)
           || nread != sizeof buf)
         break;
       for (int j = 0; j < 16; j += 4)
-        fprintf (fp, "%08x: %08x %08x %08x %08x\n",
-                 esp + j * 4, buf[j], buf[j + 1], buf[j + 2], buf[j + 3]);
-      fprintf (fp, "\n");
+        _ftprintf (fp, _T("%08x: %08x %08x %08x %08x\n"),
+                   esp + j * 4, buf[j], buf[j + 1], buf[j + 2], buf[j + 3]);
+      _ftprintf (fp, _T("\n"));
       if (ebp <= esp || ebp & 3)
         break;
       esp = ebp;
@@ -273,7 +275,7 @@ bad_object_p (FILE *fp, lisp object)
 {
   if (!IsBadReadPtr (object, sizeof object))
     return 0;
-  fprintf (fp, "(???)\n");
+  _ftprintf (fp, _T("(???)\n"));
   return 1;
 }
 
@@ -281,7 +283,7 @@ static void
 print_object (FILE *fp, lisp object, int f)
 {
   if (f)
-    putc ('(', fp);
+    _puttc (_T('('), fp);
   if (!bad_object_p (fp, object))
     {
       if (closurep (object))
@@ -293,11 +295,11 @@ print_object (FILE *fp, lisp object, int f)
               if (bad_object_p (fp, xcar (object)))
                 ;
               else if (xcar (object) == Qlambda)
-                fprintf (fp, "(lambda sexp)");
+                _ftprintf (fp, _T("(lambda sexp)"));
               else if (xcar (object) == Qmacro)
-                fprintf (fp, "(macro sexp)");
+                _ftprintf (fp, _T("(macro sexp)"));
               else
-                fprintf (fp, "(...)");
+                _ftprintf (fp, _T("(...)"));
             }
           else
             {
@@ -311,31 +313,33 @@ print_object (FILE *fp, lisp object, int f)
                 {
                   const Char *p = xstring_contents (object);
                   const Char *const pe = p + xstring_length (object);
-                  if (IsBadStringPtr ((char *)p, sizeof *p * xstring_length (object)))
-                    fprintf (fp, "(Invalid String)");
+                  if (IsBadStringPtr ((TCHAR *)p, sizeof *p * xstring_length (object)))
+                    _ftprintf (fp, _T("(Invalid String)"));
                   else
                     for (; p < pe; p++)
                       {
+#ifndef UNICODE
                         if (DBCP (*p))
                           putc (*p >> 8, fp);
-                        putc (*p, fp);
+#endif
+                        _puttc (*p, fp);
                       }
                 }
               else
-                fprintf (fp, "...");
+                _ftprintf (fp, _T("..."));
             }
         }
     }
 
   if (f)
-    fprintf (fp, " calculating arguments...)");
-  putc ('\n', fp);
+    _ftprintf (fp, _T(" calculating arguments...)"));
+  _puttc (_T('\n'), fp);
 }
 
 static void
 lisp_stack_trace (FILE *fp)
 {
-  fprintf (fp, "Lisp stack trace:\n");
+  _ftprintf (fp, _T("Lisp stack trace:\n"));
   for (lisp_call_stack *p = lisp_call_stack_buf, *pe = p + MAX_LISP_CALL_STACK_DEPTH;
        p < pe; p++)
     switch (p->type)
@@ -358,7 +362,7 @@ lisp_stack_trace (FILE *fp)
 void
 cleanup_exception ()
 {
-  const char *desc = "Unknown exception";
+  const TCHAR *desc = _T("Unknown exception");
   for (int i = 0; i < numberof (Win32Exception::known_excep); i++)
     if (Win32Exception::code == Win32Exception::known_excep[i].code)
       {
@@ -366,43 +370,43 @@ cleanup_exception ()
         break;
       }
 
-  char path[PATH_MAX];
+  TCHAR path[PATH_MAX];
   GetModuleFileName (0, path, PATH_MAX);
-  int l = strlen (path);
-  if (l >= 4 && !_stricmp (path + l - 4, ".exe"))
-    strcpy (path + l - 4, ".BUG");
+  int l = _tcslen (path);
+  if (l >= 4 && !_tcsicmp (path + l - 4, _T(".exe")))
+    _tcscpy (path + l - 4, _T(".BUG"));
   else
-    strcat (path, ".BUG");
+    _tcscat (path, _T(".BUG"));
 
-  char module[1024];
+  TCHAR module[1024];
   if (!find_module_name (Win32Exception::r.ExceptionAddress, module))
     *module = 0;
 
-  FILE *fp = fopen (path, "w");
-  if (!fp && GetTempPath (sizeof path, path))
+  FILE *fp = _tfopen (path, _T("w"));
+  if (!fp && GetTempPath (_countof (path), path))
     {
-      char *p = find_last_slash (path);
+      TCHAR *p = find_last_slash (path);
       if (!p || p[1])
-        strcat (path, "\\");
-      strcat (path, "xyzzy.BUG");
-      fp = fopen (path, "w");
+        _tcscat (path, _T("\\"));
+      _tcscat (path, _T("xyzzy.BUG"));
+      fp = _tfopen (path, _T("w"));
     }
   if (fp)
     {
-      fprintf (fp, "%s %s Crash log:\n\n", ProgramName, VersionString);
+      _ftprintf (fp, _T("%s %s Crash log:\n\n"), ProgramName, VersionString);
 
-      fprintf (fp, "Windows %s %d.%02d.%d %s\n\n",
-               sysdep.windows_name,
-               sysdep.os_ver.dwMajorVersion,
-               sysdep.os_ver.dwMinorVersion,
-               sysdep.os_ver.dwBuildNumber,
-               sysdep.os_ver.szCSDVersion);
+      _ftprintf (fp, _T("Windows %s %d.%02d.%d %s\n\n"),
+                 sysdep.windows_name,
+                 sysdep.os_ver.dwMajorVersion,
+                 sysdep.os_ver.dwMinorVersion,
+                 sysdep.os_ver.dwBuildNumber,
+                 sysdep.os_ver.szCSDVersion);
 
-      fprintf (fp, "%08x: %s\n", Win32Exception::code, desc);
-      fprintf (fp, "at %08x", Win32Exception::r.ExceptionAddress);
+      _ftprintf (fp, _T("%08x: %s\n"), Win32Exception::code, desc);
+      _ftprintf (fp, _T("at %08x"), Win32Exception::r.ExceptionAddress);
       if (*module)
-        fprintf (fp, " (%s)", module);
-      fprintf (fp, "\n\n");
+        _ftprintf (fp, _T(" (%s)"), module);
+      _ftprintf (fp, _T("\n\n"));
 
 #ifdef _M_IX86
       x86_print_registers (fp, Win32Exception::c);
@@ -410,38 +414,38 @@ cleanup_exception ()
 #else
 # error "yet"
 #endif
-      fprintf (fp, "Initial stack: %08x  GC: %d\n\n",
-               app.initial_stack, app.in_gc);
+      _ftprintf (fp, _T("Initial stack: %08x  GC: %d\n\n"),
+                 app.initial_stack, app.in_gc);
 
       print_module_allocation (fp);
       lisp_stack_trace (fp);
 #ifdef DEBUG_GC
-      putc ('\n', fp);
+      _puttc (_T('\n'), fp);
       output_funcall_mark (fp);
 #endif
       fclose (fp);
     }
 
-  char msg[1024], *p = msg;
-  p += sprintf (p, "致命的な例外(%s)が発生しました。\nat %08x",
-                desc, Win32Exception::r.ExceptionAddress);
+  TCHAR msg[1024], *p = msg;
+  p += _stprintf (p, _T("致命的な例外(%s)が発生しました。\nat %08x"),
+                  desc, Win32Exception::r.ExceptionAddress);
   if (*module)
-    p += sprintf (p, " (%s)", module);
-  *p++ = '\n';
-  *p++ = '\n';
+    p += _stprintf (p, _T(" (%s)"), module);
+  *p++ = _T('\n');
+  *p++ = _T('\n');
   if (fp)
-    p += sprintf (p,
-                  "気が向いたら以下のファイルを添えて作者に報告してください。\n"
-                  "\n%s\n\n"
-                  "その際、どのような操作をしたか、また、同じ操作をして再現す\n"
-                  "るかどうかなども合わせて報告してください。なお、IMEの操作\n"
-                  "中に発生したもので再現性がある場合は、他のアプリケーション\n"
-                  "(メモ帳など)でも再現するかどうかを確認してみてください。"
-                  "\n\n",
-                  path);
-  strcpy (p,
-          "運がよければ、書きかけのファイルが救えるかもしれません。\n"
-          "試しに自動セーブしてみますか?");
+    p += _stprintf (p,
+                    _T("気が向いたら以下のファイルを添えて作者に報告してください。\n")
+                    _T("\n%s\n\n")
+                    _T("その際、どのような操作をしたか、また、同じ操作をして再現す\n")
+                    _T("るかどうかなども合わせて報告してください。なお、IMEの操作\n")
+                    _T("中に発生したもので再現性がある場合は、他のアプリケーション\n")
+                    _T("(メモ帳など)でも再現するかどうかを確認してみてください。")
+                    _T("\n\n"),
+                    path);
+  _tcscpy (p,
+           _T("運がよければ、書きかけのファイルが救えるかもしれません。\n")
+           _T("試しに自動セーブしてみますか?"));
 
   if (MsgBox (get_active_window (), msg, TitleBarString,
               MB_ICONHAND | MB_YESNO, 1) != IDYES)

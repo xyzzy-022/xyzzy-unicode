@@ -104,27 +104,27 @@ XCOLORREF Window::w_textprop_xbackcolor[GLYPH_TEXTPROP_NCOLORS];
 
 const wcolor_index_name wcolor_index_names[] =
 {
-  {cfgTextColor, RGB (0, 0, 0), "文字色"},
-  {cfgBackColor, RGB (0xff, 0xff, 0xff), "背景色"},
-  {cfgCtlColor, RGB (0x80, 0x80, 0), "制御文字"},
-  {cfgSelectionTextColor, RGB (0xff, 0xff, 0xff), "選択文字色"},
-  {cfgSelectionBackColor, RGB (0, 0, 0), "選択背景色"},
-  {cfgKwdColor1, RGB (0, 0, 0xff), "キーワード1"},
-  {cfgKwdColor2, RGB (0, 0x40, 0), "キーワード2"},
-  {cfgKwdColor3, RGB (0x80, 0, 0x80), "キーワード3"},
-  {cfgStringColor, RGB (0, 0x40, 0), "文字列"},
-  {cfgCommentColor, RGB (0, 0x80, 0), "コメント"},
-  {cfgTagColor, RGB (0x40, 0x40, 0), "タグ"},
-  {cfgCursorColor, RGB (0x80, 0, 0x80), "行カーソル"},
-  {cfgCaretColor, RGB (0, 0, 0), "キャレット"},
-  {cfgImeCaretColor, RGB (0x80, 0, 0), "IMEキャレット"},
-  {cfgLinenum, RGB (0, 0, 0), "行番号"},
-  {cfgReverse, RGB (0, 0, 0), "ニセ反転色"},
-  {cfgUnselectedModeLineFg, RGB (0, 0, 0), "モード行文字色"},
-  {cfgUnselectedModeLineBg, RGB (0, 0, 0), "モード行背景色"},
+  {cfgTextColor, RGB (0, 0, 0), _T("文字色")},
+  {cfgBackColor, RGB (0xff, 0xff, 0xff), _T("背景色")},
+  {cfgCtlColor, RGB (0x80, 0x80, 0), _T("制御文字")},
+  {cfgSelectionTextColor, RGB (0xff, 0xff, 0xff), _T("選択文字色")},
+  {cfgSelectionBackColor, RGB (0, 0, 0), _T("選択背景色")},
+  {cfgKwdColor1, RGB (0, 0, 0xff), _T("キーワード1")},
+  {cfgKwdColor2, RGB (0, 0x40, 0), _T("キーワード2")},
+  {cfgKwdColor3, RGB (0x80, 0, 0x80), _T("キーワード3")},
+  {cfgStringColor, RGB (0, 0x40, 0), _T("文字列")},
+  {cfgCommentColor, RGB (0, 0x80, 0), _T("コメント")},
+  {cfgTagColor, RGB (0x40, 0x40, 0), _T("タグ")},
+  {cfgCursorColor, RGB (0x80, 0, 0x80), _T("行カーソル")},
+  {cfgCaretColor, RGB (0, 0, 0), _T("キャレット")},
+  {cfgImeCaretColor, RGB (0x80, 0, 0), _T("IMEキャレット")},
+  {cfgLinenum, RGB (0, 0, 0), _T("行番号")},
+  {cfgReverse, RGB (0, 0, 0), _T("ニセ反転色")},
+  {cfgUnselectedModeLineFg, RGB (0, 0, 0), _T("モード行文字色")},
+  {cfgUnselectedModeLineBg, RGB (0, 0, 0), _T("モード行背景色")},
 
-  {0, RGB (0, 0, 0), "選択モード行文字色"},
-  {0, RGB (0, 0, 0), "選択モード行背景色"},
+  {0, RGB (0, 0, 0), _T("選択モード行文字色")},
+  {0, RGB (0, 0, 0), _T("選択モード行背景色")},
 };
 
 ModelineParam::ModelineParam ()
@@ -159,7 +159,7 @@ ModelineParam::init (HFONT hf)
   for (int i = 0; i < 22; i++)
     {
       SIZE size;
-      GetTextExtentPoint32 (hdc, "0000000000:0000000000", i, &size);
+      GetTextExtentPoint32 (hdc, _T("0000000000:0000000000"), i, &size);
       m_exts[i] = size.cx;
     }
   SelectObject (hdc, of);
@@ -181,7 +181,7 @@ StatusWindow::restore ()
 }
 
 int
-StatusWindow::text (const char *s)
+StatusWindow::text (const TCHAR *s)
 {
   SendMessage (sw_hwnd, SB_SETTEXT, 0, LPARAM (s));
   UpdateWindow (sw_hwnd);
@@ -199,22 +199,22 @@ StatusWindow::puts (const Char *b, int size)
 int
 StatusWindow::putc (Char c)
 {
-  if (c == '\n')
+  if (c == _T('\n'))
     newline ();
   else
     {
       if (sw_b == sw_buf + TEXT_MAX)
         return 0;
-      if (c == '\t')
-        for (ucs2_t *const be = min (sw_b + 4, sw_buf + TEXT_MAX);
+      if (c == _T('\t'))
+        for (wchar_t *const be = min (sw_b + 4, sw_buf + TEXT_MAX);
              sw_b < be; sw_b++)
-          *sw_b = ' ';
-      else if (c < ' ' || c == CC_DEL)
+          *sw_b = L' ';
+      else if (c < _T(' ') || c == CC_DEL)
         {
-          *sw_b++ = '^';
+          *sw_b++ = L'^';
           if (sw_b == sw_buf + TEXT_MAX)
             return 0;
-          *sw_b++ = c == CC_DEL ? '?' : c + '@';
+          *sw_b++ = c == CC_DEL ? L'?' : c + L'@';
         }
       else
         *sw_b++ = i2w (c);
@@ -245,15 +245,17 @@ StatusWindow::flush ()
 }
 
 void
-StatusWindow::puts (const char *s, int fl)
+StatusWindow::puts (const TCHAR *s, int fl)
 {
-  for (const u_char *p = (const u_char *)s; *p;)
+  for (const _TUCHAR *p = (const _TUCHAR *)s; *p;)
+#ifndef UNICODE
     if (SJISP (*p) && p[1])
       {
         putc ((*p << 8) | p[1]);
         p += 2;
       }
     else
+#endif
       putc (*p++);
 
   if (fl)
@@ -307,7 +309,7 @@ StatusWindow::paint (const DRAWITEMSTRUCT *dis)
 #if 1
   RECT r = dis->rcItem;
   r.right = x;
-  for (const ucs2_t *b = sw_last.buf, *const be = b + sw_last.l;
+  for (const wchar_t *b = sw_last.buf, *const be = b + sw_last.l;
        b < be; b++)
     {
       SIZE sz;
@@ -431,7 +433,7 @@ Window::init (int minibufp, int temporary)
   lwp = make_window ();
 
   if (!CreateWindowEx (sysdep.Win4p () ? WS_EX_CLIENTEDGE : 0,
-                       Application::ClientClassName, "",
+                       Application::ClientClassName, _T(""),
                        (WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE
                         | WS_VSCROLL | WS_HSCROLL),
                        0, 0, 0, 0, app.active_frame.hwnd, 0, app.hinst, this))
@@ -439,7 +441,7 @@ Window::init (int minibufp, int temporary)
 
   if (minibufp)
     w_hwnd_ml = 0;
-  else if (!CreateWindow (Application::ModelineClassName, "",
+  else if (!CreateWindow (Application::ModelineClassName, _T(""),
                           WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE,
                           0, 0, 0, 0,
                           app.active_frame.hwnd, 0, app.hinst, this))
@@ -685,10 +687,10 @@ Window::init_colors (const XCOLORREF *colors, const XCOLORREF *mlcolors,
   write_conf (cfgColors, cfgModeLineBg, modeline_xcolors[MLCI_BACKGROUND].rgb, 1);
   for (i = 1; i < numberof (w_textprop_forecolor); i++)
     {
-      char b[32];
-      sprintf (b, "%s%d", cfgFg, i);
+      TCHAR b[32];
+      _stprintf (b, _T("%s%d"), cfgFg, i);
       write_conf (cfgColors, b, w_textprop_xforecolor[i].rgb, 1);
-      sprintf (b, "%s%d", cfgBg, i);
+      _stprintf (b, _T("%s%d"), cfgBg, i);
       write_conf (cfgColors, b, w_textprop_xbackcolor[i].rgb, 1);
     }
   flush_conf ();
@@ -775,11 +777,11 @@ Window::create_default_windows ()
     mlcc[1] = c;
   for (i = 1; i < GLYPH_TEXTPROP_NCOLORS; i++)
     {
-      char b[32];
-      sprintf (b, "%s%d", cfgFg, i);
+      TCHAR b[32];
+      _stprintf (b, _T("%s%d"), cfgFg, i);
       if (read_conf (cfgColors, b, c))
         fg[i] = c;
-      sprintf (b, "%s%d", cfgBg, i);
+      _stprintf (b, _T("%s%d"), cfgBg, i);
       if (read_conf (cfgColors, b, c))
         bg[i] = c;
     }
@@ -2686,8 +2688,8 @@ Flist_xyzzy_windows ()
       HWND hwnd = xh.next (i);
       if (!hwnd || i <= o)
         break;
-      char buf[256];
-      if (GetWindowText (hwnd, buf, sizeof buf))
+      TCHAR buf[256];
+      if (GetWindowText (hwnd, buf, _countof (buf)))
         p = xcons (xcons (make_fixnum (i), make_string (buf)), p);
     }
   return Fnreverse (p);
@@ -3295,8 +3297,8 @@ Window::paint_ruler (HDC hdc, const RECT &r, int x, int y, int column) const
 {
   if (!(column % 10))
     {
-      char buf[32];
-      int l = sprintf (buf, "%d", column);
+      TCHAR buf[32];
+      int l = _stprintf (buf, _T("%d"), column);
       ExtTextOut (hdc, x - l * sysdep.ruler_ext.cx / 2, r.top,
                   ETO_CLIPPED, &r, buf, l, 0);
     }

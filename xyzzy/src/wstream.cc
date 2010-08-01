@@ -2,13 +2,14 @@
 #include "wstream.h"
 
 void
-wStream::add (const char *string)
+wStream::add (const TCHAR *string)
 {
   StrBuf::add (string);
 
-  const u_char *s = (const u_char *)string;
+  const _TUCHAR *s = (const _TUCHAR *)string;
   while (*s)
     {
+#ifndef UNICODE
       if (SJISP (*s))
         {
           if (!s[1])
@@ -20,6 +21,7 @@ wStream::add (const char *string)
           s += 2;
         }
       else
+#endif
         update_column (*s++);
     }
 }

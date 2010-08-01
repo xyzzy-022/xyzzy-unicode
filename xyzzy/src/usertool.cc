@@ -242,7 +242,7 @@ void
 user_tool_bar::create (lisp bitmap, lisp items)
 {
   check_string (bitmap);
-  char bm_path[MAX_PATH + 1];
+  TCHAR bm_path[MAX_PATH + 1];
   pathname2cstr (bitmap, bm_path);
 
   u_nitems = 0;

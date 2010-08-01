@@ -22,7 +22,7 @@ Ctl3d::enable (HINSTANCE h)
     return;
   if (!state.hlib)
     {
-      state.hlib = WINFS::LoadLibrary ("ctl3d32.dll");
+      state.hlib = WINFS::LoadLibrary (_T("ctl3d32.dll"));
       if (!state.hlib)
         return;
       state.Register = (BOOL (WINAPI *)(HINSTANCE))

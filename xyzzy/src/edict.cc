@@ -1,6 +1,7 @@
 #include "ed.h"
 #include "except.h"
 #include "mman.h"
+#include "oleconv.h"
 
 #define MAGIC(a,b,c,d) (((d)<<24)+((c)<<16)+((b)<<8)+(a))
 
@@ -48,16 +49,17 @@ lookup_dictionary (const dic_head *dich, const idx_head *idxh,
   for (const idx_index *index = (const idx_index *)_P (idxh, idxh->ih_offset[h]);
        index->i_data; index++)
     {
+      USES_CONVERSION;
       const dic_string *s = (const dic_string *)_P (dich, index->i_data);
       if (s->l == xstring_length (lword)
-          && strequal (s->data, xstring_contents (lword), xstring_length (lword)))
+          && strequal (A2T (s->data), xstring_contents (lword), xstring_length (lword)))
         {
           lisp result = Qnil;
           for (const long *offset = (const long *)_P (idxh, index->i_offset);
                *offset; offset++)
             {
               s = (const dic_string *)_P (dich, *offset);
-              result = xcons (make_string (s->data, s->l), result);
+              result = xcons (make_string (A2T (s->data), s->l), result);
             }
           return result;
         }
@@ -75,12 +77,13 @@ lookup_dictionary_nomem (const dic_head *dich, const idx_head *idxh,
   for (const idx_index *index = (const idx_index *)_P (idxh, idxh->ih_offset[h]);
        index->i_data; index++)
     {
+      USES_CONVERSION;
       const dic_string *s = (const dic_string *)_P (dich, index->i_data);
       if (s->l == xstring_length (lword)
-          && strequal (s->data, xstring_contents (lword), xstring_length (lword)))
+          && strequal (A2T (s->data), xstring_contents (lword), xstring_length (lword)))
         {
           const dic_string *x = (const dic_string *)_P (dich, index->i_offset);
-          result = xcons (make_string (x->data, x->l), result);
+          result = xcons (make_string (A2T (x->data), x->l), result);
         }
     }
   return result;
@@ -97,10 +100,10 @@ Flookup_dictionary (lisp ldir, lisp ldic, lisp lidx, lisp lword)
   if (xstring_length (lidx) >= PATH_MAX)
     FEprogram_error (Epath_name_too_long, lidx);
 
-  char path[PATH_MAX * 2 + 1];
-  char *pe = pathname2cstr (ldir, path);
-  if (pe != path && pe[-1] != '/')
-    *pe++ = '/';
+  TCHAR path[PATH_MAX * 2 + 1];
+  TCHAR *pe = pathname2cstr (ldir, path);
+  if (pe != path && pe[-1] != _T('/'))
+    *pe++ = _T('/');
 
   w2s (pe, ldic);
   mapf dic;

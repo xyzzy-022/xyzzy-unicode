@@ -3,23 +3,23 @@
 #include "conf.h"
 #include "fnkey.h"
 
-const char Registry::base[] = "Software\\Free Software\\Xyzzy\\";
-const char Registry::Settings[] = "Settings";
+const TCHAR Registry::base[] = _T("Software\\Free Software\\Xyzzy\\");
+const TCHAR Registry::Settings[] = _T("Settings");
 
 #define ALLOC_SUBKEY(VAR, SUBKEY) \
-  char *(VAR) = (char *)alloca (sizeof base + strlen (SUBKEY)); \
-  memcpy ((VAR), base, sizeof base - 1), \
-  strcpy ((VAR) + sizeof base - 1, (SUBKEY))
+  TCHAR *(VAR) = (TCHAR *)alloca ((_countof (base) + _tcslen (SUBKEY)) * sizeof TCHAR); \
+  _tmemcpy ((VAR), base, _countof (base) - 1), \
+  _tcscpy ((VAR) + _countof (base) - 1, (SUBKEY))
 
 void
-ReadRegistry::open_local (const char *subkey)
+ReadRegistry::open_local (const TCHAR *subkey)
 {
   ALLOC_SUBKEY (b, subkey);
   if (RegOpenKeyEx (HKEY_CURRENT_USER, b, 0, KEY_READ, &hkey) != ERROR_SUCCESS)
     hkey = 0;
 }
 
-ReadRegistry::ReadRegistry (HKEY h, const char *subkey)
+ReadRegistry::ReadRegistry (HKEY h, const TCHAR *subkey)
 {
   if (!h)
     open_local (subkey);
@@ -27,7 +27,7 @@ ReadRegistry::ReadRegistry (HKEY h, const char *subkey)
     hkey = 0;
 }
 
-WriteRegistry::WriteRegistry (const char *subkey)
+WriteRegistry::WriteRegistry (const TCHAR *subkey)
 {
   ALLOC_SUBKEY (b, subkey);
   DWORD x;
@@ -41,27 +41,27 @@ WriteRegistry::WriteRegistry (const char *subkey)
 }
 
 int
-ReadRegistry::get (const char *key, void *buf, DWORD size, DWORD req) const
+ReadRegistry::get (const TCHAR *key, void *buf, DWORD size, DWORD req) const
 {
   assert (!fail ());
   DWORD type;
-  return (RegQueryValueEx (hkey, (char *)key, 0, &type,
+  return (RegQueryValueEx (hkey, key, 0, &type,
                            (BYTE *)buf, &size) == ERROR_SUCCESS
           && type == req) ? size : -1;
 }
 
 int
-ReadRegistry::query (const char *key, DWORD *type) const
+ReadRegistry::query (const TCHAR *key, DWORD *type) const
 {
   assert (!fail ());
   DWORD size = 0;
-  if (RegQueryValueEx (hkey, (char *)key, 0, type, 0, &size) == ERROR_SUCCESS)
+  if (RegQueryValueEx (hkey, key, 0, type, 0, &size) == ERROR_SUCCESS)
     return size;
   return -1;
 }
 
 int
-WriteRegistry::set (const char *key, DWORD type, const void *buf, int size) const
+WriteRegistry::set (const TCHAR *key, DWORD type, const void *buf, int size) const
 {
   assert (!fail ());
   DWORD e = RegSetValueEx (hkey, key, 0, type, (BYTE *)buf, size);
@@ -72,7 +72,7 @@ WriteRegistry::set (const char *key, DWORD type, const void *buf, int size) cons
 }
 
 int
-WriteRegistry::remove (const char *key) const
+WriteRegistry::remove (const TCHAR *key) const
 {
   assert (!fail ());
   DWORD e = RegDeleteValue (hkey, key);
@@ -86,16 +86,16 @@ lisp
 Fwrite_registry (lisp lsection, lisp lkey, lisp val)
 {
   lsection = Fstring (lsection);
-  char *section = (char *)alloca (w2sl (lsection) + 1);
+  TCHAR *section = (TCHAR *)alloca ((w2sl (lsection) + 1) * sizeof TCHAR);
   w2s (section, lsection);
 
-  char *key;
+  TCHAR *key;
   if (lkey == Qnil)
     key = 0;
   else
     {
       lkey = Fstring (lkey);
-      key = (char *)alloca (w2sl (lkey) + 1);
+      key = (TCHAR *)alloca ((w2sl (lkey) + 1) * sizeof TCHAR);
       w2s (key, lkey);
     }
 
@@ -116,7 +116,7 @@ Fwrite_registry (lisp lsection, lisp lkey, lisp val)
   if (stringp (val))
     {
       int l = w2sl (val);
-      char *b = (char *)alloca (l + 1);
+      TCHAR *b = (TCHAR *)alloca ((l + 1) * sizeof TCHAR);
       w2s (b, val);
       if (!r.set (key, b, l + 1))
         FEsimple_win32_error (GetLastError (), lkey);
@@ -132,16 +132,16 @@ lisp
 Fwrite_registry_literally (lisp lsection, lisp lkey, lisp val)
 {
   lsection = Fstring (lsection);
-  char *section = (char *)alloca (w2sl (lsection) + 1);
+  TCHAR *section = (TCHAR *)alloca ((w2sl (lsection) + 1) * sizeof TCHAR);
   w2s (section, lsection);
 
-  char *key;
+  TCHAR *key;
   if (lkey == Qnil)
     key = 0;
   else
     {
       lkey = Fstring (lkey);
-      key = (char *)alloca (w2sl (lkey) + 1);
+      key = (TCHAR *)alloca ((w2sl (lkey) + 1) * sizeof TCHAR);
       w2s (key, lkey);
     }
 
@@ -186,16 +186,16 @@ lisp
 Fread_registry (lisp lsection, lisp lkey, lisp lroot)
 {
   lsection = Fstring (lsection);
-  char *section = (char *)alloca (w2sl (lsection) + 1);
+  TCHAR *section = (TCHAR *)alloca ((w2sl (lsection) + 1) * sizeof TCHAR);
   w2s (section, lsection);
 
-  char *key;
+  TCHAR *key;
   if (lkey == Qnil)
     key = 0;
   else
     {
       lkey = Fstring (lkey);
-      key = (char *)alloca (w2sl (lkey) + 1);
+      key = (TCHAR *)alloca ((w2sl (lkey) + 1) * sizeof TCHAR);
       w2s (key, lkey);
     }
 
@@ -220,7 +220,7 @@ Fread_registry (lisp lsection, lisp lkey, lisp lroot)
 
     case REG_SZ:
       {
-        char *b = (char *)alloca (l + 1);
+        TCHAR *b = (TCHAR *)alloca ((l + 1) * sizeof TCHAR);
         if (!r.get (key, b, l, type))
           FEsimple_win32_error (GetLastError (), lkey);
         return make_string (b);
@@ -228,13 +228,13 @@ Fread_registry (lisp lsection, lisp lkey, lisp lroot)
 
     case REG_EXPAND_SZ:
       {
-        char *b = (char *)alloca (l + 1);
+        TCHAR *b = (TCHAR *)alloca ((l + 1) * sizeof TCHAR);
         if (!r.get (key, b, l, type))
           FEsimple_win32_error (GetLastError (), lkey);
         l = ExpandEnvironmentStrings (b, 0, 0);
         if (!l)
           FEsimple_win32_error (GetLastError (), lkey);
-        char *b2 = (char *)alloca (l + 1);
+        TCHAR *b2 = (TCHAR *)alloca ((l + 1) * sizeof TCHAR);
         if (!ExpandEnvironmentStrings (b, b2, l + 1))
           FEsimple_win32_error (GetLastError (), lkey);
         return make_string (b2);
@@ -242,14 +242,14 @@ Fread_registry (lisp lsection, lisp lkey, lisp lroot)
 
     case REG_MULTI_SZ:
       {
-        char *b = (char *)alloca (l + 1);
+        TCHAR *b = (TCHAR *)alloca ((l + 1) * sizeof TCHAR);
         if (!r.get (key, b, l, type))
           FEsimple_win32_error (GetLastError (), lkey);
         lisp p = Qnil;
         do
           {
             p = xcons (make_string (b), p);
-            b += strlen (b) + 1;
+            b += _tcslen (b) + 1;
           }
         while (*b);
         return Fnreverse (p);
@@ -274,7 +274,7 @@ lisp
 Flist_registry_key (lisp lsection, lisp lroot)
 {
   lsection = Fstring (lsection);
-  char *section = (char *)alloca (w2sl (lsection) + 1);
+  TCHAR *section = (TCHAR *)alloca ((w2sl (lsection) + 1) * sizeof TCHAR);
   w2s (section, lsection);
 
   EnumRegistry r (check_root (lroot), section);
@@ -284,8 +284,8 @@ Flist_registry_key (lisp lsection, lisp lroot)
   lisp p = Qnil;
   for (int i = 0;; i++)
     {
-      char name[1024];
-      DWORD namel = sizeof name;
+      TCHAR name[1024];
+      DWORD namel = _countof (name);
       FILETIME ft;
       int e = RegEnumKeyEx (r, i, name, &namel, 0, 0, 0, &ft);
       if (e == ERROR_SUCCESS)
@@ -627,18 +627,18 @@ Fos_csd_version ()
 void
 init_environ ()
 {
-  char b[256];
-  DWORD n = sizeof b;
+  TCHAR b[256];
+  DWORD n = _countof (b);
   if (GetUserName (b, &n))
     xsymbol_value (Vuser_name) = make_string (b);
   else
-    xsymbol_value (Vuser_name) = make_string ("unknown");
+    xsymbol_value (Vuser_name) = make_string (_T("unknown"));
 
   n = sizeof b;
   if (GetComputerName (b, &n))
     xsymbol_value (Vmachine_name) = make_string (b);
   else
-    xsymbol_value (Vmachine_name) = make_string ("unknown");
+    xsymbol_value (Vmachine_name) = make_string (_T("unknown"));
 
   xsymbol_value (Vos_major_version) = make_fixnum (sysdep.os_ver.dwMajorVersion);
   xsymbol_value (Vos_minor_version) = make_fixnum (sysdep.os_ver.dwMinorVersion);
@@ -738,8 +738,8 @@ environ::load_geometry (int cmdshow, POINT *point, SIZE *size)
   scr.cx = GetSystemMetrics (SM_CXSCREEN);
   scr.cy = GetSystemMetrics (SM_CYSCREEN);
 
-  char name[64];
-  sprintf (name, "%dx%d", scr.cx, scr.cy);
+  TCHAR name[64];
+  _stprintf (name, _T("%dx%d"), scr.cx, scr.cy);
   WINDOWPLACEMENT w;
   if (read_conf (cfgMisc, name, w)
       && w.rcNormalPosition.left < w.rcNormalPosition.right
@@ -788,9 +788,9 @@ environ::save_geometry ()
       w.length = sizeof w;
       if (GetWindowPlacement (app.toplev, &w))
         {
-          char name[256];
-          sprintf (name, "%dx%d",
-                   GetSystemMetrics (SM_CXSCREEN), GetSystemMetrics (SM_CYSCREEN));
+          TCHAR name[256];
+          _stprintf (name, _T("%dx%d"),
+                     GetSystemMetrics (SM_CXSCREEN), GetSystemMetrics (SM_CYSCREEN));
           if (!save_window_size || !save_window_position)
             {
               WINDOWPLACEMENT ow;
@@ -844,9 +844,13 @@ lisp
 Fsi_getenv (lisp var)
 {
   check_string (var);
+#ifdef UNICODE
+  TCHAR *v = (TCHAR *)alloca ((xstring_length (var) + 1) * sizeof TCHAR);
+#else
   char *v = (char *)alloca (xstring_length (var) * 2 + 1);
+#endif
   w2s (v, var);
-  char *e = getenv (v);
+  TCHAR *e = _tgetenv (v);
   return e ? make_string (e) : Qnil;
 }
 

@@ -6,6 +6,7 @@
 #include "lex.h"
 #include "symtable.h"
 #include "mainframe.h"
+#include "oleconv.h"
 
 lisp Qnil;
 lisp Qunbound;
@@ -1014,7 +1015,7 @@ init_default_nonlocal_data ()
   default_nonlocal_data.id = Qnil;
 }
 
-#define SIMPLE_STRING(NAME) make_string_simple (NAME, sizeof NAME - 1)
+#define SIMPLE_STRING(NAME) make_string_simple (NAME, _countof (NAME) - 1)
 
 #define LISP_INTSIZE 101
 #define LISP_EXTSIZE 331
@@ -1030,8 +1031,8 @@ init_default_nonlocal_data ()
 void
 init_syms ()
 {
-  Qnil = make_symbol (SIMPLE_STRING ("nil"), SFconstant);
-  Qunbound = make_symbol (SIMPLE_STRING ("unbound"));
+  Qnil = make_symbol (SIMPLE_STRING (_T("nil")), SFconstant);
+  Qunbound = make_symbol (SIMPLE_STRING (_T("unbound")));
 
   xsymbol_function (Qnil) = Qunbound;
   xsymbol_value (Qnil) = Qnil;
@@ -1047,19 +1048,19 @@ init_syms ()
     else
       li->str = Qnil;
 
-  lisp lsp = make_package (SIMPLE_STRING ("lisp"), Qnil,
+  lisp lsp = make_package (SIMPLE_STRING (_T("lisp")), Qnil,
                            LISP_INTSIZE, LISP_EXTSIZE);
-  lisp sys = make_package (SIMPLE_STRING ("system"),
-                           make_list (SIMPLE_STRING ("si"),
-                                      SIMPLE_STRING ("sys"),
+  lisp sys = make_package (SIMPLE_STRING (_T("system")),
+                           make_list (SIMPLE_STRING (_T("si")),
+                                      SIMPLE_STRING (_T("sys")),
                                       0),
                            SYS_INTSIZE, SYS_EXTSIZE);
-  lisp kwd = make_package (SIMPLE_STRING ("keyword"), Qnil,
+  lisp kwd = make_package (SIMPLE_STRING (_T("keyword")), Qnil,
                            KWD_INTSIZE, KWD_EXTSIZE);
-  lisp usr = make_package (SIMPLE_STRING ("user"), Qnil,
+  lisp usr = make_package (SIMPLE_STRING (_T("user")), Qnil,
                            USR_INTSIZE, USR_EXTSIZE);
-  lisp ed = make_package (SIMPLE_STRING ("editor"),
-                          xcons (SIMPLE_STRING ("ed"), Qnil),
+  lisp ed = make_package (SIMPLE_STRING (_T("editor")),
+                          xcons (SIMPLE_STRING (_T("ed")), Qnil),
                           ED_INTSIZE, ED_EXTSIZE);
 
   xsymbol_package (Qnil) = lsp;
@@ -1079,7 +1080,7 @@ init_syms ()
   init_syms (kwd_vars, 0, kwd, 1);
   init_syms (ed_vars, ed_fns, ed, 0);
 
-  lisp name = make_string_simple ("", 0);
+  lisp name = make_string_simple (_T(""), 0);
   for (lvars *v = unint_vars; v->name; v++)
     {
       lsymbol *symbol = make_symbol (name, v->flags);
@@ -1935,7 +1936,7 @@ rdump_object (FILE *fp, lstream *d, int n,
             d->input = (void *)readl (fp);
             d->output = (void *)readl (fp);
             d->pathname = readl (fp);
-            d->alt_pathname = (char *)Qnil;
+            d->alt_pathname = (TCHAR *)Qnil;
             d->start = 0;
             break;
 
@@ -2473,7 +2474,11 @@ dump_object (FILE *fp, const ldll_module *d, int n,
 static void
 load_dyn_library (ldll_module *p)
 {
+#ifdef UNICODE
+  TCHAR *s = (TCHAR *)alloca ((xstring_length(p->name) + 1) * sizeof TCHAR);
+#else
   char *s = (char *)alloca (xstring_length (p->name) * 2 + 1);
+#endif
   w2s (s, p->name);
   p->loaded = 0;
   HMODULE h = GetModuleHandle (s);
@@ -2517,11 +2522,17 @@ dump_object (FILE *fp, const ldll_function *d, int n,
 static FARPROC
 load_dyn_function (const ldll_function *d)
 {
+  USES_CONVERSION;
+
   if (!xdll_module_handle (d->module))
     return 0;
+#ifdef UNICODE
+  TCHAR *s = (TCHAR *)alloca ((xstring_length (d->name) + 1) * sizeof TCHAR);
+#else
   char *s = (char *)alloca (xstring_length (d->name) * 2 + 1);
+#endif
   w2s (s, d->name);
-  return GetProcAddress (xdll_module_handle (d->module), s);
+  return GetProcAddress (xdll_module_handle (d->module), T2A (s));
 }
 
 static void
@@ -2665,8 +2676,8 @@ extern int dump_version;
 lisp
 Fdump_xyzzy (lisp filename)
 {
-  char path_buf[PATH_MAX + 1];
-  const char *path;
+  TCHAR path_buf[PATH_MAX + 1];
+  const TCHAR *path;
   if (!filename || filename == Qnil)
     {
       filename = xsymbol_value (Qdump_image_path);
@@ -2707,7 +2718,7 @@ Fdump_xyzzy (lisp filename)
     }
   qsort (addr_orderp, nreps, sizeof *addr_orderp, compare_addr);
 
-  FILE *fp = fopen (path, "wb");
+  FILE *fp = _tfopen (path, _T("wb"));
   if (!fp)
     FEsimple_crtl_error (errno, filename);
 
@@ -2786,7 +2797,7 @@ static int dump_flag;
 int
 rdump_xyzzy ()
 {
-  FILE *fp = _fsopen (app.dump_image, "rb", _SH_DENYWR);
+  FILE *fp = _tfsopen (app.dump_image, _T("rb"), _SH_DENYWR);
   if (!fp)
     return 0;
 

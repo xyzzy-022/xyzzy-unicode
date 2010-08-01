@@ -86,22 +86,22 @@ lisp parse_integer (lisp, int, int &, int, int);
 int update_column (int, Char);
 int update_column (int, const Char *, int);
 int update_column (int, Char, int);
-size_t s2wl (const char *);
-Char *s2w (Char *, size_t, const char **);
-Char *s2w (Char *, const char *);
-Char *s2w (const char *, size_t);
+size_t s2wl (const TCHAR *);
+Char *s2w (Char *, size_t, const TCHAR **);
+Char *s2w (Char *, const TCHAR *);
+Char *s2w (const TCHAR *, size_t);
 Char *a2w (Char *, size_t, const char **);
 void a2w (Char *, const char *, size_t);
 Char *a2w (Char *, const char *);
 Char *a2w (const char *, size_t);
 size_t w2sl (const Char *, size_t);
-char *w2s (char *, const Char *, size_t);
-char *w2s (const Char *, size_t);
-char *w2s (char *, char *, const Char *, size_t);
-char *w2s_quote (char *, char *, const Char *, size_t, int, int);
+TCHAR *w2s (TCHAR *, const Char *, size_t);
+TCHAR *w2s (const Char *, size_t);
+TCHAR *w2s (TCHAR *, TCHAR *, const Char *, size_t);
+TCHAR *w2s_quote (TCHAR *, TCHAR *, const Char *, size_t, int, int);
 
-size_t s2wl (const char *string, const char *se, int zero_term);
-Char *s2w (Char *b, const char *string, const char *se, int zero_term);
+size_t s2wl (const TCHAR *string, const TCHAR *se, int zero_term);
+Char *s2w (Char *b, const TCHAR *string, const TCHAR *se, int zero_term);
 void w2s_chunk (char *, char *, const Char *, size_t);
 
 ucs2_t *i2w (const Char *, int, ucs2_t *);
@@ -109,9 +109,9 @@ int i2wl (const Char *, int);
 
 lisp coerce_to_string (lisp, int);
 
-lisp make_string (const char *);
-lisp make_string (const char *, size_t);
-lisp make_string_simple (const char *, size_t);
+lisp make_string (const TCHAR *);
+lisp make_string (const TCHAR *, size_t);
+lisp make_string_simple (const TCHAR *, size_t);
 lisp make_string (const Char *, size_t);
 lisp make_string (Char, size_t);
 lisp make_complex_string (Char, int, int, int);
@@ -158,26 +158,26 @@ w2sl (lisp l)
   return w2sl (xstring_contents (l), xstring_length (l));
 }
 
-inline char *
-w2s (char *b, lisp l)
+inline TCHAR *
+w2s (TCHAR *b, lisp l)
 {
   return w2s (b, xstring_contents (l), xstring_length (l));
 }
 
-inline char *
+inline TCHAR *
 w2s (lisp l)
 {
   return w2s (xstring_contents (l), xstring_length (l));
 }
 
-inline char *
-w2s (char *b, char *be, lisp l)
+inline TCHAR *
+w2s (TCHAR *b, TCHAR *be, lisp l)
 {
   return w2s (b, be, xstring_contents (l), xstring_length (l));
 }
 
-inline char *
-w2s_quote (char *b, char *be, lisp l, int qc, int qe)
+inline TCHAR *
+w2s_quote (TCHAR *b, TCHAR *be, lisp l, int qc, int qe)
 {
   return w2s_quote (b, be, xstring_contents (l), xstring_length (l), qc, qe);
 }

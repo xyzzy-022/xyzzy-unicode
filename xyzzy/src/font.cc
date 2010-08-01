@@ -14,38 +14,38 @@ const UINT FontSet::fs_lang_id[] =
   IDS_LANG_GEORGIAN,
 };
 
-const char *const FontSet::fs_regent[] =
+const TCHAR *const FontSet::fs_regent[] =
 {
-  "Ascii",
-  "Japanese",
-  "Latin",
-  "Cyrillic",
-  "Greek",
-  "GB2312",
-  "BIG5",
-  "KSC5601",
-  "Georgian",
+  _T("Ascii"),
+  _T("Japanese"),
+  _T("Latin"),
+  _T("Cyrillic"),
+  _T("Greek"),
+  _T("GB2312"),
+  _T("BIG5"),
+  _T("KSC5601"),
+  _T("Georgian"),
 };
 
 const FontSet::fontface FontSet::fs_default_face[] =
 {
-  {"FixedSys", "ÇlÇr ÉSÉVÉbÉN", SHIFTJIS_CHARSET},
-  {"FixedSys", "ÇlÇr ÉSÉVÉbÉN", SHIFTJIS_CHARSET},
-  {"Courier New"},
-  {"Courier New"},
-  {"Courier New"},
-  {"MS Hei", 0, GB2312_CHARSET},
-  {"MingLiu", 0, CHINESEBIG5_CHARSET},
-  {"GulimChe", 0, HANGEUL_CHARSET},
-  {"BPG Courier New U"},
+  {_T("FixedSys"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},
+  {_T("FixedSys"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},
+  {_T("Courier New")},
+  {_T("Courier New")},
+  {_T("Courier New")},
+  {_T("MS Hei"), 0, GB2312_CHARSET},
+  {_T("MingLiu"), 0, CHINESEBIG5_CHARSET},
+  {_T("GulimChe"), 0, HANGEUL_CHARSET},
+  {_T("BPG Courier New U")},
 };
 
 int
-FontObject::create (const char *face, int h, int charset)
+FontObject::create (const TCHAR *face, int h, int charset)
 {
   LOGFONT lf;
   bzero (&lf, sizeof lf);
-  strcpy (lf.lfFaceName, face);
+  _tcscpy (lf.lfFaceName, face);
   lf.lfHeight = h;
   lf.lfCharSet = charset;
   lf.lfPitchAndFamily = FIXED_PITCH;
@@ -74,8 +74,8 @@ FontObject::get_metrics (HDC hdc, SIZE &ex1, SIZE &ex2)
   fo_size.cx = tm.tmAveCharWidth;
   fo_size.cy = tm.tmAscent + tm.tmDescent;
   fo_ascent = tm.tmAscent;
-  GetTextExtentPoint32 (hdc, "A", 1, &ex1);
-  GetTextExtentPoint32 (hdc, "Ç†", 2, &ex2);
+  GetTextExtentPoint32 (hdc, _T("A"), 1, &ex1);
+  GetTextExtentPoint32 (hdc, _T("Ç†"), 2, &ex2);
   SelectObject (hdc, of);
 }
 
@@ -109,14 +109,14 @@ FontSet::paint_backsl_bitmap (HDC hdc)
 {
   HGDIOBJ of = SelectObject (hdc, fs_font[FONT_ASCII]);
 
-  TextOut (hdc, fs_cell.cx * backsl, 0, "/", 1);
+  TextOut (hdc, fs_cell.cx * backsl, 0, _T("/"), 1);
   StretchBlt (hdc, fs_cell.cx * backsl, 0, fs_cell.cx, fs_cell.cy,
               hdc, fs_cell.cx * (backsl + 1) - 1, 0, -fs_cell.cx, fs_cell.cy,
               SRCCOPY);
 
-  TextOut (hdc, fs_cell.cx * bold_backsl, 0, "/", 1);
+  TextOut (hdc, fs_cell.cx * bold_backsl, 0, _T("/"), 1);
   int omode = SetBkMode (hdc, TRANSPARENT);
-  TextOut (hdc, fs_cell.cx * bold_backsl + 1, 0, "/", 1);
+  TextOut (hdc, fs_cell.cx * bold_backsl + 1, 0, _T("/"), 1);
   SetBkMode (hdc, omode);
   StretchBlt (hdc, fs_cell.cx * bold_backsl, 0, fs_cell.cx, fs_cell.cy,
               hdc, fs_cell.cx * (bold_backsl + 1) - 1, 0, -fs_cell.cx, fs_cell.cy,
@@ -217,7 +217,7 @@ FontSet::paint_fold_bitmap (HDC hdc)
 
   const FontObject &f = fs_font[FONT_ASCII];
   HGDIOBJ of = SelectObject (hdc, f);
-  char c = '<';
+  TCHAR c = _T('<');
   ExtTextOut (hdc, m0 + f.offset ().x, f.offset ().y, 0, 0, &c, 1, 0);
   ExtTextOut (hdc, m1 + f.offset ().x, f.offset ().y, 0, 0, &c, 1, 0);
   SelectObject (hdc, of);
@@ -351,7 +351,7 @@ fix_charset_proc (ENUMLOGFONT *elf, NEWTEXTMETRIC *, int type, LPARAM lparam)
   FontSetParam &param = *(FontSetParam *)lparam;
   if (*elf->elfLogFont.lfFaceName != '@')
     for (int i = 0; i < FONT_MAX; i++)
-      if (!strcmp (elf->elfLogFont.lfFaceName, param.fs_logfont[i].lfFaceName))
+      if (!_tcscmp (elf->elfLogFont.lfFaceName, param.fs_logfont[i].lfFaceName))
         param.fs_logfont[i].lfCharSet = elf->elfLogFont.lfCharSet;
   return 1;
 }
@@ -377,7 +377,7 @@ FontSet::load_params (FontSetParam &param)
     {
       if (!*param.fs_logfont[i].lfFaceName)
         {
-          strcpy (param.fs_logfont[i].lfFaceName, default_face (i, 0));
+          _tcscpy (param.fs_logfont[i].lfFaceName, default_face (i, 0));
           if (!i)
             {
               LOGFONT lf;

@@ -7,10 +7,10 @@
 void *xmalloc (size_t);
 void *xrealloc (void *, size_t);
 void xfree (void *);
-char *xstrdup (const char *);
+TCHAR *xstrdup (const TCHAR *);
 void *xmemdup (const void *, size_t);
-char *stpcpy (char *, const char *);
-char *stpncpy (char *, const char *, int);
+TCHAR *stpcpy (TCHAR *, const TCHAR *);
+TCHAR *stpncpy (TCHAR *, const TCHAR *, int);
 long log2 (u_long);
 
 # define NF_BAD 0
@@ -25,53 +25,61 @@ long log2 (u_long);
 # define  NF_FLOAT_L (NF_FLOAT | 'l')
 
 int parse_number_format (const Char *, const Char *, int);
-int check_integer_format (const char *, int *);
+int check_integer_format (const TCHAR *, int *);
 int default_float_format ();
 
-int streq (const Char *, int, const char *);
-int strequal (const char *, const Char *);
-int strequal (const char *, const Char *, int);
+int streq (const Char *, int, const TCHAR *);
+int strequal (const TCHAR *, const Char *);
+int strequal (const TCHAR *, const Char *, int);
+#ifdef UNICODE
+static inline int
+strcaseeq (const TCHAR *w1, const TCHAR *w2)
+{
+  return !_tcsicmp (w1, w2);
+}
+#else
 int strcasecmp (const char *, const char *);
 static inline int
 strcaseeq (const char *s1, const char *s2)
 {
   return !strcasecmp (s1, s2);
 }
+#endif
 
-char *jindex (const char *, int);
-char *jrindex (const char *, int);
-char *find_last_slash (const char *);
-char *find_slash (const char *);
-void convert_backsl_with_sl (char *, int, int);
+TCHAR *jindex (const TCHAR *, int);
+TCHAR *jrindex (const TCHAR *, int);
+TCHAR *find_last_slash (const TCHAR *);
+TCHAR *find_slash (const TCHAR *);
+void convert_backsl_with_sl (TCHAR *, int, int);
 
 inline void
-map_backsl_to_sl (char *s)
+map_backsl_to_sl (TCHAR *s)
 {
-  convert_backsl_with_sl (s, '\\', '/');
+  convert_backsl_with_sl (s, _T('\\'), _T('/'));
 }
 
 inline void
-map_sl_to_backsl (char *s)
+map_sl_to_backsl (TCHAR *s)
 {
-  convert_backsl_with_sl (s, '/', '\\');
+  convert_backsl_with_sl (s, _T('/'), _T('\\'));
 }
 
-inline char *
-strappend (char *d, const char *s)
+inline TCHAR *
+strappend (TCHAR *d, const TCHAR *s)
 {
-  return stpcpy (d + strlen (d), s);
+  return stpcpy (d + _tcslen (d), s);
 }
 
 static inline int
 dir_separator_p (Char c)
 {
-  return c == '/' || c == '\\';
+  return c == _T('/') || c == _T('\\');
 }
 
 static inline int
 dir_separator_p (int c)
 {
-  return c == '/' || c == '\\';
+  return c == _T('/') || c == _T('\\');
 }
 
 void paint_button_off (HDC, const RECT &);

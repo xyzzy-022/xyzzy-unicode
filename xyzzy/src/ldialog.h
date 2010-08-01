@@ -112,7 +112,7 @@ protected:
   int send_ltext (int, int, WPARAM, lisp, dlg_txtwidth * = 0) const;
   void enable_windows (dlgctrl *, int);
   void invalidate_ctrls (dlgctrl *);
-  static lisp check_result_type (dlgctrl *, const char *);
+  static lisp check_result_type (dlgctrl *, const TCHAR *);
   static lisp warn (lisp);
   lisp make_lb_string (int, int, int, int);
   int get_result (dlgctrl *);
@@ -183,7 +183,7 @@ struct PropSheetFont
   static int load ();
   static void find_font (const DLGTEMPLATE *);
   static HGLOBAL change_font (const DLGTEMPLATE *, DWORD);
-  static HGLOBAL change_font (const char *);
+  static HGLOBAL change_font (const TCHAR *);
 };
 
 #endif

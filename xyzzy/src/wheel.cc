@@ -21,13 +21,13 @@ get_mouse_scroll_lines ()
     }
 
   HKEY hkey;
-  if (RegOpenKeyEx (HKEY_CURRENT_USER,  "Control Panel\\Desktop",
+  if (RegOpenKeyEx (HKEY_CURRENT_USER,  _T("Control Panel\\Desktop"),
                     0, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
     {
       char buf[64];
       DWORD type;
       DWORD size = sizeof buf;
-      if (RegQueryValueEx (hkey, "WheelScrollLines", 0, &type,
+      if (RegQueryValueEx (hkey, _T("WheelScrollLines"), 0, &type,
                            (BYTE *)buf, &size) == ERROR_SUCCESS
           && type == REG_SZ)
         nlines = strtoul (buf, 0, 10);
@@ -90,7 +90,7 @@ mouse_wheel::msg_handler (HWND hwnd, UINT msg,
 }
 
 static ATOM auto_scroll_atom;
-static const char auto_scroll_class_name[] = "autoScrollClass";
+static const TCHAR auto_scroll_class_name[] = _T("autoScrollClass");
 
 #define STATE_CENTER 0
 #define STATE_UP 1
@@ -200,7 +200,7 @@ begin_auto_scroll (HWND hwnd_parent, const POINT &point,
   if (!register_wndclass ())
     return 0;
 
-  HWND hwnd_scroll = CreateWindow (auto_scroll_class_name, "", WS_POPUP,
+  HWND hwnd_scroll = CreateWindow (auto_scroll_class_name, _T(""), WS_POPUP,
                                    0, 0, 0, 0, hwnd_parent,
                                    0, app.hinst, 0);
   if (!hwnd_scroll)

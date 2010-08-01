@@ -112,7 +112,7 @@ public:
   static int init_winsock (HINSTANCE);
   static void term_winsock ();
 
-  static const char *errmsg (int);
+  static const TCHAR *errmsg (int);
 
   void create (int, sock_type, int);
   void close (int = 0);

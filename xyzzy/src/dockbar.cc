@@ -2,9 +2,9 @@
 #include "dockbar.h"
 #include "mman.h"
 
-const char dock_bar::b_dock_bar_prop[] = "dock_bar::prop";
-char dock_bar::b_ttbuf[TTBUFSIZE];
-const char tab_bar::b_tab_bar_spin_prop[] = "tab_bar::spin::prop";
+const TCHAR dock_bar::b_dock_bar_prop[] = _T("dock_bar::prop");
+TCHAR dock_bar::b_ttbuf[TTBUFSIZE];
+const TCHAR tab_bar::b_tab_bar_spin_prop[] = _T("tab_bar::spin::prop");
 
 dock_bar::dock_bar (dock_frame &frame, lisp name, int dockable)
      : b_hwnd (0), b_wndproc (0), b_frame (frame), b_lname (name),
@@ -414,7 +414,7 @@ tool_bar::set_bitmap ()
 }
 
 int
-tool_bar::load_bitmap (const char *filename)
+tool_bar::load_bitmap (const TCHAR *filename)
 {
   int e;
   t_bm = b_frame.bm ().load (filename, e);
@@ -519,7 +519,7 @@ tab_bar::modify_spin ()
     return;
 
   HWND hwnd = CreateWindowEx (GetWindowLong (hwnd_spin, GWL_EXSTYLE),
-                              UPDOWN_CLASS, "", (style ^ UDS_HORZ) & ~UDS_WRAP,
+                              UPDOWN_CLASS, _T(""), (style ^ UDS_HORZ) & ~UDS_WRAP,
                               0, 0, 0, 0, b_hwnd, HMENU (IDC_TAB_SPIN),
                               app.hinst, 0);
   if (!hwnd)
@@ -591,7 +591,7 @@ tab_bar::calc_tab_height ()
     {
       TC_ITEM ti;
       ti.mask = TCIF_TEXT;
-      ti.pszText = "xyzzy";
+      ti.pszText = _T("xyzzy");
       insert_item (0, ti);
     }
 
@@ -607,7 +607,7 @@ tab_bar::calc_tab_height ()
   HDC hdc = GetDC (b_hwnd);
   HGDIOBJ of = SelectObject (hdc, sysdep.ui_font ());
   SIZE sz;
-  GetTextExtentPoint32 (hdc, "...", 3, &sz);
+  GetTextExtentPoint32 (hdc, _T("..."), 3, &sz);
   t_dots = sz.cx;
   SelectObject (hdc, of);
   ReleaseDC (b_hwnd, hdc);
@@ -646,14 +646,14 @@ tab_bar::calc_client_size (SIZE &sz, int vert) const
 }
 
 int
-tab_bar::abbrev_text (HDC hdc, char *s0, int l, int cx) const
+tab_bar::abbrev_text (HDC hdc, TCHAR *s0, int l, int cx) const
 {
   cx -= t_dots;
   if (cx <= 0)
     return 0;
 
   SIZE sz;
-  char *se = s0 + l;
+  TCHAR *se = s0 + l;
   do
     {
       se = CharPrev (s0, se);
@@ -662,12 +662,12 @@ tab_bar::abbrev_text (HDC hdc, char *s0, int l, int cx) const
       GetTextExtentPoint32 (hdc, s0, se - s0, &sz);
     }
   while (sz.cx > cx);
-  strcpy (se, "...");
+  _tcscpy (se, _T("..."));
   return se - s0 + 3;
 }
 
 void
-tab_bar::draw_item (const draw_item_struct &dis, char *s, int l,
+tab_bar::draw_item (const draw_item_struct &dis, TCHAR *s, int l,
                     COLORREF fg, COLORREF bg) const
 {
   SIZE sz;
@@ -1420,11 +1420,11 @@ tab_bar::move_tab (int x, int y)
                 else if (index == oindex + 1)
                   index++;
 
-                char b[1024];
+                TCHAR b[1024];
                 TC_ITEM ti;
                 ti.mask = TCIF_TEXT | TCIF_IMAGE | TCIF_PARAM;
                 ti.pszText = b;
-                ti.cchTextMax = sizeof b;
+                ti.cchTextMax = _countof (b);
                 set_no_redraw ();
                 if (get_item (oindex, ti) && insert_item (index, ti) >= 0)
                   {
@@ -2409,7 +2409,7 @@ dock_frame::color_changed () const
 }
 
 int
-tool_bm::load_mapped_bitmap (const char *filename, HBITMAP &hbm)
+tool_bm::load_mapped_bitmap (const TCHAR *filename, HBITMAP &hbm)
 {
   hbm = 0;
 
@@ -2483,7 +2483,7 @@ tool_bm::load_mapped_bitmap (const char *filename, HBITMAP &hbm)
 }
 
 const tool_bm::bm_node *
-tool_bm::load (const char *path, int &e)
+tool_bm::load (const TCHAR *path, int &e)
 {
   e = LMB_NO_ERRORS;
 
@@ -2495,7 +2495,7 @@ tool_bm::load (const char *path, int &e)
       }
 
   p = new bm_node;
-  p->b_path = strdup (path);
+  p->b_path = _tcsdup (path);
   if (p->b_path)
     {
       HBITMAP hbm;

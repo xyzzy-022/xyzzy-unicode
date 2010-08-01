@@ -1,7 +1,7 @@
 #ifndef _ed_h_
 # define _ed_h_
 
-#include <tchar.h>
+# include <tchar.h>
 # include "version.h"
 # include "sysdep.h"
 # include "xcolor.h"
@@ -304,11 +304,11 @@ protected:
   ucs2_t *sw_tail;
 public:
   void restore ();
-  int text (const char *);
+  int text (const TCHAR *);
   void puts (const Char *, int);
   int putc (Char);
   void newline ();
-  void puts (const char *, int);
+  void puts (const TCHAR *, int);
   void puts (int, int);
   void flush ();
   void clear (int = 0);
@@ -366,10 +366,10 @@ public:
   Application ();
   ~Application ();
 
-  static const char ToplevelClassName[];
-  static const char FrameClassName[];
-  static const char ClientClassName[];
-  static const char ModelineClassName[];
+  static const TCHAR ToplevelClassName[];
+  static const TCHAR FrameClassName[];
+  static const TCHAR ClientClassName[];
+  static const TCHAR ModelineClassName[];
 
   HINSTANCE hinst;
   HWND toplev;
@@ -418,8 +418,8 @@ public:
   UINT default_caret_blink_time;
   int last_blink_caret;
 
-  char dump_image[PATH_MAX + 8];
-  char *ini_file_path;
+  TCHAR dump_image[PATH_MAX + 8];
+  TCHAR *ini_file_path;
 
   lisp lquit_char;
   int quit_vkey;

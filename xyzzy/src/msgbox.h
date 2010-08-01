@@ -15,8 +15,8 @@ public:
     };
 protected:
   HINSTANCE hinst;
-  const char *msg;
-  const char *title;
+  const TCHAR *msg;
+  const TCHAR *title;
   HFONT hfont;
   HICON hicon;
   HWND hwnd;
@@ -25,7 +25,7 @@ protected:
   struct
     {
       UINT id;
-      const char *caption;
+      const TCHAR *caption;
     } btn[MAX_BUTTONS];
   int close_id;
   int default_btn;
@@ -36,28 +36,28 @@ protected:
   BOOL init_dialog ();
   void calc_text_rect (RECT &) const;
   void calc_button_size (RECT br[MAX_BUTTONS]) const;
-  HWND create_ctl (const char *, const char *, DWORD, UINT, const RECT &) const;
-  void create_btn (const char *, UINT, const RECT &) const;
-  void create_label (const char *, const RECT &, int) const;
+  HWND create_ctl (const TCHAR *, const TCHAR *, DWORD, UINT, const RECT &) const;
+  void create_btn (const TCHAR *, UINT, const RECT &) const;
+  void create_label (const TCHAR *, const RECT &, int) const;
   void create_icon (const RECT &) const;
   void create_buttons (const RECT br[MAX_BUTTONS]) const;
   static BOOL CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 public:
-  XMessageBox (HINSTANCE hinst_, const char *msg_, const char *title_,
+  XMessageBox (HINSTANCE hinst_, const TCHAR *msg_, const TCHAR *title_,
                int crlf, int no_wrap)
        : hinst (hinst_), msg (msg_), title (title_), nbuttons (0),
          close_id (-1), default_btn (0), hicon (0),
          f_crlf (crlf), f_no_wrap (no_wrap) {}
-  void add_button (UINT, const char *);
-  void set_button (int, UINT, const char *);
+  void add_button (UINT, const TCHAR *);
+  void set_button (int, UINT, const TCHAR *);
   void set_default (int n) {default_btn = n;}
   void set_close (int id) {close_id = id;}
   void set_icon (HICON h) {hicon = h;}
   int doit (HWND);
 };
 
-int MsgBox (HWND, const char *, const char *, UINT, int);
-int MsgBoxEx (HWND, const char *, const char *, int, int, int, int,
-              const char **, int, int, int);
+int MsgBox (HWND, const TCHAR *, const TCHAR *, UINT, int);
+int MsgBoxEx (HWND, const TCHAR *, const TCHAR *, int, int, int, int,
+              const TCHAR **, int, int, int);
 
 #endif

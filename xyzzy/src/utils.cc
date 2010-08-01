@@ -31,14 +31,16 @@ xrealloc (void *p, size_t size)
 void
 xfree (void *p)
 {
+/*
   if (p)
     free (p);
+    */
 }
 
-char *
-xstrdup (const char *s)
+TCHAR *
+xstrdup (const TCHAR *s)
 {
-  return strcpy ((char *)xmalloc (strlen (s) + 1), s);
+  return _tcscpy ((TCHAR *)xmalloc ((_tcslen (s) + 1) * sizeof TCHAR), s);
 }
 
 void *
@@ -47,16 +49,16 @@ xmemdup (const void *p, size_t size)
   return memcpy (xmalloc (size), p, size);
 }
 
-char *
-stpcpy (char *d, const char *s)
+TCHAR *
+stpcpy (TCHAR *d, const TCHAR *s)
 {
   while ((*d++ = *s++))
     ;
   return d - 1;
 }
 
-char *
-stpncpy (char *d, const char *s, int n)
+TCHAR *
+stpncpy (TCHAR *d, const TCHAR *s, int n)
 {
   for (; n > 0; n--)
     if (!(*d++ = *s++))
@@ -65,72 +67,80 @@ stpncpy (char *d, const char *s, int n)
   return d;
 }
 
-char *
-jindex (const char *p, int c)
+TCHAR *
+jindex (const TCHAR *p, int c)
 {
-  for (const u_char *s = (const u_char *)p; *s;)
+  for (const TBYTE *s = (const TBYTE *)p; *s;)
     {
+#ifndef UNICODE
       if (SJISP (*s) && s[1])
         s += 2;
       else
+#endif
         {
           if (*s == c)
-            return (char *)s;
+            return (TCHAR *)s;
           s++;
         }
     }
   return 0;
 }
 
-char *
-jrindex (const char *p, int c)
+TCHAR *
+jrindex (const TCHAR *p, int c)
 {
-  for (const u_char *save = 0, *s = (const u_char *)p; *s;)
+  for (const TBYTE *save = 0, *s = (const TBYTE *)p; *s;)
     {
+#ifndef UNICODE
       if (SJISP (*s) && s[1])
         s += 2;
       else
+#endif
         {
           if (*s == c)
             save = s;
           s++;
         }
     }
-  return (char *)save;
+  return (TCHAR *)save;
 }
 
-char *
-find_slash (const char *p)
+TCHAR *
+find_slash (const TCHAR *p)
 {
-  for (u_char *s = (u_char *)p; *s;)
+  for (TBYTE *s = (TBYTE *)p; *s;)
     {
+#ifndef UNICODE
       if (SJISP (*s) && s[1])
         s += 2;
       else
+#endif
         {
-          if (*s == '/' || *s == '\\')
-            return (char *)s;
+          if (*s == _T('/') || *s == _T('\\'))
+            return (TCHAR *)s;
           s++;
         }
     }
   return 0;
 }
 
-char *
-find_last_slash (const char *p)
+TCHAR *
+find_last_slash (const TCHAR *p)
 {
-  for (u_char *save = 0, *s = (u_char *)p; *s;)
+  for (TBYTE *save = 0, *s = (TBYTE *)p; *s;)
     {
+#ifndef UNICODE
       if (SJISP (*s) && s[1])
         s += 2;
       else
+#endif
         {
           if (*s == '/' || *s == '\\')
             save = s;
           s++;
         }
     }
-  return (char *)save;
+  return (TCHAR *)save;
 }
 
 long
@@ -250,20 +260,20 @@ parse_number_format (const Char *p, const Char *pe, int base)
 }
 
 int
-check_integer_format (const char *s, int *n)
+check_integer_format (const TCHAR *s, int *n)
 {
-  Char *b = (Char *)alloca (strlen (s) * 2);
+  Char *b = (Char *)alloca (_tcslen (s) * sizeof Char);
   Char *be = s2w (b, s);
-  for (; b < be && (*b == ' ' || *b == '\t'); b++)
+  for (; b < be && (*b == _T(' ') || *b == _T('\t')); b++)
     ;
-  for (; be > b && (b[-1] == ' ' || b[-1] == '\t'); b--)
+  for (; be > b && (b[-1] == _T(' ') || b[-1] == _T('\t')); b--)
     ;
 
   switch (parse_number_format (b, be, 10))
     {
     case NF_INTEGER:
     case NF_INTEGER_DOT:
-      *n = atoi (s);
+      *n = _tstoi (s);
       return 1;
 
     default:
@@ -272,7 +282,7 @@ check_integer_format (const char *s, int *n)
 }
 
 int
-streq (const Char *p, int l, const char *s)
+streq (const Char *p, int l, const TCHAR *s)
 {
   for (const Char *pe = p + l; p < pe; p++, s++)
     if (*p != *s)
@@ -281,11 +291,12 @@ streq (const Char *p, int l, const char *s)
 }
 
 int
-strequal (const char *cp, const Char *Cp)
+strequal (const TCHAR *cp, const Char *Cp)
 {
   while (*cp)
     {
       Char c = *Cp++;
+#ifndef UNICODE
       if (DBCP (c))
         {
           if (!cp[1] || c != Char ((u_char (*cp) << 8) | u_char (cp[1])))
@@ -293,8 +304,9 @@ strequal (const char *cp, const Char *Cp)
           cp += 2;
         }
       else
+#endif
         {
-          if (char_downcase (c) != char_downcase (u_char (*cp)))
+          if (char_downcase (c) != char_downcase (TBYTE (*cp)))
             return 0;
           cp++;
         }
@@ -303,11 +315,12 @@ strequal (const char *cp, const Char *Cp)
 }
 
 int
-strequal (const char *cp, const Char *Cp, int l)
+strequal (const TCHAR *cp, const Char *Cp, int l)
 {
   for (const Char *Ce = Cp + l; Cp < Ce; Cp++)
     {
       Char c = *Cp;
+#ifndef UNICODE
       if (DBCP (c))
         {
           if (c != Char ((u_char (*cp) << 8) | u_char (cp[1])))
@@ -315,8 +328,9 @@ strequal (const char *cp, const Char *Cp, int l)
           cp += 2;
         }
       else
+#endif
         {
-          if (char_downcase (c) != char_downcase (u_char (*cp)))
+          if (char_downcase (c) != char_downcase (TBYTE (*cp)))
             return 0;
           cp++;
         }
@@ -353,13 +367,15 @@ strcasecmp (const char *s1, const char *s2)
 }
 
 void
-convert_backsl_with_sl (char *path, int f, int t)
+convert_backsl_with_sl (TCHAR *path, int f, int t)
 {
-  for (u_char *s = (u_char *)path; *s;)
+  for (TBYTE *s = (TBYTE *)path; *s;)
     {
+#ifndef UNICODE
       if (SJISP (*s) && s[1])
         s += 2;
       else
+#endif
         {
           if (*s == f)
             *s = t;

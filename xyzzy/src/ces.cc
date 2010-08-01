@@ -462,11 +462,11 @@ init_char_encoding ()
   lisp ce;
 
   ce = make_char_encoding (encoding_auto_detect,
-                           make_string ("auto"), make_string ("Ž©“®”»’è"));
+                           make_string (_T("auto")), make_string (_T("Ž©“®”»’è")));
   xsymbol_value (Qencoding_auto) = ce;
   xsymbol_value (Vencoding_auto) = ce;
 
-  ce = Fmake_sjis_encoding (make_string ("sjis"), make_string ("“ú–{Œê(Shift_JIS)"));
+  ce = Fmake_sjis_encoding (make_string (_T("sjis")), make_string (_T("“ú–{Œê(Shift_JIS)")));
   xsymbol_value (Qencoding_sjis) = ce;
   xsymbol_value (Vencoding_sjis) = ce;
 

@@ -1,89 +1,89 @@
 #include "ed.h"
 #include "binfo.h"
 
-const char *const buffer_info::b_eol_name[] = {"lf", "crlf", "cr"};
+const TCHAR *const buffer_info::b_eol_name[] = {_T("lf"), _T("crlf"), _T("cr")};
 
-char *
-buffer_info::modified (char *b, int pound) const
+TCHAR *
+buffer_info::modified (TCHAR *b, int pound) const
 {
   if (!pound)
     {
-      int c1 = '-', c2 = '-';
+      int c1 = _T('-'), c2 = _T('-');
       if (b_bufp->b_modified)
-        c1 = c2 = '*';
+        c1 = c2 = _T('*');
       if (b_bufp->read_only_p ())
         {
-          c1 = '%';
-          if (c2 == '-')
+          c1 = _T('%');
+          if (c2 == _T('-'))
             c2 = c1;
         }
       if (b_bufp->b_truncated)
-        c2 = '#';
+        c2 = _T('#');
       *b++ = c1;
       *b++ = c2;
     }
   else
-    *b++ = b_bufp->b_modified ? '*' : ' ';
+    *b++ = b_bufp->b_modified ? _T('*') : _T(' ');
   return b;
 }
 
-char *
-buffer_info::read_only (char *b, int pound) const
+TCHAR *
+buffer_info::read_only (TCHAR *b, int pound) const
 {
   if (b_bufp->read_only_p ())
-    *b++ = '%';
+    *b++ = _T('%');
   else if (!pound && b_bufp->b_truncated)
-    *b++ = '#';
+    *b++ = _T('#');
   else
-    *b++ = ' ';
+    *b++ = _T(' ');
   return b;
 }
 
-char *
-buffer_info::buffer_name (char *b, char *be) const
+TCHAR *
+buffer_info::buffer_name (TCHAR *b, TCHAR *be) const
 {
   b = b_bufp->buffer_name (b, be);
   if (b == be - 1)
-    *b++ = ' ';
+    *b++ = _T(' ');
   return b;
 }
 
-char *
-buffer_info::file_name (char *b, char *be, int pound) const
+TCHAR *
+buffer_info::file_name (TCHAR *b, TCHAR *be, int pound) const
 {
   lisp name;
   if (stringp (name = b_bufp->lfile_name)
       || stringp (name = b_bufp->lalternate_file_name))
     {
       if (!pound)
-        b = stpncpy (b, "File: ", be - b);
+        b = stpncpy (b, _T("File: "), be - b);
       b = w2s (b, be, name);
       if (b == be - 1)
-        *b++ = ' ';
+        *b++ = _T(' ');
     }
   return b;
 }
 
-char *
-buffer_info::file_or_buffer_name (char *b, char *be, int pound) const
+TCHAR *
+buffer_info::file_or_buffer_name (TCHAR *b, TCHAR *be, int pound) const
 {
-  char *bb = b;
+  TCHAR *bb = b;
   b = file_name (b, be, pound);
   if (b == bb)
     b = buffer_name (b, be);
   return b;
 }
 
-static char *
-docopy (char *d, char *de, const char *s, int &f)
+static TCHAR *
+docopy (TCHAR *d, TCHAR *de, const TCHAR *s, int &f)
 {
-  *d++ = f ? ' ' : ':';
+  *d++ = f ? _T(' ') : _T(':');
   f = 1;
   return stpncpy (d, s, de - d);
 }
 
-char *
-buffer_info::minor_mode (lisp x, char *b, char *be, int &f) const
+TCHAR *
+buffer_info::minor_mode (lisp x, TCHAR *b, TCHAR *be, int &f) const
 {
   for (int i = 0; i < 10; i++)
     if (consp (x) && symbolp (xcar (x))
@@ -98,7 +98,7 @@ buffer_info::minor_mode (lisp x, char *b, char *be, int &f) const
           }
         if (stringp (x))
           {
-            *b++ = f ? ' ' : ':';
+            *b++ = f ? _T(' ') : _T(':');
             f = 1;
             return w2s (b, be, x);
           }
@@ -108,20 +108,20 @@ buffer_info::minor_mode (lisp x, char *b, char *be, int &f) const
   return b;
 }
 
-char *
-buffer_info::mode_name (char *b, char *be, int c) const
+TCHAR *
+buffer_info::mode_name (TCHAR *b, TCHAR *be, int c) const
 {
   int f = 0;
   lisp mode = symbol_value (Vmode_name, b_bufp);
   if (stringp (mode))
     b = w2s (b, be, mode);
 
-  if (c == 'M')
+  if (c == _T('M'))
     {
       if (b_bufp->b_narrow_depth)
-        b = docopy (b, be, "Narrow", f);
+        b = docopy (b, be, _T("Narrow"), f);
       if (Fkbd_macro_saving_p () != Qnil)
-        b = docopy (b, be, "Def", f);
+        b = docopy (b, be, _T("Def"), f);
       for (lisp al = xsymbol_value (Vminor_mode_alist);
            consp (al); al = xcdr (al))
         b = minor_mode (xcar (al), b, be, f);
@@ -131,55 +131,55 @@ buffer_info::mode_name (char *b, char *be, int c) const
     switch (xprocess_status (b_bufp->lprocess))
       {
       case PS_RUN:
-        b = stpncpy (b, ":Run", be - b);
+        b = stpncpy (b, _T(":Run"), be - b);
         break;
 
       case PS_EXIT:
-        b = stpncpy (b, ":Exit", be - b);
+        b = stpncpy (b, _T(":Exit"), be - b);
         break;
       }
   return b;
 }
 
-char *
-buffer_info::ime_mode (char *b, char *be) const
+TCHAR *
+buffer_info::ime_mode (TCHAR *b, TCHAR *be) const
 {
   if (!b_ime)
     return b;
   *b_ime = 1;
   return stpncpy (b, (app.ime_open_mode == kbd_queue::IME_MODE_ON
-                      ? "‚ " : "--"),
+                      ? _T("‚ ") : _T("--")),
                   be - b);
 }
 
-char *
-buffer_info::position (char *b, char *be) const
+TCHAR *
+buffer_info::position (TCHAR *b, TCHAR *be) const
 {
   if (b_posp)
     *b_posp = b;
   else if (b_wp)
     {
-      char tem[64];
-      sprintf (tem, "%d:%d", b_wp->w_plinenum, b_wp->w_column);
+      TCHAR tem[64];
+      _stprintf (tem, _T("%d:%d"), b_wp->w_plinenum, b_wp->w_column);
       b = stpncpy (b, tem, be - b);
     }
   return b;
 }
 
-char *
-buffer_info::host_name (char *b, char *be, int pound) const
+TCHAR *
+buffer_info::host_name (TCHAR *b, TCHAR *be, int pound) const
 {
   if (*sysdep.host_name)
     {
       if (pound)
-        *b++ = '@';
+        *b++ = _T('@');
       b = stpncpy (b, sysdep.host_name, be - b);
     }
   return b;
 }
 
-char *
-buffer_info::format (lisp fmt, char *b, char *be) const
+TCHAR *
+buffer_info::format (lisp fmt, TCHAR *b, TCHAR *be) const
 {
   if (b_posp)
     *b_posp = 0;
@@ -192,12 +192,14 @@ buffer_info::format (lisp fmt, char *b, char *be) const
   while (p < pe && b < be)
     {
       Char c = *p++;
-      if (c != '%')
+      if (c != _T('%'))
         {
         normal_char:
+#ifndef UNICODE
           if (DBCP (c))
             *b++ = c >> 8;
-          *b++ = char (c);
+#endif
+          *b++ = TCHAR (c);
         }
       else
         {
@@ -206,7 +208,7 @@ buffer_info::format (lisp fmt, char *b, char *be) const
 
           c = *p++;
           int pound = 0;
-          if (c == '#')
+          if (c == _T('#'))
             {
               pound = 1;
               if (p == pe)
@@ -219,56 +221,56 @@ buffer_info::format (lisp fmt, char *b, char *be) const
             default:
               goto normal_char;
 
-            case '*':
+            case _T('*'):
               b = modified (b, pound);
               break;
 
-            case 'r':
+            case _T('r'):
               b = read_only (b, pound);
               break;
 
-            case 'p':
+            case _T('p'):
               b = progname (b, be);
               break;
 
-            case 'v':
+            case _T('v'):
               b = version (b, be);
               break;
 
-            case 'h':
+            case _T('h'):
               b = host_name (b, be, pound);
               break;
 
-            case 'b':
+            case _T('b'):
               b = buffer_name (b, be);
               break;
 
-            case 'f':
+            case _T('f'):
               b = file_name (b, be, pound);
               break;
 
-            case 'F':
+            case _T('F'):
               b = file_or_buffer_name (b, be, pound);
               break;
 
-            case 'M':
-            case 'm':
+            case _T('M'):
+            case _T('m'):
               b = mode_name (b, be, c);
               break;
 
-            case 'k':
+            case _T('k'):
               b = encoding (b, be);
               break;
 
-            case 'l':
+            case _T('l'):
               b = eol_code (b, be);
               break;
 
-            case 'i':
+            case _T('i'):
               b = ime_mode (b, be);
               break;
 
-            case 'P':
+            case _T('P'):
               b = position (b, be);
               break;
             }

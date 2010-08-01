@@ -1305,15 +1305,15 @@ bignum_rep::fmtwidth (u_long base) const
   return (br_len + 1) * BR_SHIFT / (::log2 (base) - 1) + 16;
 }
 
-char *
-bignum_rep::to_ascii (char *b, int base, int dot, int sign,
-                      const char *digit_chars) const
+TCHAR *
+bignum_rep::to_ascii (TCHAR *b, int base, int dot, int sign,
+                      const TCHAR *digit_chars) const
 {
   *--b = 0;
   if (dot)
-    *--b = '.';
+    *--b = _T('.');
   if (!br_len)
-    *--b = '0';
+    *--b = _T('0');
   else
     {
       safe_bignum_rep r (br_alloc (0, this, br_len));
@@ -1345,9 +1345,9 @@ bignum_rep::to_ascii (char *b, int base, int dot, int sign,
     }
 
   if (minusp ())
-    *--b = '-';
+    *--b = _T('-');
   else if (sign)
-    *--b = '+';
+    *--b = _T('+');
   return b;
 }
 

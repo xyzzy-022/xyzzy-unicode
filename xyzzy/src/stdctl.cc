@@ -1,8 +1,8 @@
 #include "ed.h"
 
-static const char csComboBox[] = "ComboBox";
-static const char csEdit[] = "Edit";
-static const char csListBox[] = "ListBox";
+static const TCHAR csComboBox[] = _T("ComboBox");
+static const TCHAR csEdit[] = _T("Edit");
+static const TCHAR csListBox[] = _T("ListBox");
 
 static WNDPROC org_lbx_wndproc;
 static WNDPROC org_edt_wndproc;
@@ -169,11 +169,11 @@ edt_char (HWND hwnd, int ch)
   if (op < 0)
     return 0;
 
-  char class_name[16];
+  TCHAR class_name[16];
   HWND hwnd_parent = GetParent (hwnd);
   if (!hwnd_parent
-      || !GetClassName (hwnd_parent, class_name, sizeof class_name)
-      || _stricmp (class_name, csComboBox))
+      || !GetClassName (hwnd_parent, class_name, _countof (class_name))
+      || _tcsicmp (class_name, csComboBox))
     return 0;
 
   if (op == VK_RETURN)
@@ -195,7 +195,7 @@ edt_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 static int
-init_hook (HINSTANCE hinst, const char *class_name,
+init_hook (HINSTANCE hinst, const TCHAR *class_name,
            WNDPROC wndproc, WNDPROC &org_wndproc)
 {
   WNDCLASS wc;

@@ -14,6 +14,7 @@
 # include <string.h>
 # include <mbstring.h>
 # include <malloc.h>
+# include <tchar.h>
 
 # pragma warning (default: 4201)
 
@@ -49,7 +50,7 @@ typedef u_int16_t Char;
 typedef u_long lChar;
 const lChar lChar_EOF = lChar (-1);
 
-typedef u_int16_t ucs2_t;
+typedef wchar_t ucs2_t;
 typedef u_int32_t ucs4_t;
 
 typedef long point_t;
@@ -166,7 +167,20 @@ int assert_failed (const char *, int);
 
 # define __TOSTR(X) #X
 # define _TOSTR(X) __TOSTR(X)
+# define _TOTSTR(X) _T(__TOSTR(X))
 
 # define THREADLOCAL __declspec (thread)
+
+# ifdef UNICODE
+#  define _tmemcmp  wmemcmp
+#  define _tmemcpy  wmemcpy
+#  define _tmemset  wmemset
+#  define _tmemmove wmemmove
+# else
+#  define _tmemcmp  memcmp
+#  define _tmemcpy  memcpy
+#  define _tmemset  memset
+#  define _tmemmove memmove
+# endif
 
 #endif

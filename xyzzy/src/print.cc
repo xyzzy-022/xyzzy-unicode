@@ -6,8 +6,8 @@
 HGLOBAL printer_device::pd_devmode;
 HGLOBAL printer_device::pd_devnames;
 
-static const char default_header[] = "%F%l%r%:w, %0d %:m %Y %0h:%0M:%0s";
-static const char default_footer[] = "- %p -";
+static const TCHAR default_header[] = _T("%F%l%r%:w, %0d %:m %Y %0h:%0M:%0s");
+static const TCHAR default_footer[] = _T("- %p -");
 
 print_settings::print_settings ()
 {
@@ -46,7 +46,7 @@ print_settings::init_faces ()
   for (int i = 0; i < FONT_MAX; i++)
     if (!*ps_font[i].face)
       {
-        strcpy (ps_font[i].face, FontSet::default_face (i, 1));
+        _tcscpy (ps_font[i].face, FontSet::default_face (i, 1));
         ps_font[i].charset = FontSet::default_charset (i);
         ps_font[i].point = 100;
         ps_font[i].bold = 0;
@@ -77,9 +77,9 @@ print_settings::load_conf ()
   if (read_conf (cfgPrint, cfgFoldColumns, x) && x >= 0)
     ps_fold_width = x;
   if (!read_conf (cfgPrint, cfgHeader, ps_header, sizeof ps_header))
-    strcpy (ps_header, default_header);
+    _tcscpy (ps_header, default_header);
   if (!read_conf (cfgPrint, cfgFooter, ps_footer, sizeof ps_footer))
-    strcpy (ps_footer, default_footer);
+    _tcscpy (ps_footer, default_footer);
   if (read_conf (cfgPrint, cfgHeaderOn, x))
     ps_header_on = x ? 1 : 0;
   if (read_conf (cfgPrint, cfgFooterOn, x))
@@ -156,7 +156,7 @@ print_settings::make_font (HDC hdc, int charset, int height) const
 
   LOGFONT lf;
   bzero (&lf, sizeof lf);
-  strcpy (lf.lfFaceName, ps_font[charset].face);
+  _tcscpy (lf.lfFaceName, ps_font[charset].face);
   lf.lfHeight = height;
   lf.lfCharSet = ps_font[charset].charset;
   lf.lfItalic = ps_font[charset].italic;
@@ -308,9 +308,9 @@ printer_device::create_dc ()
     return 0;
   DEVMODE *dm = pd_devmode ? (DEVMODE *)GlobalLock (pd_devmode) : 0;
 
-  HDC hdc = CreateDC ((const char *)dn + dn->wDriverOffset,
-                      (const char *)dn + dn->wDeviceOffset,
-                      (const char *)dn + dn->wOutputOffset,
+  HDC hdc = CreateDC ((const TCHAR *)dn + dn->wDriverOffset,
+                      (const TCHAR *)dn + dn->wDeviceOffset,
+                      (const TCHAR *)dn + dn->wOutputOffset,
                       dm);
   GlobalUnlock (pd_devnames);
   if (dm)
@@ -349,12 +349,12 @@ printer_device::get_dev_spec ()
         {
           DEVMODE *dm = pd_devmode ? (DEVMODE *)GlobalLock (pd_devmode) : 0;
           pd_max_copies =
-            DeviceCapabilities ((const char *)dn + dn->wDeviceOffset,
-                                (const char *)dn + dn->wOutputOffset,
+            DeviceCapabilities ((const TCHAR *)dn + dn->wDeviceOffset,
+                                (const TCHAR *)dn + dn->wOutputOffset,
                                 DC_COPIES, 0, dm);
           pd_dm_fields =
-            DeviceCapabilities ((const char *)dn + dn->wDeviceOffset,
-                                (const char *)dn + dn->wOutputOffset,
+            DeviceCapabilities ((const TCHAR *)dn + dn->wDeviceOffset,
+                                (const TCHAR *)dn + dn->wOutputOffset,
                                 DC_FIELDS, 0, dm);
           if (dm)
             GlobalUnlock (pd_devmode);
@@ -802,7 +802,11 @@ print_engine::paint_ascii (PaintCtx &ctx, Char cc) const
 {
   if (cc != ' ')
     {
+#ifdef UNICODE
+      TCHAR c = TCHAR (cc);
+#else
       char c = SJISP (cc) ? 0 : char (cc);
+#endif
       SelectObject (ctx.hdc, pe_hfonts[FONT_ASCII]);
       ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, &c, 1, 0);
     }
@@ -815,7 +819,7 @@ print_engine::paint_ascii (PaintCtx &ctx, Char cc) const
 void
 print_engine::paint_kana (PaintCtx &ctx, Char cc) const
 {
-  char c = char (cc);
+  TCHAR c = TCHAR (cc);
   SelectObject (ctx.hdc, pe_hfonts[FONT_JP]);
   ExtTextOut (ctx.hdc, ctx.x + pe_offset[FONT_JP].x,
               ctx.y + pe_offset[FONT_JP].y, 0, 0, &c, 1, 0);
@@ -830,14 +834,19 @@ print_engine::paint_kanji (PaintCtx &ctx, Char cc) const
 {
   if (char_width (cc) == 2)
     {
+#ifdef UNICODE
+      TCHAR b[1];
+      b[0] = TCHAR (cc);
+#else
       char b[2];
       b[0] = cc >> 8;
       b[1] = char (cc);
       if (!b[1] || !SJISP (b[0] & 255))
         b[0] = char (0x81), b[1] = char (0x45);
+#endif
       SelectObject (ctx.hdc, pe_hfonts[FONT_JP]);
       ExtTextOut (ctx.hdc, ctx.x + pe_offset2x[FONT_JP],
-                  ctx.y + pe_offset[FONT_JP].y, 0, 0, b, 2, 0);
+                  ctx.y + pe_offset[FONT_JP].y, 0, 0, b, _countof (b), 0);
       ctx.column += 2;
       ctx.x += (pe_fixed_pitch
                 ? pe_print_cell.cx * 2
@@ -846,7 +855,7 @@ print_engine::paint_kanji (PaintCtx &ctx, Char cc) const
   else
     {
       SelectObject (ctx.hdc, pe_hfonts[FONT_ASCII]);
-      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, "", 1, 0);
+      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, _T(""), 1, 0);
       ctx.column++;
       ctx.x += (pe_fixed_pitch
                 ? pe_print_cell.cx
@@ -869,7 +878,7 @@ print_engine::paint_jisx0212 (PaintCtx &ctx, Char cc) const
   else
     {
       SelectObject (ctx.hdc, pe_hfonts[FONT_ASCII]);
-      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, "\0", l, 0);
+      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, _T("\0"), l, 0);
     }
   ctx.column += l;
   ctx.x += (pe_fixed_pitch
@@ -890,7 +899,7 @@ print_engine::paint_full_width (PaintCtx &ctx, Char cc, int f) const
   else
     {
       SelectObject (ctx.hdc, pe_hfonts[FONT_ASCII]);
-      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, "\0", 2, 0);
+      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, _T("\0"), 2, 0);
     }
   ctx.column += 2;
   ctx.x += (pe_fixed_pitch
@@ -911,7 +920,7 @@ print_engine::paint_latin (PaintCtx &ctx, Char cc, int f) const
   else
     {
       SelectObject (ctx.hdc, pe_hfonts[FONT_ASCII]);
-      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, "", 1, 0);
+      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, _T(""), 1, 0);
     }
   ctx.column++;
   ctx.x += (pe_fixed_pitch
@@ -925,7 +934,7 @@ print_engine::paint_lucida (PaintCtx &ctx, Char cc) const
   ucs2_t wc = i2w (cc);
   if (wc != ucs2_t (-1))
     {
-      static LOGFONT lf = {0,0,0,0,0,0,0,0,0,0,0,0,0,LUCIDA_FACE_NAME};
+      static LOGFONT lf = {0,0,0,0,0,0,0,0,0,0,0,0,0,_T(LUCIDA_FACE_NAME)};
       lf.lfHeight = pe_cell.cy;
       HGDIOBJ of = SelectObject (ctx.hdc, CreateFontIndirect (&lf));
       int o;
@@ -943,7 +952,7 @@ print_engine::paint_lucida (PaintCtx &ctx, Char cc) const
   else
     {
       SelectObject (ctx.hdc, pe_hfonts[FONT_ASCII]);
-      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, "", 1, 0);
+      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, _T(""), 1, 0);
     }
   ctx.column++;
   ctx.x += (pe_fixed_pitch
@@ -1107,55 +1116,59 @@ print_engine::paint_line (HDC hdc, int x, int y, Point &cur_point, long &linenum
 }
 
 void
-print_engine::paint_string (HDC hdc, int x, int y, const char *s, int l) const
+print_engine::paint_string (HDC hdc, int x, int y, const TCHAR *s, int l) const
 {
   PaintCtx ctx;
   ctx.hdc = hdc;
   ctx.x = x;
   ctx.y = y;
   ctx.column = 0;
-  for (const u_char *p = (const u_char *)s, *pe = p + l; p < pe;)
+  for (const _TUCHAR *p = (const _TUCHAR *)s, *pe = p + l; p < pe;)
     {
       int c = *p++;
+#ifndef UNICODE
       if (SJISP (c) && p != pe)
         paint_kanji (ctx, (c << 8) | *p++);
       else if (kana_char_p (c))
         paint_kana (ctx, c);
       else
+#endif
         paint_ascii (ctx, c);
     }
 }
 
 int
-print_engine::get_extent (const char *s, int l) const
+print_engine::get_extent (const TCHAR *s, int l) const
 {
   int cx = 0;
-  for (const u_char *p = (const u_char *)s, *pe = p + l; p < pe;)
+  for (const _TUCHAR *p = (const _TUCHAR *)s, *pe = p + l; p < pe;)
     {
       int c = *p++;
+#ifndef UNICODE
       if (SJISP (c) && p != pe)
         cx += get_glyph_width ((c << 8) | *p++, pe_glyph_width);
       else
+#endif
         cx += get_glyph_width (c, pe_glyph_width);
     }
   return cx;
 }
 
 int
-print_engine::paint_fmt (HDC hdc, const char *fmt, int y)
+print_engine::paint_fmt (HDC hdc, const TCHAR *fmt, int y)
 {
   if (!*fmt)
     return 0;
-  char buf[4096];
-  char *left, *right;
-  int hline = format (hdc, fmt, buf, sizeof buf, left, right);
+  TCHAR buf[4096];
+  TCHAR *left, *right;
+  int hline = format (hdc, fmt, buf, _countof (buf), left, right);
   int width[3];
   int x[3];
-  char *b[4];
+  TCHAR *b[4];
   b[0] = buf;
   b[1] = left ? left : buf;
-  b[2] = (right && right >= b[1]) ? right : b[1] + strlen (b[1]);
-  b[3] = b[2] + strlen (b[2]);
+  b[2] = (right && right >= b[1]) ? right : b[1] + _tcslen (b[1]);
+  b[3] = b[2] + _tcslen (b[2]);
   if (pe_fixed_pitch)
     for (int i = 0; i < 3; i++)
       width[i] = (b[i + 1] - b[i]) * pe_print_cell.cx;
@@ -1381,14 +1394,14 @@ print_engine::prev_page_exist_p ()
   return pe_page > pe_start_page && pe_cache.find (pe_page - 1);
 }
 
-inline char *
-print_engine::fmt_buffer_name (char *b, char *be)
+inline TCHAR *
+print_engine::fmt_buffer_name (TCHAR *b, TCHAR *be)
 {
   return pe_bp->buffer_name (b, be);
 }
 
-char *
-print_engine::fmt_filename_short (char *b, char *be)
+TCHAR *
+print_engine::fmt_filename_short (TCHAR *b, TCHAR *be)
 {
   lisp name;
   if (!stringp (name = pe_bp->lfile_name)
@@ -1397,92 +1410,93 @@ print_engine::fmt_filename_short (char *b, char *be)
 
   for (const Char *p0 = xstring_contents (name),
        *pe = p0 + xstring_length (name), *p = pe;
-       p > p0 && p[-1] != '/' && p[-1] != '\\';
+       p > p0 && p[-1] != _T('/') && p[-1] != _T('\\');
        p--)
     ;
-  char s[PATH_MAX + 1];
+  TCHAR s[PATH_MAX + 1];
   w2s (s, p, pe - p);
   return stpncpy (b, s, be - b);
 }
 
-char *
-print_engine::fmt_filename_long (char *b, char *be)
+TCHAR *
+print_engine::fmt_filename_long (TCHAR *b, TCHAR *be)
 {
   lisp name;
   if (!stringp (name = pe_bp->lfile_name)
       && !stringp (name = pe_bp->lalternate_file_name))
     return fmt_buffer_name (b, be);
 
-  char s[PATH_MAX + 1];
+  TCHAR s[PATH_MAX + 1];
   w2s (s, name);
   return stpncpy (b, s, be - b);
 }
 
-char *
-print_engine::fmt (char *b, char *be, const char *f, int v)
+TCHAR *
+print_engine::fmt (TCHAR *b, TCHAR *be, const TCHAR *f, int v)
 {
-  char s[256];
-  sprintf (s, f, v);
+  TCHAR s[256];
+  _stprintf (s, f, v);
   return stpncpy (b, s, be - b);
 }
 
-inline char *
-print_engine::fmt_page_no (char *b, char *be)
+inline TCHAR *
+print_engine::fmt_page_no (TCHAR *b, TCHAR *be)
 {
-  return fmt (b, be, "%d", current_page ());
+  return fmt (b, be, _T("%d"), current_page ());
 }
 
-inline char *
-print_engine::fmt_total_page_no (HDC hdc, char *b, char *be)
+inline TCHAR *
+print_engine::fmt_total_page_no (HDC hdc, TCHAR *b, TCHAR *be)
 {
-  return fmt (b, be, "%u", count_total_pages (hdc));
+  return fmt (b, be, _T("%u"), count_total_pages (hdc));
 }
 
-inline char *
-print_engine::fmt_year4 (char *b, char *be)
+inline TCHAR *
+print_engine::fmt_year4 (TCHAR *b, TCHAR *be)
 {
-  return fmt (b, be, "%04u", current_time ().wYear);
+  return fmt (b, be, _T("%04u"), current_time ().wYear);
 }
 
-inline char *
-print_engine::fmt_year2 (char *b, char *be)
+inline TCHAR *
+print_engine::fmt_year2 (TCHAR *b, TCHAR *be)
 {
-  return fmt (b, be, "%02u", current_time ().wYear % 100);
+  return fmt (b, be, _T("%02u"), current_time ().wYear % 100);
 }
 
-char *
-print_engine::fmt_month (char *b, char *be, int zero, int star, int colon)
+TCHAR *
+print_engine::fmt_month (TCHAR *b, TCHAR *be, int zero, int star, int colon)
 {
-  static const char month_names[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
-  static const char *const month_full_names[] =
-    { "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",};
+  static const TCHAR month_names[] = _T("JanFebMarAprMayJunJulAugSepOctNovDec");
+  static const TCHAR *const month_full_names[] =
+    { _T("January"), _T("February"), _T("March"), _T("April"), _T("May"), _T("June"),
+      _T("July"), _T("August"), _T("September"), _T("October"), _T("November"), _T("December"),};
   int m = current_time ().wMonth;
   if (m < 1 || m > 12)
     return b;
   if (zero)
-    return fmt (b, be, "%02d", m);
+    return fmt (b, be, _T("%02d"), m);
   if (star)
     return stpncpy (b, month_full_names[m - 1], be - b);
   if (colon)
     return stpncpy (b, &month_names[3 * (m - 1)], min (3, be - b));
-  return fmt (b, be, "%d", m);
+  return fmt (b, be, _T("%d"), m);
 }
 
-inline char *
-print_engine::fmt_day (char *b, char *be, int zero)
+inline TCHAR *
+print_engine::fmt_day (TCHAR *b, TCHAR *be, int zero)
 {
-  return fmt (b, be, zero ? "%02d" : "%d", current_time ().wDay);
+  return fmt (b, be, zero ? _T("%02d") : _T("%d"), current_time ().wDay);
 }
 
-char *
-print_engine::fmt_week (char *b, char *be, int star, int colon)
+TCHAR *
+print_engine::fmt_week (TCHAR *b, TCHAR *be, int star, int colon)
 {
-  static const char day_names[] = "SunMonTueWedThuFriSat";
-  static const char *const day_full_names[] =
-    { "Sunday","Monday", "Tuesday", "Wednesday",
-      "Thursday", "Friday", "Saturday",};
-  static const char day_japanese_names[] = "ì˙åéâŒêÖñÿã‡ìy";
+  static const TCHAR day_names[] = _T("SunMonTueWedThuFriSat");
+  static const TCHAR *const day_full_names[] =
+    { _T("Sunday"),_T("Monday"), _T("Tuesday"), _T("Wednesday"),
+      _T("Thursday"), _T("Friday"), _T("Saturday"),};
+  static const TCHAR *const day_japanese_names[] =
+    { _T("ì˙"), _T("åé"), _T("âŒ"), _T("êÖ"), _T("ñÿ"), _T("ã‡"), _T("ìy") };
   int w = current_time ().wDayOfWeek;
   if (w < 0 || w > 6)
     return b;
@@ -1490,38 +1504,38 @@ print_engine::fmt_week (char *b, char *be, int star, int colon)
     return stpncpy (b, day_full_names[w], be - b);
   if (colon)
     return stpncpy (b, &day_names[3 * w], min (3, be - b));
-  return stpncpy (b, &day_japanese_names[2 * w], min (2, be - b));
+  return stpncpy (b, day_japanese_names[w], be - b);
 }
 
-inline char *
-print_engine::fmt_hour24 (char *b, char *be, int zero)
+inline TCHAR *
+print_engine::fmt_hour24 (TCHAR *b, TCHAR *be, int zero)
 {
-  return fmt (b, be, zero ? "%02d" : "%d", current_time ().wHour);
+  return fmt (b, be, zero ? _T("%02d") : _T("%d"), current_time ().wHour);
 }
 
-char *
-print_engine::fmt_hour12 (char *b, char *be, int zero, int star, int colon)
+TCHAR *
+print_engine::fmt_hour12 (TCHAR *b, TCHAR *be, int zero, int star, int colon)
 {
   int h = current_time ().wHour;
   if (star)
-    return stpncpy (b, colon ? (h < 12 ? "am" : "pm") : (h < 12 ? "AM" : "PM"),
+    return stpncpy (b, colon ? (h < 12 ? _T("am") : _T("pm")) : (h < 12 ? _T("AM") : _T("PM")),
                     min (2, be - b));
   h %= 12;
   if (colon)
     h++;
-  return fmt (b, be, zero ? "%02d" : "%d", h);
+  return fmt (b, be, zero ? _T("%02d") : _T("%d"), h);
 }
 
-inline char *
-print_engine::fmt_minute (char *b, char *be, int zero)
+inline TCHAR *
+print_engine::fmt_minute (TCHAR *b, TCHAR *be, int zero)
 {
-  return fmt (b, be, zero ? "%02d" : "%d", current_time ().wMinute);
+  return fmt (b, be, zero ? _T("%02d") : _T("%d"), current_time ().wMinute);
 }
 
-inline char *
-print_engine::fmt_second (char *b, char *be, int zero)
+inline TCHAR *
+print_engine::fmt_second (TCHAR *b, TCHAR *be, int zero)
 {
-  return fmt (b, be, zero ? "%02d" : "%d", current_time ().wSecond);
+  return fmt (b, be, zero ? _T("%02d") : _T("%d"), current_time ().wSecond);
 }
 
 /*
@@ -1559,19 +1573,21 @@ print_engine::fmt_second (char *b, char *be, int zero)
  */
 
 int
-print_engine::format (HDC hdc, const char *fmt, char *b, int l,
-                      char *&left, char *&right)
+print_engine::format (HDC hdc, const TCHAR *fmt, TCHAR *b, int l,
+                      TCHAR *&left, TCHAR *&right)
 {
-  const u_char *f = (const u_char *)fmt;
-  char *be = b + l - 2;
+  const _TUCHAR *f = (const _TUCHAR *)fmt;
+  TCHAR *be = b + l - 2;
   int hline = 0;
   left = right = 0;
   while (*f && b < be)
     {
-      if (*f != '%')
+      if (*f != _T('%'))
         {
+#ifndef UNICODE
           if (SJISP (*f) && f[1])
             *b++ = *f++;
+#endif
           *b++ = *f++;
         }
       else
@@ -1584,11 +1600,11 @@ print_engine::format (HDC hdc, const char *fmt, char *b, int l,
           while (1)
             {
               c = *f++;
-              if (c == ':')
+              if (c == _T(':'))
                 colon = 1;
-              else if (c == '*')
+              else if (c == _T('*'))
                 star = 1;
-              else if (c == '0')
+              else if (c == _T('0'))
                 zero = 1;
               else
                 break;
@@ -1599,80 +1615,82 @@ print_engine::format (HDC hdc, const char *fmt, char *b, int l,
             case 0:
               goto done;
 
-            case 'f':
+            case _T('f'):
               b = fmt_filename_short (b, be);
               break;
 
-            case 'F':
+            case _T('F'):
               b = fmt_filename_long (b, be);
               break;
 
-            case 'b':
+            case _T('b'):
               b = fmt_buffer_name (b, be);
               break;
 
-            case 'p':
+            case _T('p'):
               b = fmt_page_no (b, be);
               break;
 
-            case 'P':
+            case _T('P'):
               b = fmt_total_page_no (hdc, b, be);
               break;
 
-            case 'Y':
+            case _T('Y'):
               b = fmt_year4 (b, be);
               break;
 
-            case 'y':
+            case _T('y'):
               b = fmt_year2 (b, be);
               break;
 
-            case 'm':
+            case _T('m'):
               b = fmt_month (b, be, zero, star, colon);
               break;
 
-            case 'd':
+            case _T('d'):
               b = fmt_day (b, be, zero);
               break;
 
-            case 'w':
+            case _T('w'):
               b = fmt_week (b, be, star, colon);
               break;
 
-            case 'h':
+            case _T('h'):
               b = fmt_hour24 (b, be, zero);
               break;
 
-            case 'H':
+            case _T('H'):
               b = fmt_hour12 (b, be, zero, star, colon);
               break;
 
-            case 'M':
+            case _T('M'):
               b = fmt_minute (b, be, zero);
               break;
 
-            case 's':
+            case _T('s'):
               b = fmt_second (b, be, zero);
               break;
 
-            case 'l':
+            case _T('l'):
               if (!right)
                 left = b;
               break;
 
-            case 'r':
+            case _T('r'):
               if (!right)
                 right = b;
               break;
 
-            case '-':
+            case _T('-'):
               hline = 1;
               break;
 
             default:
               *b++ = c;
+#ifndef UNICODE
               if (SJISP (c) && *f)
                 *b++ = *f++;
+#endif
               break;
             }
         }
@@ -1786,18 +1804,26 @@ print_engine::doprint1 (HWND hwnd)
                          pe_settings.ps_range_end))
     return bad_range (hwnd);
 
-  char *docname;
+  TCHAR *docname;
   lisp name;
   if (stringp (name = pe_bp->lfile_name)
       || stringp (name = pe_bp->lalternate_file_name))
     {
+#ifdef UNICODE
+      docname = (TCHAR *)alloca ((xstring_length (name) + 32) * sizeof TCHAR);
+#else
       docname = (char *)alloca (xstring_length (name) * 2 + 32);
+#endif
       w2s (docname, name);
     }
   else
     {
+#ifdef UNICODE
+      int l = xstring_length (pe_bp->lbuffer_name) + 32;
+#else
       int l = xstring_length (pe_bp->lbuffer_name) * 2 + 32;
-      docname = (char *)alloca (l);
+#endif
+      docname = (TCHAR *)alloca (l * sizeof TCHAR);
       pe_bp->buffer_name (docname, docname + l);
     }
 
@@ -1828,8 +1854,8 @@ print_engine::doprint1 (HWND hwnd)
 
   do
     {
-      char b[32];
-      sprintf (b, "Page %u", page++);
+      TCHAR b[32];
+      _stprintf (b, _T("Page %u"), page++);
       SetDlgItemText (printing, IDC_PAGENUM, b);
 
       if (StartPage (pe_dev) == SP_ERROR)
@@ -1921,8 +1947,8 @@ print_engine::bad_range (HWND hwnd)
 int
 print_engine::notice (HWND hwnd, UINT id, UINT ids)
 {
-  char b[256];
-  LoadString (app.hinst, ids, b, sizeof b);
+  TCHAR b[256];
+  LoadString (app.hinst, ids, b, _countof (b));
   MsgBox (hwnd, b, TitleBarString, MB_OK | MB_ICONEXCLAMATION,
           xsymbol_value (Vbeep_on_error) != Qnil);
   if (id != UINT (-1))
@@ -1933,8 +1959,8 @@ print_engine::notice (HWND hwnd, UINT id, UINT ids)
 int
 print_engine::notice (HWND hwnd, UINT id, UINT ids, int arg)
 {
-  char fmt[256], b[512];
-  LoadString (app.hinst, ids, fmt, sizeof fmt);
+  TCHAR fmt[256], b[512];
+  LoadString (app.hinst, ids, fmt, _countof (fmt));
   wsprintf (b, fmt, arg);
   MsgBox (hwnd, b, TitleBarString, MB_OK | MB_ICONEXCLAMATION,
           xsymbol_value (Vbeep_on_error) != Qnil);
@@ -2047,7 +2073,11 @@ get_glyph_width (Char cc, const glyph_width &gw)
     {
     case ccs_usascii:
       {
+#ifdef UNICODE
+        TCHAR c = TCHAR (cc);
+#else
         char c = SJISP (cc) ? 0 : char (cc);
+#endif
         SelectObject (gw.hdc, gw.hfonts[FONT_ASCII]);
         GetTextExtentPoint32 (gw.hdc, &c, 1, &sz);
         break;
@@ -2055,7 +2085,7 @@ get_glyph_width (Char cc, const glyph_width &gw)
 
     case ccs_jisx0201_kana:
       {
-        char c = char (cc);
+        TCHAR c = TCHAR (cc);
         SelectObject (gw.hdc, gw.hfonts[FONT_JP]);
         GetTextExtentPoint32 (gw.hdc, &c, 1, &sz);
         break;
@@ -2124,7 +2154,7 @@ get_glyph_width (Char cc, const glyph_width &gw)
         else
           {
             SelectObject (gw.hdc, gw.hfonts[FONT_ASCII]);
-            GetTextExtentPoint32 (gw.hdc, "\0", char_width (cc), &sz);
+            GetTextExtentPoint32 (gw.hdc, _T("\0"), char_width (cc), &sz);
           }
         break;
       }
@@ -2140,7 +2170,7 @@ get_glyph_width (Char cc, const glyph_width &gw)
         else
           {
             SelectObject (gw.hdc, gw.hfonts[FONT_ASCII]);
-            GetTextExtentPoint32 (gw.hdc, "\0", char_width (cc), &sz);
+            GetTextExtentPoint32 (gw.hdc, _T("\0"), char_width (cc), &sz);
           }
         break;
       }
@@ -2148,18 +2178,23 @@ get_glyph_width (Char cc, const glyph_width &gw)
     default:
       if (char_width (cc) == 2)
         {
+#ifdef UNICODE
+          TCHAR b[1];
+          b[0] = TCHAR (cc);
+#else
           char b[2];
           b[0] = cc >> 8;
           b[1] = char (cc);
           if (!b[1] || !SJISP (b[0] & 255))
             b[0] = char (0x81), b[1] = char (0x45);
+#endif
           SelectObject (gw.hdc, gw.hfonts[FONT_JP]);
-          GetTextExtentPoint32 (gw.hdc, b, 2, &sz);
+          GetTextExtentPoint32 (gw.hdc, b, _countof (b), &sz);
         }
       else
         {
           SelectObject (gw.hdc, gw.hfonts[FONT_ASCII]);
-          GetTextExtentPoint32 (gw.hdc, "", 1, &sz);
+          GetTextExtentPoint32 (gw.hdc, _T(""), 1, &sz);
         }
       break;
     }

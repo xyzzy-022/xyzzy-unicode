@@ -4,7 +4,7 @@
 #include "resolver.h"
 #include "sockimpl.h"
 
-static const char resolver_wndclass[] = "resolverClass";
+static const TCHAR resolver_wndclass[] = _T("resolverClass");
 int resolver::r_initialized;
 
 resolver::resolver (int timeout)
@@ -42,10 +42,10 @@ int
 resolver::create (HINSTANCE hinst)
 {
 #ifndef __XYZZY__
-  return r_hwnd || CreateWindow (resolver_wndclass, "", WS_OVERLAPPED,
+  return r_hwnd || CreateWindow (resolver_wndclass, _T(""), WS_OVERLAPPED,
                                  0, 0, 0, 0, HWND_DESKTOP, 0, hinst, this);
 #else
-  return r_hwnd || CreateWindow (resolver_wndclass, "", WS_CHILD,
+  return r_hwnd || CreateWindow (resolver_wndclass, _T(""), WS_CHILD,
                                  0, 0, 0, 0, app.toplev, 0, hinst, this);
 #endif
 }

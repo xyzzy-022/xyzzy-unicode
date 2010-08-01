@@ -274,8 +274,8 @@ digit_char_p (int c, int base)
   return ascii_char_p (c) ? _digit_char_p (c, base) : -1;
 }
 
-extern char upcase_digit_char[];
-extern char downcase_digit_char[];
+extern TCHAR upcase_digit_char[];
+extern TCHAR downcase_digit_char[];
 
 inline int
 meta_char_p (Char c)

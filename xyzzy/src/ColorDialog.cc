@@ -17,7 +17,7 @@ get_font_height (HWND hwnd)
 }
 
 static void
-paint_color_list (DRAWITEMSTRUCT *dis, const char *string, COLORREF color)
+paint_color_list (DRAWITEMSTRUCT *dis, const TCHAR *string, COLORREF color)
 {
   COLORREF bg = (dis->itemState & ODS_SELECTED
                  ? sysdep.highlight : sysdep.window);
@@ -29,12 +29,12 @@ paint_color_list (DRAWITEMSTRUCT *dis, const char *string, COLORREF color)
   if (dis->itemID != UINT (-1))
     {
       SIZE size;
-      GetTextExtentPoint32 (dis->hDC, "M", 1, &size);
+      GetTextExtentPoint32 (dis->hDC, _T("M"), 1, &size);
       size.cx = size.cx * 5 / 2;
       ExtTextOut (dis->hDC,
                   r.left + size.cx,
                   (r.top + r.bottom - size.cy) / 2,
-                  ETO_OPAQUE | ETO_CLIPPED, &r, string, strlen (string), 0);
+                  ETO_OPAQUE | ETO_CLIPPED, &r, string, _tcslen (string), 0);
 
       HGDIOBJ open = SelectObject (dis->hDC, sysdep.hpen_black);
       HBRUSH hbr = CreateSolidBrush (color);
@@ -88,8 +88,8 @@ SelectColor::SelectColor ()
       initialized = 1;
       for (int i = 0; i < numberof (cust); i++)
         {
-          char name[16];
-          sprintf (name, "%s%d", cfgCustColor, i);
+          TCHAR name[16];
+          _stprintf (name, _T("%s%d"), cfgCustColor, i);
           if (!read_conf (cfgColors, name, cust[i]))
             cust[i] = RGB (255, 255, 255);
         }
@@ -104,8 +104,8 @@ SelectColor::~SelectColor ()
 {
   for (int i = 0; i < numberof (cust); i++)
     {
-      char name[16];
-      sprintf (name, "%s%d", cfgCustColor, i);
+      TCHAR name[16];
+      _stprintf (name, _T("%s%d"), cfgCustColor, i);
       write_conf (cfgColors, name, cust[i], 1);
     }
   flush_conf ();
@@ -182,11 +182,11 @@ void
 SelectColor::draw_combo (DRAWITEMSTRUCT *dis)
 {
   if (dis->itemID == UINT (-1))
-    paint_color_list (dis, "", RGB (0, 0, 0));
+    paint_color_list (dis, _T(""), RGB (0, 0, 0));
   else
     {
-      char b[256];
-      if (!LoadString (app.hinst, dis->itemData, b, sizeof b))
+      TCHAR b[256];
+      if (!LoadString (app.hinst, dis->itemData, b, _countof (b)))
         *b = 0;
       paint_color_list (dis, b, GetSysColor (dis->itemData - IDS_COLOR_SCROLLBAR));
     }
@@ -505,17 +505,17 @@ ChangeColorsPageP::draw_item (int id, DRAWITEMSTRUCT *dis)
     {
     case IDC_COLOR_LIST:
       if (dis->itemID == UINT (-1))
-        paint_color_list (dis, "", RGB (0, 0, 0));
+        paint_color_list (dis, _T(""), RGB (0, 0, 0));
       else if (prop_fg_p (dis->itemData))
         {
-          char b[32];
-          sprintf (b, "•¶Žš%d", dis->itemData - PROP_FG_OFFSET + 1);
+          TCHAR b[32];
+          _stprintf (b, _T("•¶Žš%d"), dis->itemData - PROP_FG_OFFSET + 1);
           paint_color_list (dis, b, ccp_curcc[dis->itemData]);
         }
       else if (prop_bg_p (dis->itemData))
         {
-          char b[32];
-          sprintf (b, "”wŒi%d", dis->itemData - PROP_BG_OFFSET + 1);
+          TCHAR b[32];
+          _stprintf (b, _T("”wŒi%d"), dis->itemData - PROP_BG_OFFSET + 1);
           paint_color_list (dis, b, ccp_curcc[dis->itemData]);
         }
       else if (misc_p (dis->itemData))
@@ -602,8 +602,8 @@ ChooseFontPage::notify_color (int n)
 int
 ChooseFontPage::get_result ()
 {
-  char b[128];
-  if (!GetDlgItemText (ccp_hwnd, IDC_LSP, b, sizeof b))
+  TCHAR b[128];
+  if (!GetDlgItemText (ccp_hwnd, IDC_LSP, b, _countof (b)))
     *b = 0;
   int lsp;
   if (!check_integer_format (b, &lsp) || lsp < 0 || lsp > 30)
@@ -635,7 +635,7 @@ ChooseFontPage::get_result ()
   for (i = 0; i < FONT_MAX; i++)
     if (cfp_font.cf_param.fs_logfont[i].lfHeight != cfp_param.fs_logfont[i].lfHeight
         || cfp_font.cf_param.fs_logfont[i].lfCharSet != cfp_param.fs_logfont[i].lfCharSet
-        || strcmp (cfp_font.cf_param.fs_logfont[i].lfFaceName, cfp_param.fs_logfont[i].lfFaceName))
+        || _tcscmp (cfp_font.cf_param.fs_logfont[i].lfFaceName, cfp_param.fs_logfont[i].lfFaceName))
       {
         cfp_param.fs_logfont[i] = cfp_font.cf_param.fs_logfont[i];
         ccp_modified = 1;

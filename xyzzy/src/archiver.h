@@ -3,6 +3,8 @@
 
 # include "arc-if.h"
 
+# ifndef UNICODE
+
 class ArchiverP
 {
 public:
@@ -225,5 +227,7 @@ public:
   static int config_dialog (const ArchiverP &, HWND hwnd, int mode);
   const ArchiverP *get (lisp) const;
 };
+
+# endif /* UNICODE */
 
 #endif

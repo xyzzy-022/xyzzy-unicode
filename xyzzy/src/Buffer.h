@@ -34,9 +34,9 @@ enum wcolor_index
 
 struct wcolor_index_name
 {
-  const char *name;
+  const TCHAR *name;
   COLORREF rgb;
-  const char *display_name;
+  const TCHAR *display_name;
 };
 
 extern const wcolor_index_name wcolor_index_names[];
@@ -627,23 +627,23 @@ struct Buffer
   void unlink_list () const;
   static Buffer *find_buffer (const Char *, int, long);
   static Buffer *find_buffer (lisp, long, int);
-  static Buffer *make_internal_buffer (const char *);
+  static Buffer *make_internal_buffer (const TCHAR *);
   void set_local_variable (lisp, lisp);
   void make_local_variable (lisp);
 
   Chunk *read_chunk (ReadFileContext &, xread_stream &);
   int read_file_contents (ReadFileContext &, xread_stream &);
-  int read_file_contents (ReadFileContext &, const char *, int, int);
-  int write_region (const char *, point_t, point_t, int, write_region_param &);
+  int read_file_contents (ReadFileContext &, const TCHAR *, int, int);
+  int write_region (const TCHAR *, point_t, point_t, int, write_region_param &);
   int write_region (xwrite_stream &, xwrite_buffer &, int &);
   void init_write_region_param (write_region_param &, lisp, lisp) const;
 
   int readin_chunk (ReadFileContext &, xread_stream &);
-  int readin_chunk (ReadFileContext &, const char *);
+  int readin_chunk (ReadFileContext &, const TCHAR *);
 
-  int make_auto_save_file_name (char *);
+  int make_auto_save_file_name (TCHAR *);
   void delete_auto_save_file ();
-  int make_backup_file_name (char *, const char *);
+  int make_backup_file_name (TCHAR *, const TCHAR *);
   lisp save_buffer (lisp encoding, lisp eol);
 
   void goto_char (Point &, point_t) const;
@@ -684,8 +684,8 @@ struct Buffer
   point_t coerce_to_point (lisp) const;
   point_t coerce_to_restricted_point (lisp) const;
   static Buffer *coerce_to_buffer (lisp);
-  char *buffer_name (char *, char *) const;
-  char *quoted_buffer_name (char *, char *, int, int) const;
+  TCHAR *buffer_name (TCHAR *, TCHAR *) const;
+  TCHAR *quoted_buffer_name (TCHAR *, TCHAR *, int, int) const;
   void modify_mode_line () const;
   void modify_buffer_bar ()
     {
@@ -759,7 +759,7 @@ struct Buffer
 
   void refresh_title_bar () const;
   void set_frame_title (int);
-  char *store_title (lisp, char *, char *) const;
+  TCHAR *store_title (lisp, TCHAR *, TCHAR *) const;
 
   void change_colors (const XCOLORREF *);
 

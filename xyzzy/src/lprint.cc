@@ -4,17 +4,18 @@
 #include <math.h>
 #include <float.h>
 #include <stdarg.h>
+#include "oleconv.h"
 
-char upcase_digit_char[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-char downcase_digit_char[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+TCHAR upcase_digit_char[] = _T("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+TCHAR downcase_digit_char[] = _T("0123456789abcdefghijklmnopqrstuvwxyz");
 
 static int special_condition_report (wStream &, lisp);
 
 struct fmt_float
 {
-  char buf[DBL_DIG + 16];
-  char *b0;
-  char *be;
+  TCHAR buf[DBL_DIG + 16];
+  TCHAR *b0;
+  TCHAR *be;
   int sign;
   int exp;
   int fmt;
@@ -42,9 +43,10 @@ fmt_float::fmt_float (lisp lnumber)
 
   if (_finite (number))
     {
-      char *buf1 = buf + 1;
-      for (be = stpcpy (buf1, _ecvt (number, prec, &exp, &sign));
-           be > buf1 && be[-1] == '0'; be--)
+      USES_CONVERSION;
+      TCHAR *buf1 = buf + 1;
+      for (be = stpcpy (buf1, A2T (_ecvt (number, prec, &exp, &sign)));
+           be > buf1 && be[-1] == _T('0'); be--)
         ;
       b0 = buf1;
       *be = 0;
@@ -56,15 +58,15 @@ fmt_float::fmt_float (lisp lnumber)
       switch (_fpclass (number))
         {
         case _FPCLASS_NINF:
-          strcpy (buf, "#<-Inf>");
+          _tcscpy (buf, _T("#<-Inf>"));
           break;
 
         case _FPCLASS_PINF:
-          strcpy (buf, "#<+Inf>");
+          _tcscpy (buf, _T("#<+Inf>"));
           break;
 
         default:
-          strcpy (buf, "#<NaN>");
+          _tcscpy (buf, _T("#<NaN>"));
           break;
         }
       b0 = 0;
@@ -77,14 +79,14 @@ fmt_float::round (int d)
   if (d < 0 || d >= be - b0)
     return;
   be = b0 + d;
-  char *b = be;
-  if (*b >= '5')
+  TCHAR *b = be;
+  if (*b >= _T('5'))
     {
-      b0[-1] = '0';
+      b0[-1] = _T('0');
       while (1)
         {
           b--;
-          if (*b == '9')
+          if (*b == _T('9'))
             be--;
           else
             {
@@ -98,7 +100,7 @@ fmt_float::round (int d)
           exp++;
         }
     }
-  for (; be > b0 && be[-1] == '0'; be--)
+  for (; be > b0 && be[-1] == _T('0'); be--)
     ;
   *be = 0;
   return;
@@ -110,12 +112,12 @@ fmt_float::roundf (int d)
   round (d + 1 + exp);
 }
 
-static char *
-store_uint (char *b, u_int n)
+static TCHAR *
+store_uint (TCHAR *b, u_int n)
 {
   *--b = 0;
   do
-    *--b = '0' + n % 10;
+    *--b = _T('0') + n % 10;
   while (n /= 10);
   return b;
 }
@@ -327,19 +329,19 @@ print_circle::find (wStream &stream, lisp object, int need_dot) const
     return circle_object::single;
 
   if (need_dot)
-    stream.add (". ");
-  stream.add ('#');
-  char buf[32];
-  stream.add (store_uint (buf + sizeof buf, p->f & ~circle_object::shared));
+    stream.add (_T(". "));
+  stream.add (_T('#'));
+  TCHAR buf[32];
+  stream.add (store_uint (buf + _countof (buf), p->f & ~circle_object::shared));
   if (p->f & circle_object::shared)
     {
-      stream.add ('=');
+      stream.add (_T('='));
       p->f &= ~circle_object::shared;
       return circle_object::shared;
     }
   else
     {
-      stream.add ('#');
+      stream.add (_T('#'));
       return circle_object::referenced;
     }
 }
@@ -437,20 +439,20 @@ static void print_sexp (wStream &, const print_control &, lisp, int);
 static void
 print_object_address (wStream &stream, lisp object)
 {
-  char buf[32];
-  char *b = store_uint (buf + sizeof buf, pointer_t (object));
-  *--b = ' ';
+  TCHAR buf[32];
+  TCHAR *b = store_uint (buf + _countof (buf), pointer_t (object));
+  *--b = _T(' ');
   stream.add (b);
 }
 
 static void
-print_unreadable_object (wStream &stream, lisp object, const char *string)
+print_unreadable_object (wStream &stream, lisp object, const TCHAR *string)
 {
-  stream.add ('#');
-  stream.add ('<');
+  stream.add (_T('#'));
+  stream.add (_T('<'));
   stream.add (string);
   print_object_address (stream, object);
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 static int
@@ -461,9 +463,9 @@ print_list_pretty (wStream &stream, const print_control &pc, lisp object, int le
   if (!consp (object) || xcdr (object) != Qnil)
     return 0;
   if (x == Qquote)
-    stream.add ('\'');
+    stream.add (_T('\''));
   else if (x == Qfunction)
-    stream.add ("#'");
+    stream.add (_T("#'"));
   else
     return 0;
   print_sexp (stream, pc, xcar (object), level);
@@ -477,17 +479,17 @@ print_list (wStream &stream, const print_control &pc, lisp object, int level)
     return;
   if (!pc.readably && pc.level >= 0 && level > pc.level)
     {
-      stream.add ('#');
+      stream.add (_T('#'));
       return;
     }
-  stream.add ('(');
+  stream.add (_T('('));
   int braces = 1;
   int l = 0;
   while (1)
     {
       if (!pc.readably && pc.length >= 0 && l >= pc.length)
         {
-          stream.add ("...");
+          stream.add (_T("..."));
           l = -1;
           break;
         }
@@ -496,7 +498,7 @@ print_list (wStream &stream, const print_control &pc, lisp object, int level)
       if (!consp (object))
         break;
       l++;
-      stream.add (' ');
+      stream.add (_T(' '));
       if (pc.circle)
         {
           int f = pc.pr_circle->find (stream, object, 1);
@@ -507,7 +509,7 @@ print_list (wStream &stream, const print_control &pc, lisp object, int level)
             }
           if (f == circle_object::shared)
             {
-              stream.add ('(');
+              stream.add (_T('('));
               braces++;
             }
         }
@@ -515,7 +517,7 @@ print_list (wStream &stream, const print_control &pc, lisp object, int level)
     }
   if (object != Qnil && l >= 0)
     {
-      stream.add (" . ");
+      stream.add (_T(" . "));
       print_sexp (stream, pc, object, level);
     }
   stream.fill (')', braces);
@@ -594,7 +596,7 @@ print_symbol_name (wStream &stream, const print_control &pc, lisp object)
   lisp readtab = current_readtable ();
   int escape = symbol_name_need_escape_p (readtab, pc, object);
   if (escape)
-    stream.add ('|');
+    stream.add (_T('|'));
 
   for (const Char *p = xstring_contents (object), *pe = p + xstring_length (object);
        p < pe; p++)
@@ -604,14 +606,14 @@ print_symbol_name (wStream &stream, const print_control &pc, lisp object)
         case SCT_ILLEGAL:
         case SCT_SINGLE_ESCAPE:
         case SCT_MULTIPLE_ESCAPE:
-          stream.add ('\\');
+          stream.add (_T('\\'));
           break;
         }
       stream.add (*p);
     }
 
   if (escape)
-    stream.add ('|');
+    stream.add (_T('|'));
 }
 
 static void
@@ -624,14 +626,14 @@ print_symbol (wStream &stream, const print_control &pc, lisp object)
     {
       lisp package = xsymbol_package (object);
       if (package == Qnil)
-        stream.add ("#:");
+        stream.add (_T("#:"));
       else if (package == xsymbol_value (Vkeyword_package))
-        stream.add (':');
+        stream.add (_T(':'));
       else if (Ffind_symbol (xsymbol_name (object), 0) != object
                || multiple_value::value (1) == Qnil)
         {
           if (xpackage_name (package) == Qnil)
-            stream.add ('#:');
+            stream.add (_T("#:"));
           else
             {
               print_symbol_name (stream, pc, xpackage_name (package));
@@ -640,9 +642,9 @@ print_symbol (wStream &stream, const print_control &pc, lisp object)
                                         Ecannot_access_symbol_from_home_package,
                                         object);
               else if (multiple_value::value (1) == Kinternal)
-                stream.add ("::");
+                stream.add (_T("::"));
               else if (multiple_value::value (1) == Kexternal)
-                stream.add (':');
+                stream.add (_T(':'));
               else
                 FEsimple_package_error (package,
                                         Ecannot_access_symbol_from_home_package,
@@ -670,8 +672,8 @@ print_integer_width (const print_control &pc, lisp linteger)
   return print_integer_width (linteger, pc.base);
 }
 
-static char *
-print_integer (char *b, lisp linteger, int base, int sign, int radix)
+static TCHAR *
+print_integer (TCHAR *b, lisp linteger, int base, int sign, int radix)
 {
   assert (base >= 2 && base <= 36);
   if (bignump (linteger))
@@ -681,38 +683,38 @@ print_integer (char *b, lisp linteger, int base, int sign, int radix)
                                               : downcase_digit_char));
   *--b = 0;
   if (base == 10 && radix)
-    *--b = '.';
+    *--b = _T('.');
   long value = fixnum_value (linteger);
   u_long v = value < 0 ? -value : value;
-  const char *x = radix ? upcase_digit_char : downcase_digit_char;
+  const TCHAR *x = radix ? upcase_digit_char : downcase_digit_char;
   do
     *--b = x[v % base];
   while (v /= base);
   if (value < 0)
-    *--b = '-';
+    *--b = _T('-');
   else if (sign)
-    *--b = '+';
+    *--b = _T('+');
   return b;
 }
 
-static char *
-print_base_spec (char *b, int base, int fractp)
+static TCHAR *
+print_base_spec (TCHAR *b, int base, int fractp)
 {
   switch (base)
     {
     case 2:
-      *--b = 'b';
-      *--b = '#';
+      *--b = _T('b');
+      *--b = _T('#');
       break;
 
     case 8:
-      *--b = 'o';
-      *--b = '#';
+      *--b = _T('o');
+      *--b = _T('#');
       break;
 
     case 16:
-      *--b = 'x';
-      *--b = '#';
+      *--b = _T('x');
+      *--b = _T('#');
       break;
 
     case 10:
@@ -720,17 +722,17 @@ print_base_spec (char *b, int base, int fractp)
         break;
       /* fall thru... */
     default:
-      *--b = 'r';
-      *--b = base % 10 + '0';
+      *--b = _T('r');
+      *--b = base % 10 + _T('0');
       if (base >= 10)
-        *--b = base / 10 + '0';
-      *--b = '#';
+        *--b = base / 10 + _T('0');
+      *--b = _T('#');
     }
   return b;
 }
 
-static char *
-print_integer (char *b, const print_control &pc, lisp linteger, int sign)
+static TCHAR *
+print_integer (TCHAR *b, const print_control &pc, lisp linteger, int sign)
 {
   assert (pc.base >= 2 && pc.base <= 36);
   b = print_integer (b, linteger, pc.base, sign, pc.radix);
@@ -743,7 +745,7 @@ static void
 print_integer (wStream &stream, const print_control &pc, lisp linteger)
 {
   int w = print_integer_width (pc, linteger);
-  char *b = (char *)alloca (w);
+  TCHAR *b = (TCHAR *)alloca (w * sizeof TCHAR);
   stream.add (print_integer (b + w, pc, linteger, 0));
 }
 
@@ -753,11 +755,11 @@ print_fraction (wStream &stream, const print_control &pc, lisp object)
   int w = max (max (print_integer_width (pc, xfract_num (object)),
                     print_integer_width (pc, xfract_den (object))),
                10);
-  char *b = (char *)alloca (w);
+  TCHAR *b = (TCHAR *)alloca (w * sizeof TCHAR);
   if (pc.radix)
     stream.add (print_base_spec (b + w, pc.base, 1));
   stream.add (print_integer (b + w, xfract_num (object), pc.base, 0, pc.radix));
-  stream.add ('/');
+  stream.add (_T('/'));
   stream.add (print_integer (b + w, xfract_den (object), pc.base, 0, pc.radix));
 }
 
@@ -770,58 +772,58 @@ print_flonum (wStream &stream, const print_control &, lisp lnumber)
     stream.add (f.buf);
   else if (f.b0 == f.be)
     {
-      stream.add ("0.0");
+      stream.add (_T("0.0"));
       if (f.fmt != default_float_format ())
         {
           stream.add (f.fmt & ~NF_FLOAT);
-          stream.add ('0');
+          stream.add (_T('0'));
         }
     }
   else
     {
       if (f.sign < 0)
-        stream.add ('-');
+        stream.add (_T('-'));
       if (f.exp >= -3 && f.exp < 7)
         {
           if (f.exp < 0)
             {
-              stream.add ('0');
-              stream.add ('.');
-              stream.fill ('0', -1 - f.exp);
+              stream.add (_T('0'));
+              stream.add (_T('.'));
+              stream.fill (_T('0'), -1 - f.exp);
               stream.add (f.b0);
             }
           else
             {
-              char *b = f.b0;
+              TCHAR *b = f.b0;
               for (int i = -1; i < f.exp && *b; i++, b++)
                 stream.add (*b);
-              stream.fill ('0', f.exp - i);
-              stream.add ('.');
+              stream.fill (_T('0'), f.exp - i);
+              stream.add (_T('.'));
               if (*b)
                 stream.add (b);
               else
-                stream.add ('0');
+                stream.add (_T('0'));
             }
           if (f.fmt != default_float_format ())
             {
               stream.add (f.fmt & ~NF_FLOAT);
-              stream.add ('0');
+              stream.add (_T('0'));
             }
         }
       else
         {
           stream.add (*f.b0);
-          stream.add ('.');
+          stream.add (_T('.'));
           if (f.b0[1])
             stream.add (f.b0 + 1);
           else
-            stream.add ('0');
+            stream.add (_T('0'));
           if (f.fmt != default_float_format ())
             stream.add (f.fmt & ~NF_FLOAT);
           else
-            stream.add ('e');
-          char b[10];
-          sprintf (b, "%d", f.exp);
+            stream.add (_T('e'));
+          TCHAR b[10];
+          _stprintf (b, _T("%d"), f.exp);
           stream.add (b);
         }
     }
@@ -830,11 +832,11 @@ print_flonum (wStream &stream, const print_control &, lisp lnumber)
 static void
 print_complex (wStream &stream, const print_control &pc, lisp c)
 {
-  stream.add ("#C(");
+  stream.add (_T("#C("));
   print_sexp (stream, pc, xcomplex_real (c), 0);
-  stream.add (' ');
+  stream.add (_T(' '));
   print_sexp (stream, pc, xcomplex_imag (c), 0);
-  stream.add (')');
+  stream.add (_T(')'));
 }
 
 static void
@@ -846,7 +848,7 @@ quote_char (wStream &stream, Char c)
     case SCT_TERM_MACRO:
     case SCT_SINGLE_ESCAPE:
     case SCT_MULTIPLE_ESCAPE:
-      stream.add ('\\');
+      stream.add (_T('\\'));
       break;
     }
 }
@@ -871,9 +873,9 @@ print_char (wStream &stream, Char c, int escape)
     {
       if (pseudo_ctlchar_p (c))
         {
-          stream.add ("C-");
+          stream.add (_T("C-"));
           if (meta)
-            stream.add ("M-");
+            stream.add (_T("M-"));
           c = pseudo_ctl2char_table[c & 0xff];
           if (escape)
             quote_char (stream, c);
@@ -882,12 +884,12 @@ print_char (wStream &stream, Char c, int escape)
       else
         {
           if (c & CCF_SHIFT_BIT)
-            stream.add ("S-");
+            stream.add (_T("S-"));
           if (c & CCF_CTRL_BIT)
-            stream.add ("C-");
+            stream.add (_T("C-"));
           if (meta)
-            stream.add ("M-");
-          const char *p = function_Char2name (c & ~(CCF_SHIFT_BIT | CCF_CTRL_BIT));
+            stream.add (_T("M-"));
+          const TCHAR *p = function_Char2name (c & ~(CCF_SHIFT_BIT | CCF_CTRL_BIT));
           if (p)
             stream.add (p);
           else
@@ -896,33 +898,38 @@ print_char (wStream &stream, Char c, int escape)
     }
   else
     {
-      const char *p = standard_Char2name (c);
+      const TCHAR *p = standard_Char2name (c);
       if (p)
         {
           if (meta)
-            stream.add ("M-");
+            stream.add (_T("M-"));
           stream.add (p);
         }
       else
         {
           int quote = 0;
-          if (c < ' ')
+          if (c < _T(' '))
             {
-              stream.add ("C-");
-              c = _char_downcase (c + '@');
+              stream.add (_T("C-"));
+              c = _char_downcase (c + _T('@'));
               quote = 1;
             }
           else if (c == CC_DEL)
             {
-              stream.add ("C-");
-              c = '?';
+              stream.add (_T("C-"));
+              c = _T('?');
             }
           if (meta)
             {
-              stream.add ("M-");
+              stream.add (_T("M-"));
               quote = 1;
             }
 
+#ifdef UNICODE
+          if (escape && quote)
+              quote_char(stream, c);
+          stream.add(c);
+#else
           if (DBCP (c))
             {
               if (!escape || SJISP (c >> 8))
@@ -951,6 +958,7 @@ print_char (wStream &stream, Char c, int escape)
                   stream.add (c);
                 }
             }
+#endif
         }
     }
 }
@@ -960,7 +968,7 @@ print_char (wStream &stream, const print_control &pc, Char c)
 {
   if (pc.readably || pc.escape)
     {
-      stream.add ("#\\");
+      stream.add (_T("#\\"));
       print_char (stream, c, 1);
     }
   else
@@ -974,11 +982,16 @@ print_string (wStream &stream, const print_control &pc, lisp object)
     stream.add (xstring_contents (object), xstring_length (object));
   else
     {
-      stream.add ('"');
+      stream.add (_T('"'));
       for (const Char *p = xstring_contents (object), *pe = p + xstring_length (object);
            p < pe; p++)
         {
           Char c = *p;
+#ifdef UNICODE
+          if (c == _T('"') || c == _T('\\'))
+            stream.add (_T('\\'));
+          stream.add (c);
+#else
           if (DBCP (c))
             {
               if (SJISP (c >> 8))
@@ -1009,8 +1022,9 @@ print_string (wStream &stream, const print_control &pc, lisp object)
                   stream.add (c);
                 }
             }
+#endif
         }
-      stream.add ('"');
+      stream.add (_T('"'));
     }
 }
 
@@ -1019,12 +1033,12 @@ print_vector (wStream &stream, const print_control &pc, lisp object, int level)
 {
   if (!pc.readably && pc.level >= 0 && level > pc.level)
     {
-      stream.add ('#');
+      stream.add (_T('#'));
       return;
     }
   const lisp *v = xvector_contents (object);
   int l = xvector_length (object);
-  stream.add ("#(");
+  stream.add (_T("#("));
   if (l)
     {
       if (pc.readably || pc.length < 0 || l < pc.length)
@@ -1032,7 +1046,7 @@ print_vector (wStream &stream, const print_control &pc, lisp object, int level)
           for (int i = 1; i < l; i++, v++)
             {
               print_sexp (stream, pc, *v, level);
-              stream.add (' ');
+              stream.add (_T(' '));
             }
           print_sexp (stream, pc, *v, level);
         }
@@ -1041,30 +1055,30 @@ print_vector (wStream &stream, const print_control &pc, lisp object, int level)
           for (int i = 0; i < pc.length; i++, v++)
             {
               print_sexp (stream, pc, *v, level);
-              stream.add (' ');
+              stream.add (_T(' '));
             }
-          stream.add ("...");
+          stream.add (_T("..."));
         }
     }
-  stream.add (')');
+  stream.add (_T(')'));
 }
 
 static void
 print_empty_array (wStream &stream, const print_control &pc, lisp object)
 {
   if (!pc.readably && !pc.escape)
-    print_unreadable_object (stream, object, "array");
+    print_unreadable_object (stream, object, _T("array"));
   else
     {
-      stream.add ("#.(make-array '(");
-      char buf[32];
+      stream.add (_T("#.(make-array '("));
+      TCHAR buf[32];
       for (int i = 0; i < xarray_rank (object); i++)
         {
           if (i)
-            stream.add (' ');
-          stream.add (store_uint (buf + sizeof buf, xarray_dims (object) [i]));
+            stream.add (_T(' '));
+          stream.add (store_uint (buf + _countof (buf), xarray_dims (object) [i]));
         }
-      stream.add ("))");
+      stream.add (_T("))"));
     }
 }
 
@@ -1083,7 +1097,7 @@ print_omitted_array (wStream &stream, const print_control &pc,
 
   if (!rank)
     {
-      stream.add ('#');
+      stream.add (_T('#'));
       return;
     }
 
@@ -1096,7 +1110,7 @@ print_omitted_array (wStream &stream, const print_control &pc,
     {
       for (int j = rank - 1; j >= 0; j--)
         if (!subscripts[j])
-          stream.add ('(');
+          stream.add (_T('('));
         else
           break;
 
@@ -1104,22 +1118,22 @@ print_omitted_array (wStream &stream, const print_control &pc,
       if (!pc.readably && pc.length >= 0 && i % dim_n >= pc.length)
         {
           if (i % dim_n == pc.length)
-            stream.add ("...");
+            stream.add (_T("..."));
           spc = 0;
         }
       else
-        stream.add ('#');
+        stream.add (_T('#'));
       for (j = rank - 1; j >= 0; j--)
         {
           subscripts[j]++;
           if (subscripts[j] < xarray_dims (object) [j])
             break;
           subscripts[j] = 0;
-          stream.add (')');
+          stream.add (_T(')'));
           spc = 1;
         }
       if (j >= 0 && spc)
-        stream.add (' ');
+        stream.add (_T(' '));
     }
 }
 
@@ -1134,10 +1148,10 @@ print_array (wStream &stream, const print_control &pc,
       return;
     }
 
-  stream.add ('#');
-  char buf[32];
-  stream.add (store_uint (buf + sizeof buf, xarray_rank (object)));
-  stream.add ('A');
+  stream.add (_T('#'));
+  TCHAR buf[32];
+  stream.add (store_uint (buf + _countof (buf), xarray_rank (object)));
+  stream.add (_T('A'));
 
   level += xarray_rank (object);
   if (!pc.readably && pc.level >= 0 && level > pc.level)
@@ -1158,7 +1172,7 @@ print_array (wStream &stream, const print_control &pc,
     {
       for (int j = xarray_rank (object) - 1; j >= 0; j--)
         if (!subscripts[j])
-          stream.add ('(');
+          stream.add (_T('('));
         else
           break;
 
@@ -1166,7 +1180,7 @@ print_array (wStream &stream, const print_control &pc,
       if (!pc.readably && pc.length >= 0 && i % dim_n >= pc.length)
         {
           if (i % dim_n == pc.length)
-            stream.add ("...");
+            stream.add (_T("..."));
           spc = 0;
         }
       else
@@ -1191,11 +1205,11 @@ print_array (wStream &stream, const print_control &pc,
           if (subscripts[j] < xarray_dims (object) [j])
             break;
           subscripts[j] = 0;
-          stream.add (')');
+          stream.add (_T(')'));
           spc = 1;
         }
       if (j >= 0 && spc)
-        stream.add (' ');
+        stream.add (_T(' '));
     }
 }
 
@@ -1215,26 +1229,26 @@ simple_print_string (wStream &stream, lisp string)
 static void
 print_function (wStream &stream, const print_control &, lisp object)
 {
-  stream.add ("#<function: ");
+  stream.add (_T("#<function: "));
   simple_print_string (stream, xfunction_name (object));
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 static void
 print_closure (wStream &stream, const print_control &pc, lisp object)
 {
-  stream.add ("#<lexical-closure: ");
+  stream.add (_T("#<lexical-closure: "));
   if (xclosure_name (object) == Qnil)
-    stream.add ("(anonymous)");
+    stream.add (_T("(anonymous)"));
   else
     print_sexp (stream, pc, xclosure_name (object), 0);
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 static inline void
 print_hash_table (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "hashtable");
+  print_unreadable_object (stream, object, _T("hashtable"));
 }
 
 static void
@@ -1243,8 +1257,8 @@ print_file_stream_pathname (wStream &stream, lisp object)
   if (stringp (xfile_stream_pathname (object)))
     simple_print_string (stream, xfile_stream_pathname (object));
   else
-    stream.add ('-');
-  stream.add ('>');
+    stream.add (_T('-'));
+  stream.add (_T('>'));
 }
 
 static void
@@ -1253,74 +1267,74 @@ print_stream (wStream &stream, const print_control &, lisp object)
   switch (xstream_type (object))
     {
     case st_file_input:
-      stream.add ("#<file-input stream: ");
+      stream.add (_T("#<file-input stream: "));
       print_file_stream_pathname (stream, object);
       break;
 
     case st_file_output:
-      stream.add ("#<file-output stream: ");
+      stream.add (_T("#<file-output stream: "));
       print_file_stream_pathname (stream, object);
       break;
 
     case st_file_io:
-      stream.add ("#<file-io stream: ");
+      stream.add (_T("#<file-io stream: "));
       print_file_stream_pathname (stream, object);
       break;
 
     case st_string_input:
-      print_unreadable_object (stream, object, "string-input stream");
+      print_unreadable_object (stream, object, _T("string-input stream"));
       break;
 
     case st_string_output:
-      print_unreadable_object (stream, object, "string-output stream");
+      print_unreadable_object (stream, object, _T("string-output stream"));
       break;
 
     case st_synonym:
-      print_unreadable_object (stream, object, "synonym stream");
+      print_unreadable_object (stream, object, _T("synonym stream"));
       break;
 
     case st_broadcast:
-      print_unreadable_object (stream, object, "broadcast stream");
+      print_unreadable_object (stream, object, _T("broadcast stream"));
       break;
 
     case st_concatenated:
-      print_unreadable_object (stream, object, "concatenated stream");
+      print_unreadable_object (stream, object, _T("concatenated stream"));
       break;
 
     case st_two_way:
-      print_unreadable_object (stream, object, "two-way stream");
+      print_unreadable_object (stream, object, _T("two-way stream"));
       break;
 
     case st_echo:
-      print_unreadable_object (stream, object, "echo stream");
+      print_unreadable_object (stream, object, _T("echo stream"));
       break;
 
     case st_status:
-      print_unreadable_object (stream, object, "status window stream");
+      print_unreadable_object (stream, object, _T("status window stream"));
       break;
 
     case st_buffer:
-      print_unreadable_object (stream, object, "buffer stream");
+      print_unreadable_object (stream, object, _T("buffer stream"));
       break;
 
     case st_keyboard:
-      print_unreadable_object (stream, object, "keyboard stream");
+      print_unreadable_object (stream, object, _T("keyboard stream"));
       break;
 
     case st_wstream:
-      print_unreadable_object (stream, object, "stream");
+      print_unreadable_object (stream, object, _T("stream"));
       break;
 
     case st_socket:
-      print_unreadable_object (stream, object, "socket-stream");
+      print_unreadable_object (stream, object, _T("socket-stream"));
       break;
 
     case st_general_input:
-      print_unreadable_object (stream, object, "general-input-stream");
+      print_unreadable_object (stream, object, _T("general-input-stream"));
       break;
 
     case st_general_output:
-      print_unreadable_object (stream, object, "general-output-stream");
+      print_unreadable_object (stream, object, _T("general-output-stream"));
       break;
 
     default:
@@ -1332,35 +1346,35 @@ print_stream (wStream &stream, const print_control &, lisp object)
 static void
 print_package (wStream &stream, const print_control &, lisp object)
 {
-  stream.add ("#<package: ");
+  stream.add (_T("#<package: "));
   if (stringp (xpackage_name (object)))
     simple_print_string (stream, xpackage_name (object));
   else
-    stream.add ("anonymous");
-  stream.add ('>');
+    stream.add (_T("anonymous"));
+  stream.add (_T('>'));
 }
 
 static void
 print_error (wStream &stream, const print_control &, lisp object)
 {
   if (xerror_type (object) == CRTL_ERROR)
-    stream.add (strerror (xerror_number (object)));
+    stream.add (_tcserror (xerror_number (object)));
   else
     {
-      const char *s = sock::errmsg (xerror_number (object));
+      const TCHAR *s = sock::errmsg (xerror_number (object));
       if (s)
         stream.add (s);
       else
         {
-          char buf[1024];
-          static char *args[] = {"", "", "", "", 0,};
+          TCHAR buf[1024];
+          static DWORD_PTR args[] = {(DWORD_PTR)_T(""), (DWORD_PTR)_T(""), (DWORD_PTR)_T(""), (DWORD_PTR)_T(""), 0,};
           if (!FormatMessage ((FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY
                                | FORMAT_MESSAGE_MAX_WIDTH_MASK),
                               0, xerror_number (object), GetUserDefaultLangID (),
-                              buf, sizeof buf, args))
+                              buf, _countof (buf), (va_list *)&args))
             *buf = 0;
           if (!*buf)
-            wsprintf (buf, "Undocumented win32 error: %d", xerror_number (object));
+            wsprintf (buf, _T("Undocumented win32 error: %d"), xerror_number (object));
           stream.add (buf);
         }
     }
@@ -1369,23 +1383,23 @@ print_error (wStream &stream, const print_control &, lisp object)
 static void
 print_random_state (wStream &stream, const print_control &, lisp object)
 {
-  char buf[32];
-  stream.add ("#S(random-state data #(");
-  stream.add (store_uint (buf + sizeof buf, xrandom_state_object (object).index));
+  TCHAR buf[32];
+  stream.add (_T("#S(random-state data #("));
+  stream.add (store_uint (buf + _countof (buf), xrandom_state_object (object).index));
   for (int i = 0; i < Random::INDEX_MAX; i++)
     {
-      stream.add (' ');
-      stream.add (store_uint (buf + sizeof buf, xrandom_state_object (object).X[i]));
+      stream.add (_T(' '));
+      stream.add (store_uint (buf + _countof (buf), xrandom_state_object (object).X[i]));
     }
-  stream.add ("))");
+  stream.add (_T("))"));
 }
 
 static void
 print_struct_def (wStream &stream, const print_control &, lisp object)
 {
-  stream.add ("#<structure-definition: ");
+  stream.add (_T("#<structure-definition: "));
   simple_print_string (stream, xsymbol_name (xstrdef_name (object)));
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 class wstream_stream
@@ -1414,17 +1428,17 @@ print_struct_data (wStream &stream, const print_control &pc,
   if (pc.readably || pc.escape
       || (xstrdef_print_function (def) == Qnil && !condp))
     {
-      stream.add ("#S(");
+      stream.add (_T("#S("));
       print_sexp (stream, pc, xstrdef_name (def), level);
       int n = min (xstrdata_nslots (object), xstrdef_nslots (def));
       for (int i = 0; i < n; i++)
         {
-          stream.add (' ');
+          stream.add (_T(' '));
           simple_print_string (stream, xsymbol_name (xstrdef_slotdesc (def) [i].name));
-          stream.add (' ');
+          stream.add (_T(' '));
           print_sexp (stream, pc, xstrdata_data (object) [i], level);
         }
-      stream.add (')');
+      stream.add (_T(')'));
     }
   else if (condp)
     {
@@ -1446,7 +1460,7 @@ print_struct_data (wStream &stream, const print_control &pc,
 static inline void
 print_window (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "window");
+  print_unreadable_object (stream, object, _T("window"));
 }
 
 static void
@@ -1455,8 +1469,8 @@ print_buffer_name (wStream &stream, const Buffer *bp)
   simple_print_string (stream, bp->lbuffer_name);
   if (bp->b_version != 1)
     {
-      char b[64];
-      sprintf (b, "<%d>", bp->b_version);
+      TCHAR b[64];
+      _stprintf (b, _T("<%d>"), bp->b_version);
       stream.add (b);
     }
 }
@@ -1465,114 +1479,114 @@ static void
 print_buffer (wStream &stream, const print_control &, lisp object)
 {
   if (!xbuffer_bp (object))
-    print_unreadable_object (stream, object, "deleted-buffer");
+    print_unreadable_object (stream, object, _T("deleted-buffer"));
   else
     {
-      stream.add ("#<buffer: ");
+      stream.add (_T("#<buffer: "));
       print_buffer_name (stream, xbuffer_bp (object));
-      stream.add ('>');
+      stream.add (_T('>'));
     }
 }
 
 static inline void
 print_syntax_table (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "syntax-table");
+  print_unreadable_object (stream, object, _T("syntax-table"));
 }
 
 static void
 print_marker (wStream &stream, const print_control &, lisp object)
 {
   if (!xmarker_buffer (object))
-    print_unreadable_object (stream, object, "deleted-marker");
+    print_unreadable_object (stream, object, _T("deleted-marker"));
   else
     {
-      stream.add ("#<marker: ");
+      stream.add (_T("#<marker: "));
       print_buffer_name (stream, xmarker_buffer (object));
       if (xmarker_point (object) == NO_MARK_SET)
-        stream.add (": -");
+        stream.add (_T(": -"));
       else
         {
-          char b[64];
-          sprintf (b, ": %u", xmarker_point (object));
+          TCHAR b[64];
+          _stprintf (b, _T(": %u"), xmarker_point (object));
           stream.add (b);
         }
-      stream.add ('>');
+      stream.add (_T('>'));
     }
 }
 
 static inline void
 print_regexp (wStream &stream, const print_control &, lisp object)
 {
-  stream.add ("#<compiled regular expression: ");
+  stream.add (_T("#<compiled regular expression: "));
   simple_print_string (stream, xregexp_source (object));
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 static inline void
 print_process (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "process");
+  print_unreadable_object (stream, object, _T("process"));
 }
 
 static inline void
 print_win32_menu (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "menu");
+  print_unreadable_object (stream, object, _T("menu"));
 }
 
 static inline void
 print_win32_dde_handle (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "DDE handle");
+  print_unreadable_object (stream, object, _T("DDE handle"));
 }
 
 static inline void
 print_chunk (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "chunk");
+  print_unreadable_object (stream, object, _T("chunk"));
 }
 
 static inline void
 print_readtable (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "readtable");
+  print_unreadable_object (stream, object, _T("readtable"));
 }
 
 static void
 print_dll_module (wStream &stream, const print_control &, lisp object)
 {
-  stream.add ("#<DLL-module: ");
+  stream.add (_T("#<DLL-module: "));
   simple_print_string (stream, xdll_module_name (object));
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 static void
 print_dll_function (wStream &stream, const print_control &, lisp object)
 {
-  stream.add ("#<c-function: ");
+  stream.add (_T("#<c-function: "));
   simple_print_string (stream, xdll_function_name (object));
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 static void
 print_c_callable (wStream &stream, const print_control &pc, lisp object)
 {
-  stream.add ("#<c-callable: ");
+  stream.add (_T("#<c-callable: "));
   print_sexp (stream, pc, xc_callable_function (object), 0);
-  stream.add ('>');
+  stream.add (_T('>'));
 }
 
 static inline void
 print_oledata (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "oledata");
+  print_unreadable_object (stream, object, _T("oledata"));
 }
 
 static inline void
 print_wait_object (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "wait-object");
+  print_unreadable_object (stream, object, _T("wait-object"));
 }
 
 static void
@@ -1580,23 +1594,23 @@ print_char_encoding (wStream &stream, const print_control &pc, lisp object)
 {
   if (pc.readably || pc.escape)
     {
-      stream.add ("#.");
+      stream.add (_T("#."));
       object = make_char_encoding_constructor (object);
       protect_gc gcpro (object);
       print_sexp (stream, pc, object, 0);
     }
   else
     {
-      stream.add ("#<char-encoding: ");
+      stream.add (_T("#<char-encoding: "));
       simple_print_string (stream, xchar_encoding_name (object));
-      stream.add ('>');
+      stream.add (_T('>'));
     }
 }
 
 static inline void
 print_environment (wStream &stream, const print_control &, lisp object)
 {
-  print_unreadable_object (stream, object, "environment-object");
+  print_unreadable_object (stream, object, _T("environment-object"));
 }
 
 /*GENERIC_FUNCTION*/
@@ -2038,12 +2052,12 @@ Format::s_exp (wStream &stream, Char c)
 
   lisp x = getarg ();
   if (colon && x == Qnil)
-    tem.add ("()");
+    tem.add (_T("()"));
   else
     {
       print_circle circle;
       print_control pc (circle);
-      if (c == 'a')
+      if (c == _T('a'))
         pc.princ ();
       else
         pc.prin1 ();
@@ -2086,9 +2100,9 @@ Format::integer (wStream &stream, lisp linteger, int base, int istart)
 
   print_control pc (base);
   int fmtw = print_integer_width (linteger, base);
-  char *b0 = (char *)alloca (fmtw);
-  char *be = b0 + fmtw;
-  char *b = print_integer (be, pc, linteger, atsign);
+  TCHAR *b0 = (TCHAR *)alloca (fmtw * sizeof TCHAR);
+  TCHAR *be = b0 + fmtw;
+  TCHAR *b = print_integer (be, pc, linteger, atsign);
   int l = be - b - 1;
   if (!colon)
     {
@@ -2161,60 +2175,60 @@ fmt_old_roman (wStream &stream, int n, Char one, Char five)
 static int
 fmt_thousand (wStream &stream, int n, int o, int f)
 {
-  static const char *const numeral[] =
+  static const TCHAR *const numeral[] =
     {
-      "zero", "one", "two", "three", "four",
-      "five", "six", "seven", "eight", "nine",
-      "ten", "eleven", "twelve", "thirteen", "fourteen",
-      "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+      _T("zero"), _T("one"), _T("two"), _T("three"), _T("four"),
+      _T("five"), _T("six"), _T("seven"), _T("eight"), _T("nine"),
+      _T("ten"), _T("eleven"), _T("twelve"), _T("thirteen"), _T("fourteen"),
+      _T("fifteen"), _T("sixteen"), _T("seventeen"), _T("eighteen"), _T("nineteen"),
     };
-  static const char *const numeral_10[] =
+  static const TCHAR *const numeral_10[] =
     {
-      "twenty", "thirty", "forty", "fifty",
-      "sixty", "seventy", "eighty", "ninety",
+      _T("twenty"), _T("thirty"), _T("forty"), _T("fifty"),
+      _T("sixty"), _T("seventy"), _T("eighty"), _T("ninety"),
     };
-  static const char *const ordinal[] =
+  static const TCHAR *const ordinal[] =
     {
-      "zeroth", "first", "second", "third", "fourth",
-      "fifth", "sixth", "seventh", "eighth", "ninth",
-      "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth",
-      "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth",
+      _T("zeroth"), _T("first"), _T("second"), _T("third"), _T("fourth"),
+      _T("fifth"), _T("sixth"), _T("seventh"), _T("eighth"), _T("ninth"),
+      _T("tenth"), _T("eleventh"), _T("twelfth"), _T("thirteenth"), _T("fourteenth"),
+      _T("fifteenth"), _T("sixteenth"), _T("seventeenth"), _T("eighteenth"), _T("nineteenth"),
     };
-  static const char *const ordinal_10[] =
+  static const TCHAR *const ordinal_10[] =
     {
-      "twentieth", "thirtieth", "fortieth", "fiftieth",
-      "sixtieth", "seventieth", "eightieth", "ninetieth",
+      _T("twentieth"), _T("thirtieth"), _T("fortieth"), _T("fiftieth"),
+      _T("sixtieth"), _T("seventieth"), _T("eightieth"), _T("ninetieth"),
     };
 
   if (n >= 100)
     {
       if (f)
-        stream.add (' ');
+        stream.add (_T(' '));
       stream.add (numeral[n / 100]);
-      stream.add (" hundred");
+      stream.add (_T(" hundred"));
       n %= 100;
       if (!n)
         {
           if (o)
-            stream.add ("th");
+            stream.add (_T("th"));
           return 1;
         }
-      stream.add (" and");
+      stream.add (_T(" and"));
       f = 1;
     }
   if (n >= 20)
     {
       if (f)
-        stream.add (' ');
+        stream.add (_T(' '));
       stream.add ((o && !(n % 10) ? ordinal_10 : numeral_10) [n / 10 - 2]);
       n %= 10;
       if (!n)
         return 1;
-      stream.add ('-');
+      stream.add (_T('-'));
       f = 0;
     }
   if (f)
-    stream.add (' ');
+    stream.add (_T(' '));
   stream.add ((o ? ordinal : numeral) [n]);
   return 1;
 }
@@ -2222,10 +2236,10 @@ fmt_thousand (wStream &stream, int n, int o, int f)
 static int
 fmt_x_illion (wStream &stream, int n, int o, int f, int t)
 {
-  static const char *const big_numeral[] =
+  static const TCHAR *const big_numeral[] =
     {
-      "thousand",
-      "million",
+      _T("thousand"),
+      _T("million"),
     };
 
   if (n >= 1000)
@@ -2234,7 +2248,7 @@ fmt_x_illion (wStream &stream, int n, int o, int f, int t)
       n %= 1000;
       if (n)
         {
-          stream.add (',');
+          stream.add (_T(','));
           f = 1;
         }
     }
@@ -2244,7 +2258,7 @@ fmt_x_illion (wStream &stream, int n, int o, int f, int t)
       if (t)
         {
           if (f)
-            stream.add (' ');
+            stream.add (_T(' '));
           stream.add (big_numeral[t - 1]);
           f = 1;
         }
@@ -2301,11 +2315,11 @@ Format::radix (wStream &stream)
           if (m < 1000000000)
             {
               if (!n)
-                stream.add (colon ? "zeroth" : "zero");
+                stream.add (colon ? _T("zeroth") : _T("zero"));
               else
                 {
                   if (n < 0)
-                    stream.add ("minus ");
+                    stream.add (_T("minus "));
                   fmt_x_illion (stream, m, colon, 0, 0);
                 }
               return;
@@ -2325,9 +2339,9 @@ Format::plural (wStream &stream)
     relative_goto (-1);
   int f = Feql (getarg (), make_fixnum (1)) != Qnil;
   if (atsign)
-    stream.add (f ? "y" : "ies");
+    stream.add (f ? _T("y") : _T("ies"));
   else if (!f)
-    stream.add ('s');
+    stream.add (_T('s'));
 }
 
 void
@@ -2341,7 +2355,7 @@ Format::character (wStream &stream)
     print_char (stream, c, 0);
   else if (atsign)
     {
-      stream.add ("#\\");
+      stream.add (_T("#\\"));
       print_char (stream, c, 1);
     }
   else
@@ -2379,7 +2393,7 @@ Format::fixed_format (wStream &stream)
     {
       if (param_is_given (0))
         {
-          int l = strlen (f.buf);
+          int l = _tcslen (f.buf);
           if (l > w && param_is_given (3))
             stream.fill (overflow, w);
           else
@@ -2452,20 +2466,20 @@ Format::fixed_format (wStream &stream)
     }
 
   if (f.sign < 0)
-    stream.add ('-');
+    stream.add (_T('-'));
   else if (atsign)
-    stream.add ('+');
+    stream.add (_T('+'));
 
   if (f.exp < 0)
     {
       if (!no_lead_zero)
-        stream.add ('0');
-      stream.add ('.');
+        stream.add (_T('0'));
+      stream.add (_T('.'));
       m = -1 - f.exp;
       if (m < d)
         {
           stream.fill ('0', m);
-          for (char *b = f.b0; m < d && *b; m++, b++)
+          for (TCHAR *b = f.b0; m < d && *b; m++, b++)
             stream.add (*b);
           stream.fill ('0', d - m);
         }
@@ -2474,11 +2488,11 @@ Format::fixed_format (wStream &stream)
     }
   else
     {
-      char *b = f.b0;
+      TCHAR *b = f.b0;
       for (int i = -1; i < f.exp && *b; i++, b++)
         stream.add (*b);
       stream.fill ('0', f.exp - i);
-      stream.add ('.');
+      stream.add (_T('.'));
       for (m = 0; m < d && *b; m++, b++)
         stream.add (*b);
       stream.fill ('0', d - m);
@@ -2513,7 +2527,7 @@ Format::exp_format (wStream &stream)
     {
       if (param_is_given (0))
         {
-          int l = strlen (f.buf);
+          int l = _tcslen (f.buf);
           if (l > w && param_is_given (4))
             stream.fill (overflow, w);
           else
@@ -2569,17 +2583,17 @@ Format::exp_format (wStream &stream)
   stream.fill (padchar, w - m);
 
   if (f.sign < 0)
-    stream.add ('-');
+    stream.add (_T('-'));
   else if (atsign)
-    stream.add ('+');
+    stream.add (_T('+'));
 
   if (!k)
     {
       if (!no_lead_zero)
-        stream.add ('0');
-      stream.add ('.');
+        stream.add (_T('0'));
+      stream.add (_T('.'));
       f.round (d);
-      char *b = f.b0;
+      TCHAR *b = f.b0;
       for (int i = d; i > 0 && *b; i--, b++)
         stream.add (*b);
       stream.fill ('0', i);
@@ -2587,11 +2601,11 @@ Format::exp_format (wStream &stream)
   else if (k > 0)
     {
       f.round (d + 1);
-      char *b = f.b0;
+      TCHAR *b = f.b0;
       for (int i = k; i > 0 && *b; i--, b++)
         stream.add (*b);
       stream.fill ('0', i);
-      stream.add ('.');
+      stream.add (_T('.'));
       for (i = d - k + 1; i > 0 && *b; i--, b++)
         stream.add (*b);
       stream.fill ('0', i);
@@ -2600,10 +2614,10 @@ Format::exp_format (wStream &stream)
     {
       f.round (d + k);
       if (!no_lead_zero)
-        stream.add ('0');
-      stream.add ('.');
+        stream.add (_T('0'));
+      stream.add (_T('.'));
       stream.fill ('0', -k);
-      char *b = f.b0;
+      TCHAR *b = f.b0;
       for (int i = d + k; i > 0 && *b; i--, b++)
         stream.add (*b);
       stream.fill ('0', i);
@@ -2612,14 +2626,14 @@ Format::exp_format (wStream &stream)
   int n = f.exp - k + 1;
   if (n < 0)
     {
-      stream.add ('-');
+      stream.add (_T('-'));
       n = -n;
     }
   else
-    stream.add ('+');
-  char buf[32];
-  char *b = store_uint (buf + sizeof buf, n);
-  e -= buf + sizeof buf - b - 1;
+    stream.add (_T('+'));
+  TCHAR buf[32];
+  TCHAR *b = store_uint (buf + _countof (buf), n);
+  e -= buf + _countof (buf) - b - 1;
   for (; e > 0; e--)
     *--b = '0';
   stream.add (b);
@@ -2735,20 +2749,20 @@ Format::dollar_format (wStream &stream)
   if (colon)
     {
       if (f.sign < 0)
-        stream.add ('-');
+        stream.add (_T('-'));
       else if (atsign)
-        stream.add ('+');
+        stream.add (_T('+'));
     }
   stream.fill (padchar, w - m);
   if (!colon)
     {
       if (f.sign < 0)
-        stream.add ('-');
+        stream.add (_T('-'));
       else if (atsign)
-        stream.add ('+');
+        stream.add (_T('+'));
     }
 
-  char *b = f.b0;
+  TCHAR *b = f.b0;
   if (f.exp < 0)
     stream.fill ('0', n);
   else
@@ -2758,7 +2772,7 @@ Format::dollar_format (wStream &stream)
         stream.add (*b);
       stream.fill ('0', f.exp - i);
     }
-  stream.add ('.');
+  stream.add (_T('.'));
   for (int i = 0; i < d && *b; i++, b++)
     stream.add (*b);
   stream.fill ('0', d - i);
@@ -2783,7 +2797,7 @@ Format::ampersand (wStream &stream)
   if (n)
     {
       if (stream.columns ())
-        stream.add ('\n');
+        stream.add (_T('\n'));
       stream.fill ('\n', n - 1);
     }
 }
@@ -2812,7 +2826,7 @@ Format::newline (wStream &stream)
   max_param (0);
   not_colon_atsign ();
   if (atsign)
-    stream.add ('\n');
+    stream.add (_T('\n'));
   if (!colon)
     for (; ctl < ctle && (*ctl == ' ' || *ctl == '\t'); ctl++)
       ;
@@ -3829,27 +3843,35 @@ Fmessage_box (lisp lmsg, lisp ltitle, lisp styles, lisp args)
   check_string (lmsg);
   int l = count_crlf (xstring_contents (lmsg),
                       xstring_contents (lmsg) + xstring_length (lmsg));
+#ifdef UNICODE
+  TCHAR *msg = (TCHAR *)alloca ((l + 3) * sizeof TCHAR);
+#else
   char *msg = (char *)alloca (l * 2 + 3);
+#endif
   copy_crlf ((Char *)msg + 1,
              xstring_contents (lmsg),
              xstring_contents (lmsg) + xstring_length (lmsg));
   w2s (msg, (Char *)msg + 1, l);
 
-  const char *title;
+  const TCHAR *title;
   if (!ltitle || ltitle == Qnil)
     title = TitleBarString;
   else
     {
       check_string (ltitle);
+#ifdef UNICODE
+      title = (TCHAR *)alloca ((xstring_length (ltitle) + 1) * sizeof TCHAR);
+#else
       title = (char *)alloca (xstring_length (ltitle) * 2 + 1);
-      w2s ((char *)title, ltitle);
+#endif
+      w2s ((TCHAR *)title, ltitle);
     }
 
   msgbox_styles mb;
   msgbox_style (mb, styles);
 
   lisp lcaptions[5];
-  const char *captions[numberof (lcaptions)];
+  const TCHAR *captions[numberof (lcaptions)];
   memset (lcaptions, 0, sizeof lcaptions);
   memset (captions, 0, sizeof captions);
   msgbox_captions (lcaptions, args);
@@ -3860,7 +3882,11 @@ Fmessage_box (lisp lmsg, lisp ltitle, lisp styles, lisp args)
       if (x && x != Qnil)
         {
           check_string (x);
+#ifdef UNICODE
+          TCHAR *s = (TCHAR *)alloca ((xstring_length (x) + 1) * sizeof TCHAR);
+#else
           char *s = (char *)alloca (xstring_length (x) * 2 + 1);
+#endif
           w2s (s, x);
           captions[i] = s;
         }
@@ -3878,7 +3904,7 @@ addobj (print_control &pc, wStream &stream, lisp x, int esc, int colon)
   if (x)
     {
       if (colon && stream.columns ())
-        stream.add (": ");
+        stream.add (_T(": "));
       pc.escape = esc;
       pc.setup_circle (x);
       print_sexp (stream, pc, x, 0);
@@ -3895,9 +3921,9 @@ putmsg (wStream &stream, int msgboxp, int style, int beep)
 
   if (msgboxp)
     {
-      w2s ((char *)b, b + 1, l);
+      w2s ((TCHAR *)b, b + 1, l);
       app.status_window.clear ();
-      return MsgBox (get_active_window (), (char *)b, TitleBarString, style, beep);
+      return MsgBox (get_active_window (), (TCHAR *)b, TitleBarString, style, beep);
     }
   else
     {
@@ -4074,8 +4100,8 @@ print_stack_trace (lisp lstream, lisp cc)
       if (p->type == stack_trace::empty)
         continue;
 
-      char buf[64];
-      sprintf (buf, ">CALL STACK %2d: ", depth--);
+      TCHAR buf[64];
+      _stprintf (buf, _T(">CALL STACK %2d: "), depth--);
       stream.add (buf);
 
       switch (p->type)
@@ -4083,48 +4109,48 @@ print_stack_trace (lisp lstream, lisp cc)
         case stack_trace::special_form:
         case stack_trace::macro:
           if (p->fn == Ssi_byte_code)
-            stream.add ("(system:*byte-code ...)\n");
+            stream.add (_T("(system:*byte-code ...)\n"));
           else
             {
-              stream.add ('(');
+              stream.add (_T('('));
               print_trace_object (stream, pc, p->fn);
               if (p->args[1] != Qnil)
                 {
-                  stream.add (' ');
+                  stream.add (_T(' '));
                   print_trace_object (stream, pc, p->args[1]);
                 }
-              stream.add (')');
-              stream.add ('\n');
+              stream.add (_T(')'));
+              stream.add (_T('\n'));
             }
           break;
 
         case stack_trace::apply:
-          stream.add ('(');
+          stream.add (_T('('));
           print_trace_object (stream, pc, p->fn);
           if (p->args[0])
             {
-              stream.add (' ');
+              stream.add (_T(' '));
               print_trace_object (stream, pc, p->args[0]);
               if (p->args[1])
                 {
-                  stream.add (' ');
+                  stream.add (_T(' '));
                   print_trace_object (stream, pc, p->args[1]);
                 }
             }
           else
             for (lisp q = p->args[1]; consp (q); q = xcdr (q))
               {
-                stream.add (' ');
+                stream.add (_T(' '));
                 print_trace_object (stream, pc, xcar (q));
               }
-          stream.add (')');
-          stream.add ('\n');
+          stream.add (_T(')'));
+          stream.add (_T('\n'));
           break;
 
         case stack_trace::eval_args:
-          stream.add ('(');
+          stream.add (_T('('));
           print_sexp (stream, pc, p->fn, 0);
-          stream.add (" calculating arguments...)\n");
+          stream.add (_T(" calculating arguments...)\n"));
           break;
         }
     }
@@ -4132,9 +4158,9 @@ print_stack_trace (lisp lstream, lisp cc)
   if (cc && cc != Qnil)
     {
       print_condition (stream, cc);
-      stream.add ('\n');
+      stream.add (_T('\n'));
     }
-  stream.add ('\n');
+  stream.add (_T('\n'));
 }
 
 lisp
@@ -4236,11 +4262,11 @@ warn (message_code a1, lisp a2)
 void
 format_message (message_code m, ...)
 {
-  const char *fmt = get_message_string (m);
+  const TCHAR *fmt = get_message_string (m);
   va_list ap;
   va_start (ap, m);
-  char buf[2048];
-  vsprintf (buf, fmt, ap);
+  TCHAR buf[2048];
+  _vstprintf (buf, fmt, ap);
   va_end (ap);
   app.status_window.puts (buf, 1);
 }
@@ -4248,18 +4274,18 @@ format_message (message_code m, ...)
 int
 format_yes_or_no_p (message_code m, ...)
 {
-  const char *fmt = get_message_string (m);
+  const TCHAR *fmt = get_message_string (m);
   va_list ap;
   va_start (ap, m);
-  char buf[2048];
-  vsprintf (buf, fmt, ap);
+  TCHAR buf[2048];
+  _vstprintf (buf, fmt, ap);
   va_end (ap);
   return MsgBox (get_active_window (), buf, TitleBarString,
                  MB_YESNO | MB_ICONQUESTION, 1) == IDYES;
 }
 
-char *
-print_key_sequence (char *b, char *be, Char c)
+TCHAR *
+print_key_sequence (TCHAR *b, TCHAR *be, Char c)
 {
   wStream stream;
   print_char (stream, c, 0);

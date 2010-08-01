@@ -3,7 +3,7 @@
 
 struct lfns
 {
-  const char *name;
+  const TCHAR *name;
   lfunction_proc fn;
   lisp *sym;
   lisp lfn;
@@ -23,7 +23,7 @@ struct lfns
 
 struct lvars
 {
-  const char *name;
+  const TCHAR *name;
   lisp *sym;
   u_short size;
   u_short flags;
@@ -31,7 +31,7 @@ struct lvars
 
 struct lintr
 {
-  const char *s;
+  const TCHAR *s;
   lisp str;
 };
 

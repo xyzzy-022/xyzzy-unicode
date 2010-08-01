@@ -24,7 +24,7 @@ enum
 
 void load_misc_colors ();
 void modify_misc_colors (const XCOLORREF *, int);
-const char *misc_color_name (int);
+const TCHAR *misc_color_name (int);
 XCOLORREF get_misc_color (int);
 
 #endif /* _colors_h_ */

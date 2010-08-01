@@ -19,7 +19,7 @@ public:
   mapf () {init ();}
   ~mapf () {close ();}
   void close ();
-  int open (const char *, int = FILE_FLAG_SEQUENTIAL_SCAN, int = 0);
+  int open (const TCHAR *, int = FILE_FLAG_SEQUENTIAL_SCAN, int = 0);
   const void *base () const {return mf_base;}
   DWORD size () const {return mf_size;}
   operator HANDLE () const {return mf_hfile;}

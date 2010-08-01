@@ -5,12 +5,16 @@
 #include "iso2022state.h"
 
 int
-check_kanji2 (const char *string, u_int off)
+check_kanji2 (const TCHAR *string, u_int off)
 {
+#ifdef UNICODE
+  return 0;
+#else
   for (const u_char *s0 = (u_char *)string, *se = s0 + off, *s = se;
        s-- > s0 && SJISP (*s);)
     ;
   return !((se - s) & 1);
+#endif
 }
 
 static inline int

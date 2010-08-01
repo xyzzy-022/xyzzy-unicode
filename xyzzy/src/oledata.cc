@@ -15,7 +15,7 @@ static lisp
 bstr2obj (BSTR bstr)
 {
   USES_CONVERSION;
-  return make_string (bstr ? W2A (bstr) : "");
+  return make_string (bstr ? W2T (bstr) : _T(""));
 }
 
 static BSTR
@@ -770,11 +770,11 @@ Fole_create_event_sink (lisp lobj, lisp linterface, lisp tlbfile)
       else
         {
           check_string (tlbfile);
-          char path[PATH_MAX + 1];
+          TCHAR path[PATH_MAX + 1];
           pathname2cstr (tlbfile, path);
           map_sl_to_backsl (path);
           USES_CONVERSION;
-          get_interface_id (xoledata_disp (lobj), A2W (path), I2W (linterface), typeinfo, iid);
+          get_interface_id (xoledata_disp (lobj), T2W (path), I2W (linterface), typeinfo, iid);
         }
     }
   else

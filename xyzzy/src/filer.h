@@ -25,7 +25,7 @@ struct filer_data
       ICON_DOTDOT = 3
     };
   volatile int icon_index;
-  char name[MAX_PATH];
+  TCHAR name[MAX_PATH];
 
   void *operator new (size_t, FilerView *);
 #if _MSC_VER >= 1100
@@ -136,21 +136,21 @@ protected:
   int fv_marks_changed;
 
   int fv_retrieve_icon;
-  char fv_buf[64];
+  TCHAR fv_buf[64];
 
 #ifdef DnD_TEST
   filer_drop_target dropt;
 #endif
 
   void cleanup_chunk ();
-  int load_contents (const char *);
+  int load_contents (const TCHAR *);
 
-  void add_list_view (const char *);
-  void set_mask_text (const char *) const;
+  void add_list_view (const TCHAR *);
+  void set_mask_text (const TCHAR *) const;
   static int chdir (lisp);
   static int chdevdir (lisp);
   lisp filename (const filer_data *) const;
-  static void disk_space (double, char *, int);
+  static void disk_space (double, TCHAR *, int);
 
 public:
   void *alloc_filer_data ();
@@ -174,7 +174,7 @@ public:
 
 protected:
   int find_focused (LV_ITEM *);
-  void set_title (const char *) const;
+  void set_title (const TCHAR *) const;
   void set_title () const;
   void set_path () const;
 
@@ -227,7 +227,7 @@ private:
   HANDLE fv_hthread;
   volatile int fv_stop_thread;
   volatile int fv_sequence;
-  char *fv_icon_path;
+  TCHAR *fv_icon_path;
   int fv_regular_file_index;
   int fv_directory_index;
 };
@@ -238,14 +238,14 @@ class ViewerBuffer: public Buffer
 {
 public:
   ViewerBuffer ();
-  int readin (ViewerWindow *, const char *);
+  int readin (ViewerWindow *, const TCHAR *);
   void clean (ViewerWindow *wp);
 };
 
 class ViewerWindow: public Window
 {
   static int vw_initialized;
-  static const char vw_classname[];
+  static const TCHAR vw_classname[];
 public:
   ViewerWindow ();
   ~ViewerWindow ();
@@ -393,7 +393,7 @@ filer_data::filer_data (const WIN32_FIND_DATA &fd)
   bytes = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
            ? -1.0
            : fd.nFileSizeHigh * 4294967296.0 + fd.nFileSizeLow);
-  strcpy (name, fd.cFileName);
+  _tcscpy (name, fd.cFileName);
   icon_index = ICON_INVALID;
 }
 

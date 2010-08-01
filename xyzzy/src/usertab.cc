@@ -155,8 +155,8 @@ void
 user_tab_bar::draw_item (const draw_item_struct &dis)
 {
   lisp name = item_name ((lisp)dis.data);
-  char buf[ITEM_NAME_MAX];
-  int l = w2s (buf, buf + sizeof buf, name) - buf;
+  TCHAR buf[ITEM_NAME_MAX];
+  int l = w2s (buf, buf + _countof (buf), name) - buf;
   if (dis.state & ODS_SELECTED)
     tab_bar::draw_item (dis, buf, l,
                         get_misc_color (MC_TAB_SEL_FG),
@@ -212,8 +212,8 @@ user_tab_bar::add_item (lisp item, lisp name, lisp tooltip, lisp menu,
       break;
     }
 
-  char buf[ITEM_NAME_MAX];
-  w2s (buf, buf + sizeof buf, name);
+  TCHAR buf[ITEM_NAME_MAX];
+  w2s (buf, buf + _countof (buf), name);
 
   TC_ITEM ti;
   ti.mask = TCIF_TEXT | TCIF_PARAM;
@@ -237,8 +237,8 @@ user_tab_bar::modify_item (lisp item, lisp name, lisp tooltip, lisp menu)
     {
       check_string (name);
 
-      char buf[ITEM_NAME_MAX];
-      w2s (buf, buf + sizeof buf, name);
+      TCHAR buf[ITEM_NAME_MAX];
+      w2s (buf, buf + _countof (buf), name);
 
       TC_ITEM ti;
       ti.mask = TCIF_TEXT;

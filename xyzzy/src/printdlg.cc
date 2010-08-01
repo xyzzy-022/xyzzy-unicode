@@ -4,8 +4,8 @@
 #include "printdlg.h"
 #include "conf.h"
 
-static const char unit_mm[] = "mm";
-static const char unit_pt[] = "pt";
+static const TCHAR unit_mm[] = _T("mm");
+static const TCHAR unit_pt[] = _T("pt");
 
 class subclass_combo
 {
@@ -17,7 +17,7 @@ public:
        : m_owndproc (0), m_hwnd (0), m_beg (-1), m_end (-1) {}
   void subclass (HWND, UINT, WNDPROC);
   LRESULT wndproc (HWND, UINT, WPARAM, LPARAM);
-  void insert (const char *);
+  void insert (const TCHAR *);
 };
 
 void
@@ -45,13 +45,13 @@ subclass_combo::wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 void
-subclass_combo::insert (const char *s)
+subclass_combo::insert (const TCHAR *s)
 {
   if (m_end < 0)
     m_end = GetWindowTextLength (m_hwnd);
   SendMessage (m_hwnd, EM_SETSEL, m_end, m_end);
   SendMessage (m_hwnd, EM_REPLACESEL, 0, LPARAM (s));
-  m_end += strlen (s);
+  m_end += _tcslen (s);
 }
 
 static subclass_combo sc_header, sc_footer;
@@ -69,17 +69,17 @@ footer_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 void
-print_dialog::set_margin_text (UINT edit, LONG value, const char *unit) const
+print_dialog::set_margin_text (UINT edit, LONG value, const TCHAR *unit) const
 {
-  char b[32];
-  sprintf (b, "%d.%d%s", value / 10, value % 10, unit);
+  TCHAR b[32];
+  _stprintf (b, _T("%d.%d%s"), value / 10, value % 10, unit);
   SetDlgItemText (m_hwnd, edit, b);
 }
 
 void
 print_dialog::set_margin (UINT edit, UINT spin, LONG value,
                           int min, int max, int setpos,
-                          const char *unit) const
+                          const TCHAR *unit) const
 {
   SendDlgItemMessage (m_hwnd, spin, UDM_SETRANGE, 0, MAKELONG (max, min));
   if (setpos)
@@ -90,18 +90,18 @@ print_dialog::set_margin (UINT edit, UINT spin, LONG value,
 }
 
 LONG
-print_dialog::parse_margin_text (UINT edit, const char *unit) const
+print_dialog::parse_margin_text (UINT edit, const TCHAR *unit) const
 {
-  char buf[128], *b, *be;
-  GetDlgItemText (m_hwnd, edit, buf, sizeof buf);
-  for (b = buf; *b == ' '; b++)
+  TCHAR buf[128], *b, *be;
+  GetDlgItemText (m_hwnd, edit, buf, _countof (buf));
+  for (b = buf; *b == _T(' '); b++)
     ;
-  double d = strtod (b, &be);
+  double d = _tcstod (b, &be);
   if (b == be)
     return -1;
-  for (; *be == ' '; be++)
+  for (; *be == _T(' '); be++)
     ;
-  if (!*be || !strcmp (be, unit))
+  if (!*be || !_tcscmp (be, unit))
     return LONG (d * 10 + .5);
   return -1;
 }
@@ -188,9 +188,9 @@ print_dialog::add_lang () const
 {
   for (int i = 0; i < FONT_MAX; i++)
     {
-      char buf[128];
+      TCHAR buf[128];
       *buf = 0;
-      LoadString (app.hinst, FontSet::lang_id (i), buf, sizeof buf);
+      LoadString (app.hinst, FontSet::lang_id (i), buf, _countof (buf));
       int idx = SendDlgItemMessage (m_hwnd, IDC_LANG, CB_ADDSTRING, 0, LPARAM (buf));
       SendDlgItemMessage (m_hwnd, IDC_LANG, CB_SETITEMDATA, idx, i);
     }
@@ -207,9 +207,9 @@ print_dialog::get_int (UINT id, BOOL *f, BOOL sign, int defalt) const
   int l = GetWindowTextLength (GetDlgItem (m_hwnd, id));
   if (l)
     {
-      char *b = (char *)alloca (l + 1);
+      TCHAR *b = (TCHAR *)alloca ((l + 1) * sizeof TCHAR);
       GetDlgItemText (m_hwnd, id, b, l + 1);
-      for (; *b == ' ' || *b == '\t'; b++)
+      for (; *b == _T(' ') || *b == _T('\t'); b++)
         ;
       if (*b)
         return 0;
@@ -220,7 +220,7 @@ print_dialog::get_int (UINT id, BOOL *f, BOOL sign, int defalt) const
 
 int
 print_dialog::check_margin_text (UINT id, LONG &r, LONG min, LONG max,
-                                 const char *unit) const
+                                 const TCHAR *unit) const
 {
   LONG x = parse_margin_text (id, unit);
   if (x < 0)
@@ -246,8 +246,8 @@ print_dialog::check_margin_text (UINT id, LONG &r, LONG min, LONG max,
 int
 print_dialog::get_result (int save)
 {
-  GetDlgItemText (m_hwnd, IDC_HEADER, m_settings.ps_header, sizeof m_settings.ps_header);
-  GetDlgItemText (m_hwnd, IDC_FOOTER, m_settings.ps_footer, sizeof m_settings.ps_footer);
+  GetDlgItemText (m_hwnd, IDC_HEADER, m_settings.ps_header, _countof (m_settings.ps_header));
+  GetDlgItemText (m_hwnd, IDC_FOOTER, m_settings.ps_footer, _countof (m_settings.ps_footer));
   m_settings.ps_header_on = IsDlgButtonChecked (m_hwnd, IDC_CHEADER) == 1;
   m_settings.ps_footer_on = IsDlgButtonChecked (m_hwnd, IDC_CFOOTER) == 1;
 
@@ -367,23 +367,23 @@ print_dialog::get_copies ()
 }
 
 void
-print_dialog::init_history (UINT id_combo, const char *section)
+print_dialog::init_history (UINT id_combo, const TCHAR *section)
 {
   HWND hwnd_combo = GetDlgItem (m_hwnd, id_combo);
-  SendMessage (hwnd_combo, CB_ADDSTRING, 0, LPARAM (""));
-  char kbuf[4096];
+  SendMessage (hwnd_combo, CB_ADDSTRING, 0, LPARAM (_T("")));
+  TCHAR kbuf[4096];
   memset (kbuf, 0, sizeof kbuf);
-  read_conf (section, 0, kbuf, sizeof kbuf);
-  for (const char *key = kbuf; *key; key += strlen (key) + 1)
+  read_conf (section, 0, kbuf, _countof (kbuf));
+  for (const TCHAR *key = kbuf; *key; key += _tcslen (key) + 1)
     {
-      char buf[MAX_HEADER_LENGTH];
-      if (read_conf (section, key, buf, sizeof buf))
+      TCHAR buf[MAX_HEADER_LENGTH];
+      if (read_conf (section, key, buf, _countof (buf)))
         SendMessage (hwnd_combo, CB_ADDSTRING, 0, LPARAM (buf));
     }
 }
 
 void
-print_dialog::save_history (UINT id_combo, const char *section)
+print_dialog::save_history (UINT id_combo, const TCHAR *section)
 {
   HWND hwnd_combo = GetDlgItem (m_hwnd, id_combo);
   delete_conf (section);
@@ -392,13 +392,13 @@ print_dialog::save_history (UINT id_combo, const char *section)
     {
       // WinME の CB_GETLBTEXTLEN は文字数を返すらしいので(ただし未確認)、
       // バッファを倍にしておく。
-      char buf[MAX_HEADER_LENGTH * 2 + 2];
+      TCHAR buf[MAX_HEADER_LENGTH * 2 + 2];
       int l = SendMessage (hwnd_combo, CB_GETLBTEXTLEN, i, 0);
       if (l > 0 && l < MAX_HEADER_LENGTH
           && SendMessage (hwnd_combo, CB_GETLBTEXT, i, LPARAM (buf)) > 0)
         {
-          char key[32];
-          sprintf (key, "%d", i);
+          TCHAR key[32];
+          _stprintf (key, _T("%d"), i);
           conf_write_string (section, key, buf);
         }
     }
@@ -479,7 +479,7 @@ print_dialog::destroy ()
 }
 
 BOOL
-print_dialog::notify_spin (NMHDR *nm, const char *unit)
+print_dialog::notify_spin (NMHDR *nm, const TCHAR *unit)
 {
   if (nm->code != UDN_DELTAPOS)
     return 0;
@@ -549,7 +549,7 @@ print_dialog::clicked (UINT id, int code) const
 
 BOOL
 print_dialog::range_command (UINT id, int code, UINT spin,
-                             LONG defalt, const char *unit) const
+                             LONG defalt, const TCHAR *unit) const
 {
   if (code != EN_KILLFOCUS)
     return 0;
@@ -579,17 +579,17 @@ print_dialog::current_lang () const
 void
 print_dialog::set_font_face (int lang) const
 {
-  char buf[LF_FACESIZE + 32];
-  char point[32];
+  TCHAR buf[LF_FACESIZE + 32];
+  TCHAR point[32];
   if (m_settings.ps_font[lang].point % 10)
-    sprintf (point, "%d.%d",
-             m_settings.ps_font[lang].point / 10,
-             m_settings.ps_font[lang].point % 10);
+    _stprintf (point, _T("%d.%d"),
+               m_settings.ps_font[lang].point / 10,
+               m_settings.ps_font[lang].point % 10);
   else
-    sprintf (point, "%d", m_settings.ps_font[lang].point / 10);
-  sprintf (buf, "%s, %s",
-           m_settings.ps_font[lang].face,
-           point);
+    _stprintf (point, _T("%d"), m_settings.ps_font[lang].point / 10);
+  _stprintf (buf, _T("%s, %s"),
+             m_settings.ps_font[lang].face,
+             point);
   SetDlgItemText (m_hwnd, IDC_FACE, buf);
 }
 
@@ -653,7 +653,7 @@ print_dialog::set_font ()
 
   LOGFONT lf;
   bzero (&lf, sizeof lf);
-  strcpy (lf.lfFaceName, m_settings.ps_font[lang].face);
+  _tcscpy (lf.lfFaceName, m_settings.ps_font[lang].face);
   HDC hdc = GetDC (m_hwnd);
   lf.lfHeight = MulDiv (m_settings.ps_font[lang].point, GetDeviceCaps (hdc, LOGPIXELSY), 720);
   ReleaseDC (m_hwnd, hdc);
@@ -679,7 +679,7 @@ print_dialog::set_font ()
   cf.nSizeMax = 72;
   if (ChooseFont (&cf))
     {
-      strcpy (m_settings.ps_font[lang].face, lf.lfFaceName);
+      _tcscpy (m_settings.ps_font[lang].face, lf.lfFaceName);
       m_settings.ps_font[lang].charset = lf.lfCharSet;
       m_settings.ps_font[lang].point = cf.iPointSize;
       m_settings.ps_font[lang].italic = lf.lfItalic;
@@ -720,9 +720,9 @@ print_dialog::preview ()
 }
 
 int
-print_dialog::find_history (UINT id, const char *s)
+print_dialog::find_history (UINT id, const TCHAR *s)
 {
-  char *buf = (char *)alloca (strlen (s) * 2 + 2);
+  TCHAR *buf = (TCHAR *)alloca ((_tcslen (s) * 2 + 2) * sizeof TCHAR);
   int i = -1;
   while (1)
     {
@@ -733,7 +733,7 @@ print_dialog::find_history (UINT id, const char *s)
       if (!*s)
         return i;
       if (SendDlgItemMessage (m_hwnd, id, CB_GETLBTEXT, i, LPARAM (buf)) != CB_ERR
-          && !strcmp (s, buf))
+          && !_tcscmp (s, buf))
         return i;
     }
 }
@@ -757,8 +757,8 @@ print_dialog::history_command (UINT id_combo, UINT code, UINT id_add, UINT id_de
 
     case CBN_EDITCHANGE:
       {
-        char buf[MAX_HEADER_LENGTH];
-        if (!GetDlgItemText (m_hwnd, id_combo, buf, sizeof buf))
+        TCHAR buf[MAX_HEADER_LENGTH];
+        if (!GetDlgItemText (m_hwnd, id_combo, buf, _countof (buf)))
           fadd = fdel = 0;
         else
           {
@@ -794,8 +794,8 @@ print_dialog::add_history (UINT id_combo, UINT id_add, UINT id_del, UINT code)
   if (code != BN_CLICKED)
     return 0;
 
-  char buf[MAX_HEADER_LENGTH];
-  if (GetDlgItemText (m_hwnd, id_combo, buf, sizeof buf)
+  TCHAR buf[MAX_HEADER_LENGTH];
+  if (GetDlgItemText (m_hwnd, id_combo, buf, _countof (buf))
       && find_history (id_combo, buf) < 0)
     SendDlgItemMessage (m_hwnd, id_combo, CB_ADDSTRING, 0, LPARAM (buf));
   move_btn_focus (id_add, id_combo);
@@ -809,13 +809,13 @@ print_dialog::delete_history (UINT id_combo, UINT id_add, UINT id_del, UINT code
   if (code != BN_CLICKED)
     return 0;
 
-  char buf[MAX_HEADER_LENGTH];
-  if (GetDlgItemText (m_hwnd, id_combo, buf, sizeof buf))
+  TCHAR buf[MAX_HEADER_LENGTH];
+  if (GetDlgItemText (m_hwnd, id_combo, buf, _countof (buf)))
     {
       int n = find_history (id_combo, buf);
       if (n >= 0 && SendDlgItemMessage (m_hwnd, id_combo,
                                         CB_DELETESTRING, n, 0) != CB_ERR)
-        SetDlgItemText (m_hwnd, id_combo, "");
+        SetDlgItemText (m_hwnd, id_combo, _T(""));
     }
   move_btn_focus (id_del, id_combo);
   history_command (id_combo, CBN_EDITCHANGE, id_add, id_del);
@@ -823,7 +823,7 @@ print_dialog::delete_history (UINT id_combo, UINT id_add, UINT id_del, UINT code
 }
 
 int
-print_dialog::find_menu_text (HMENU hmenu, int id, char *buf, int size)
+print_dialog::find_menu_text (HMENU hmenu, int id, TCHAR *buf, int size)
 {
   if (GetMenuString (hmenu, id, buf, size, MF_BYCOMMAND))
     return 1;
@@ -849,13 +849,13 @@ print_dialog::format_popup (UINT id_btn, subclass_combo &sc)
                                    | TPM_NONOTIFY | TPM_RETURNCMD),
                             r.right, r.top, 0, m_hwnd, 0);
 
-  char text[256];
-  if (cmd <= 0 || !find_menu_text (hsub, cmd, text, sizeof text))
+  TCHAR text[256];
+  if (cmd <= 0 || !find_menu_text (hsub, cmd, text, _countof (text)))
     *text = 0;
 
   DestroyMenu (hmenu);
 
-  char *p = strchr (text, '\t');
+  TCHAR *p = _tcschr (text, _T('\t'));
   if (p)
     sc.insert (p + 1);
 

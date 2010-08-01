@@ -22,22 +22,22 @@ void file_error (message_code);
 void file_error (int, lisp);
 void file_error (int);
 int parse_namestring (Char *, const Char *, int, const Char *, int);
-char *pathname2cstr (lisp, char *);
-int special_file_p (const char *);
-int sub_directory_p (char *, const char *);
+TCHAR *pathname2cstr (lisp, TCHAR *);
+int special_file_p (const TCHAR *);
+int sub_directory_p (TCHAR *, const TCHAR *);
 void map_backsl_to_sl (Char *, int);
-int match_suffixes (const char *, lisp);
-int set_device_dir (const char *, int);
-const char *get_device_dir (int);
+int match_suffixes (const TCHAR *, lisp);
+int set_device_dir (const TCHAR *, int);
+const TCHAR *get_device_dir (int);
 int strict_get_file_data (const char *, WIN32_FIND_DATA &);
 lisp make_file_info (const WIN32_FIND_DATA &);
-char *root_path_name (char *, const char *);
+TCHAR *root_path_name (TCHAR *, const TCHAR *);
 
 /* lprint.cc */
 void print_stack_trace (lisp, lisp);
 void print_condition (struct nonlocal_data *);
 void write_object (lisp, lisp, lisp);
-const char *get_message_string (int);
+const TCHAR *get_message_string (int);
 int msgbox (int, lisp, lisp = 0);
 void message (lisp, lisp = 0);
 int yes_or_no_p (lisp, lisp = 0);
@@ -50,7 +50,7 @@ void warn_msgbox (message_code, lisp = 0);
 void warn (message_code, lisp = 0);
 void format_message (message_code, ...);
 int format_yes_or_no_p (message_code, ...);
-char *print_key_sequence (char *, char *, Char);
+TCHAR *print_key_sequence (TCHAR *, TCHAR *, Char);
 void ding (int);
 int get_glyph_width (Char, const struct glyph_width &);
 
@@ -104,8 +104,8 @@ lisp minibuffer_read_integer (const Char *, long);
 Char standard_char_name2Char (const Char *, int);
 Char function_char_name2Char (const Char *, int);
 Char char_bit_name2Char (const Char *, int, int &);
-const char *function_Char2name (Char);
-const char *standard_Char2name (Char);
+const TCHAR *function_Char2name (Char);
+const TCHAR *standard_Char2name (Char);
 
 /* process.cc */
 void read_process_output (WPARAM, LPARAM);
@@ -123,14 +123,14 @@ lisp track_popup_menu (lisp, lisp, const POINT *);
 /* dialogs.cc */
 void center_window (HWND);
 void set_window_icon (HWND);
-void init_list_column (HWND, int, const int *, const int *, int, const char *, const char *);
-void save_list_column_width (HWND, int, const char *, const char *);
+void init_list_column (HWND, int, const int *, const int *, int, const TCHAR *, const TCHAR *);
+void save_list_column_width (HWND, int, const TCHAR *, const TCHAR *);
 int lv_find_selected_item (HWND);
 int lv_find_focused_item (HWND);
 
 /* fileio.cc */
-int same_file_p (const char *, const char *);
-int make_temp_file_name (char *, const char * = 0, const char * = 0, HANDLE = 0, int = 0);
+int same_file_p (const TCHAR *, const TCHAR *);
+int make_temp_file_name (TCHAR *, const TCHAR * = 0, const TCHAR * = 0, HANDLE = 0, int = 0);
 void do_auto_save (int, int);
 
 /* Buffer.cc */

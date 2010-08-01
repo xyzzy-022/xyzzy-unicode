@@ -12,10 +12,10 @@ Sysdep::Sysdep ()
 
   init_wintype ();
 
-  GetCurrentDirectory (sizeof curdir, curdir);
-  if (*curdir == '\\')
+  GetCurrentDirectory (_countof (curdir), curdir);
+  if (*curdir == _T('\\'))
     {
-      GetWindowsDirectory (curdir, sizeof curdir);
+      GetWindowsDirectory (curdir, _countof (curdir));
       WINFS::SetCurrentDirectory (curdir);
     }
 
@@ -30,8 +30,8 @@ Sysdep::Sysdep ()
 
   perf_counter_present_p = QueryPerformanceFrequency ((LARGE_INTEGER *)&perf_freq);
 
-  comctl32_version = get_dll_version ("comctl32.dll");
-  shell32_version = get_dll_version ("shell32.dll");
+  comctl32_version = get_dll_version (_T("comctl32.dll"));
+  shell32_version = get_dll_version (_T("shell32.dll"));
 
   load_colors ();
   load_settings ();
@@ -45,11 +45,11 @@ Sysdep::Sysdep ()
   LOGFONT lf;
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = 12;
-  strcpy (lf.lfFaceName, "Arial");
+  _tcscpy (lf.lfFaceName, _T("Arial"));
   hfont_ruler = CreateFontIndirect (&lf);
   HDC hdc = GetDC (0);
   HGDIOBJ of = SelectObject (hdc, hfont_ruler);
-  GetTextExtentPoint32 (hdc, "0", 1, &ruler_ext);
+  GetTextExtentPoint32 (hdc, _T("0"), 1, &ruler_ext);
   SelectObject (hdc, of);
 }
 
@@ -72,7 +72,7 @@ Sysdep::init_wintype ()
     {
     case VER_PLATFORM_WIN32s:
       wintype = WINTYPE_WIN32S;
-      windows_name = windows_short_name = "32s";
+      windows_name = windows_short_name = _T("32s");
       break;
 
     case VER_PLATFORM_WIN32_WINDOWS:
@@ -81,20 +81,20 @@ Sysdep::init_wintype ()
           wintype = WINTYPE_WINDOWS_98;
           if (version () >= WINME_VERSION)
             {
-              windows_name = "Me";
-              windows_short_name = "wme";
+              windows_name = _T("Me");
+              windows_short_name = _T("wme");
             }
           else
             {
-              windows_name = "98";
-              windows_short_name = "w98";
+              windows_name = _T("98");
+              windows_short_name = _T("w98");
             }
         }
       else
         {
           wintype = WINTYPE_WINDOWS_95;
-          windows_name = "95";
-          windows_short_name = "w95";
+          windows_name = _T("95");
+          windows_short_name = _T("w95");
         }
       break;
 
@@ -104,27 +104,27 @@ Sysdep::init_wintype ()
           wintype = WINTYPE_WINDOWS_NT5;
           if (version () >= WINXP_VERSION)
             {
-              windows_name = "XP";
-              windows_short_name = "wxp";
+              windows_name = _T("XP");
+              windows_short_name = _T("wxp");
             }
           else
             {
-              windows_name = "2000";
-              windows_short_name = "w2k";
+              windows_name = _T("2000");
+              windows_short_name = _T("w2k");
             }
         }
       else
         {
           wintype = WINTYPE_WINDOWS_NT;
-          windows_name = "NT";
-          windows_short_name = "wnt";
+          windows_name = _T("NT");
+          windows_short_name = _T("wnt");
         }
       break;
 
     default:
       wintype = WINTYPE_UNKNOWN;
-      windows_name = "(unknown)";
-      windows_short_name = "unk";
+      windows_name = _T("(unknown)");
+      windows_short_name = _T("unk");
       break;
     }
 }
@@ -137,7 +137,7 @@ Sysdep::create_ui_font (int e)
   lf.lfHeight = 12;
   lf.lfCharSet = SHIFTJIS_CHARSET;
   lf.lfEscapement = e;
-  strcpy (lf.lfFaceName, "MS UI Gothic");
+  _tcscpy (lf.lfFaceName, _T("MS UI Gothic"));
   return CreateFontIndirect (&lf);
 }
 
@@ -235,7 +235,7 @@ typedef HRESULT (CALLBACK *DLLGETVERSIONPROC)(DLLVERSIONINFO *);
 #endif /* not DLLVER_PLATFORM_WINDOWS */
 
 DWORD
-Sysdep::get_dll_version (const char *name)
+Sysdep::get_dll_version (const TCHAR *name)
 {
   HINSTANCE hinst = GetModuleHandle (name);
   if (!hinst)

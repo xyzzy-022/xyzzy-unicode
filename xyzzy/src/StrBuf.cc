@@ -138,7 +138,7 @@ StrBuf::add (const Char *s, int size)
 }
 
 void
-StrBuf::add (const char *s)
+StrBuf::add (const TCHAR *s)
 {
   assert (!sb_finished);
   if (!*s)
@@ -192,7 +192,7 @@ StrBuf::make_string ()
   finish ();
   int l = length ();
   if (!l)
-    make_string_simple ("", 0);
+    make_string_simple (_T(""), 0);
   Char *b = (Char *)xmalloc (sizeof (Char) * l);
   copy (b);
   lisp string = make_simple_string ();
@@ -211,7 +211,7 @@ StrBuf::make_substring (int start, int end)
   assert (start <= end);
   l = end - start;
   if (l <= 0)
-    make_string_simple ("", 0);
+    make_string_simple (_T(""), 0);
   Char *p = (Char *)xmalloc (sizeof (Char) * l);
   lisp string = make_simple_string ();
   xstring_contents (string) = p;

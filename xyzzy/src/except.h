@@ -7,7 +7,7 @@ public:
   struct known_exception
     {
       u_int code;
-      const char *desc;
+      const TCHAR *desc;
     };
   static const known_exception known_excep[];
   static EXCEPTION_RECORD r;

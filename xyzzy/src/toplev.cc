@@ -290,8 +290,8 @@ do_dnd (HDROP hdrop)
                 {
                   for (int i = 0; i < nfiles; i++)
                     {
-                      char path[PATH_MAX];
-                      DragQueryFile (hdrop, i, path, sizeof path);
+                      TCHAR path[PATH_MAX];
+                      DragQueryFile (hdrop, i, path, _countof (path));
                       list = xcons (make_string (path), list);
                     }
                   DragFinish (hdrop);
@@ -404,21 +404,21 @@ ime_composition (HWND hwnd, LPARAM lparam)
           ? !(app.kbdq.ime_property () & IME_PROP_UNICODE)
           : xsymbol_value (Vunicode_ime) != Qt)
         {
-          int l = app.kbdq.gime.ImmGetCompositionString (hIMC, GCS_RESULTSTR, 0, 0);
+          int l = app.kbdq.gime.ImmGetCompositionStringA (hIMC, GCS_RESULTSTR, 0, 0);
           if (l > 0)
             {
               char *s = (char *)alloca (l + 1);
-              if (app.kbdq.gime.ImmGetCompositionString (hIMC, GCS_RESULTSTR, s, l) == l)
+              if (app.kbdq.gime.ImmGetCompositionStringA (hIMC, GCS_RESULTSTR, s, l) == l)
                 {
                   app.kbdq.puts (s, l);
 
                   lparam &= ~GCS_RESULTSTR;
 
-                  int rl = app.kbdq.gime.ImmGetCompositionString (hIMC, GCS_RESULTREADSTR, 0, 0);
+                  int rl = app.kbdq.gime.ImmGetCompositionStringA (hIMC, GCS_RESULTREADSTR, 0, 0);
                   if (rl > 0)
                     {
                       char *rs = (char *)alloca (rl + 1);
-                      if (app.kbdq.gime.ImmGetCompositionString (hIMC, GCS_RESULTREADSTR,
+                      if (app.kbdq.gime.ImmGetCompositionStringA (hIMC, GCS_RESULTREADSTR,
                                                                  rs, rl) == rl)
                         {
                           s[l] = rs[rl] = 0;
@@ -599,7 +599,7 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
           report_out_of_memory ();
           return -1;
         }
-      if (!CreateWindow (FunctionKeyClassName, "",
+      if (!CreateWindow (FunctionKeyClassName, _T(""),
                          (((Window::w_default_flags & Window::WF_FUNCTION_BAR)
                            ? WS_VISIBLE : 0)
                           | WS_CHILD | WS_CLIPSIBLINGS),
@@ -607,7 +607,7 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
                          hwnd, 0, app.hinst, app.active_frame.fnkey))
         return -1;
 
-      app.active_frame.hwnd = CreateWindow (Application::FrameClassName, "",
+      app.active_frame.hwnd = CreateWindow (Application::FrameClassName, _T(""),
                                             (WS_VISIBLE | WS_CHILD
                                              | WS_CLIPCHILDREN | WS_CLIPSIBLINGS),
                                             0, 0, 0, 0,
@@ -1774,15 +1774,15 @@ Fcall_menu (lisp ln)
   int n = GetMenuItemCount (hmenu);
   if (req < 0 || req >= n)
     return Qnil;
-  char buf[1024], *b = buf;
-  if (!GetMenuString (hmenu, req, buf, sizeof buf, MF_BYPOSITION))
+  TCHAR buf[1024], *b = buf;
+  if (!GetMenuString (hmenu, req, buf, _countof (buf), MF_BYPOSITION))
     return Qnil;
   while (1)
     {
-      b = jindex (b, '&');
+      b = jindex (b, _T('&'));
       if (!b || !b[1])
         return Qnil;
-      if (b[1] == '&')
+      if (b[1] == _T('&'))
         b += 2;
       else
         break;

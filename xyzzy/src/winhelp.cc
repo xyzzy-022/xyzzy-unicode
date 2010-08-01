@@ -6,13 +6,17 @@
 lisp
 Frun_winhelp (lisp file, lisp topic)
 {
-  char path[PATH_MAX + 1];
+  TCHAR path[PATH_MAX + 1];
   pathname2cstr (file, path);
   if (!topic || topic == Qnil)
     return boole (WinHelp (app.toplev, path, HELP_CONTENTS, 0));
 
   check_string (topic);
+#ifdef UNICODE
+  TCHAR *b = (TCHAR *)alloca ((xstring_length (topic) + 1) * sizeof TCHAR);
+#else
   char *b = (char *)alloca (xstring_length (topic) * 2 + 1);
+#endif
   w2s (b, topic);
   return boole (WinHelp (app.toplev, path, HELP_PARTIALKEY, DWORD (b)));
 }
@@ -20,7 +24,7 @@ Frun_winhelp (lisp file, lisp topic)
 lisp
 Fkill_winhelp (lisp file)
 {
-  char path[PATH_MAX + 1];
+  TCHAR path[PATH_MAX + 1];
   pathname2cstr (file, path);
   return boole (WinHelp (app.toplev, path, HELP_QUIT, 0));
 }
@@ -111,7 +115,7 @@ ifile::get_titles (FILE *fp)
       if_headers[i].ih_file[iheader::FILE_LENGTH] = 0;
       if_headers[i].ih_title[iheader::TITLE_LENGTH] = 0;
       for (char *p = if_headers[i].ih_title, *pe = p + iheader::TITLE_LENGTH;
-           p < pe; p = CharNext (p))
+           p < pe; p = CharNextA (p))
         if (*p && *(u_char *)p < ' ')
           *p = ' ';
     }
@@ -240,19 +244,20 @@ iset::find_index ()
 void
 iset::init_files (HWND dlg)
 {
+  USES_CONVERSION;
   SendDlgItemMessage (dlg, IDC_FILES, LB_RESETCONTENT, 0, 0);
   for (ifile *f = is_files; f; f = f->if_next)
     for (int i = 0; i < f->if_nfiles; i++)
       if (is_match_all || f->if_headers[i].ih_match)
         {
           int idx = SendDlgItemMessage (dlg, IDC_FILES, LB_ADDSTRING, 0,
-                                        LPARAM (f->if_headers[i].ih_title));
+                                        LPARAM (A2T (f->if_headers[i].ih_title)));
           if (idx != LB_ERR)
             SendDlgItemMessage (dlg, IDC_FILES, LB_SETITEMDATA,
                                 idx, LPARAM (&f->if_headers[i]));
         }
   SendDlgItemMessage (dlg, IDC_FILES, LB_SETCURSEL, 0, 0);
-  SetDlgItemText (dlg, IDC_TOPIC, is_topic);
+  SetDlgItemText (dlg, IDC_TOPIC, A2T (is_topic));
 }
 
 inline
@@ -273,10 +278,10 @@ iset::~iset ()
 void
 iset::load (lisp filename)
 {
-  char path[PATH_MAX + 1];
+  TCHAR path[PATH_MAX + 1];
   pathname2cstr (filename, path);
   ifile *f = new ifile;
-  FILE *fp = _fsopen (path, "rb", _SH_DENYNO);
+  FILE *fp = _tfsopen (path, _T("rb"), _SH_DENYNO);
   if (!fp)
     {
       delete f;
@@ -316,9 +321,11 @@ select_dialog_proc (HWND dlg, UINT msg, WPARAM wparam, LPARAM lparam)
 
         case IDOK:
           {
+            USES_CONVERSION;
             iset *is = (iset *)GetWindowLong (dlg, DWL_USER);
-            char buf[256];
-            GetDlgItemText (dlg, IDC_TOPIC, buf, sizeof buf);
+            TCHAR b[256];
+            GetDlgItemText (dlg, IDC_TOPIC, b, _countof (b));
+            char *buf = T2A(b);
             if (strcmp (buf, is->is_topic))
               {
                 strcpy (is->is_topic, buf);
@@ -360,7 +367,7 @@ iset::lookup ()
 static void
 trim_spaces (char *p)
 {
-  for (; *p && *p != ' ' && *p != '\t'; p = CharNext (p))
+  for (; *p && *p != ' ' && *p != '\t'; p = CharNextA (p))
     ;
   *p = 0;
 }
@@ -368,17 +375,18 @@ trim_spaces (char *p)
 lisp
 Ffind_winhelp_path (lisp index_file, lisp ltopic)
 {
-  char topic[256];
+  USES_CONVERSION;
+  TCHAR topic[256];
 
   if (ltopic == Qnil)
     *topic = 0;
   else
     {
       check_string (ltopic);
-      w2s (topic, topic + sizeof topic, ltopic);
+      w2s (topic, topic + _countof (topic), ltopic);
     }
 
-  iset is (topic);
+  iset is (T2A (topic));
   if (stringp (index_file))
     is.load (index_file);
   else
@@ -394,13 +402,17 @@ Ffind_winhelp_path (lisp index_file, lisp ltopic)
 
   multiple_value::value (1) = make_string (topic);
   multiple_value::count () = 2;
-  return make_string (is.is_match->ih_file);
+  return make_string (A2T (is.is_match->ih_file));
 }
 
-typedef HWND (WINAPI *HTMLHELPPROC)(HWND, LPCSTR, UINT, DWORD);
+typedef HWND (WINAPI *HTMLHELPPROC)(HWND, LPCTSTR, UINT, DWORD);
 
-static HTMLHELPPROC HtmlHelp = (HTMLHELPPROC)GetProcAddress (LoadLibrary ("hhctrl.ocx"),
+static HTMLHELPPROC HtmlHelp = (HTMLHELPPROC)GetProcAddress (LoadLibrary (_T("hhctrl.ocx")),
+#ifdef UNICODE
+                                                             "HtmlHelpW");
+#else
                                                              "HtmlHelpA");
+#endif
 #define HH_KEYWORD_LOOKUP 0xd
 #define HH_GET_LAST_ERROR 0x14
 
@@ -432,9 +444,17 @@ Fhtml_help (lisp lfile, lisp lkeyword)
   if (!HtmlHelp)
     FEsimple_error (Ehtml_help_does_not_supported);
 
+#ifdef UNICODE
+  TCHAR *file = (TCHAR *)alloca ((xstring_length (lfile) + 1) * sizeof TCHAR);
+#else
   char *file = (char *)alloca (xstring_length (lfile) * 2 + 1);
+#endif
   w2s (file, lfile);
+#ifdef UNICODE
+  TCHAR *keyword = (TCHAR *)alloca ((xstring_length (lkeyword) + 1) * sizeof TCHAR);
+#else
   char *keyword = (char *)alloca (xstring_length (lkeyword) * 2 + 1);
+#endif
   w2s (keyword, lkeyword);
 
   HH_AKLINK link = {sizeof link};
@@ -450,10 +470,16 @@ Fhtml_help (lisp lfile, lisp lkeyword)
     {
       if (err.description)
         {
+#ifdef UNICODE
+          lisp ldesc = make_string (err.description);
+          SysFreeString (err.description);
+          FEsimple_error (Ehtml_help_error, ldesc);
+#else
           USES_CONVERSION;
           char *desc = W2A (err.description);
           SysFreeString (err.description);
           FEsimple_error (Ehtml_help_error, make_string (desc));
+#endif
         }
       else
         FEsimple_win32_error (err.hr);

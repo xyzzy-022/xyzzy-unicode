@@ -1,6 +1,8 @@
 #include "arc-if.h"
 #include "vfs.h"
 
+#ifndef UNICODE
+
 const char *ArchiverInterface::ai_names[] =
 {
   "GetVersion",
@@ -234,3 +236,5 @@ UnzipInterface::patch_module (void *base) const
         }
   return 0;
 }
+
+#endif /* UNICODE */

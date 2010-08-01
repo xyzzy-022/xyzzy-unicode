@@ -29,13 +29,13 @@ protected:
   dock_frame &b_frame;
   lisp b_lname;
   enum {TTBUFSIZE = 256};
-  static char b_ttbuf[TTBUFSIZE];
+  static TCHAR b_ttbuf[TTBUFSIZE];
 private:
   u_char b_edge;
   u_char b_border;
   u_char b_dockable;
   u_char b_status;
-  static const char b_dock_bar_prop[];
+  static const TCHAR b_dock_bar_prop[];
 public:
   enum
     {
@@ -117,7 +117,7 @@ public:
     {return (dock_bar *)GetProp (hwnd, b_dock_bar_prop);}
   LRESULT sendmsg (UINT msg, WPARAM wparam, LPARAM lparam) const
     {return CallWindowProc (b_wndproc, b_hwnd, msg, wparam, lparam);}
-  int create (DWORD exstyle, const char *class_name, const char *window_name,
+  int create (DWORD exstyle, const TCHAR *class_name, const TCHAR *window_name,
               DWORD style, int x, int y, int cx, int cy, HWND hwnd_parent,
               HMENU hmenu, HINSTANCE hinst, void *param)
     {
@@ -167,7 +167,7 @@ public:
     {
       HBITMAP b_hbm;
       int b_ref;
-      const char *b_path;
+      const TCHAR *b_path;
       bm_node () : b_hbm (0), b_ref (0), b_path (0) {}
       ~bm_node ()
         {
@@ -193,9 +193,9 @@ public:
 private:
   xlist <bm_node> bm_list;
 protected:
-  static int load_mapped_bitmap (const char *, HBITMAP &);
+  static int load_mapped_bitmap (const TCHAR *, HBITMAP &);
 public:
-  const bm_node *load (const char *, int &);
+  const bm_node *load (const TCHAR *, int &);
   void release (const bm_node *);
   void reload ();
 };
@@ -257,7 +257,7 @@ public:
   int press_button (int id, int f)
     {return sendmsg (TB_PRESSBUTTON, id, MAKELONG (f ? 1 : 0, 0));}
   virtual void calc_client_size (SIZE &, int) const;
-  int load_bitmap (const char *);
+  int load_bitmap (const TCHAR *);
   virtual void reload_settings ();
 };
 
@@ -271,7 +271,7 @@ protected:
 private:
   int t_erasebkgnd_called;
   int t_dots;
-  static const char b_tab_bar_spin_prop[];
+  static const TCHAR b_tab_bar_spin_prop[];
 protected:
   enum {IDC_TAB_SPIN = 1};
   enum {GRIPPER_SIZE = 3};
@@ -289,11 +289,11 @@ protected:
   void erase_bkgnd (HDC);
   int inverse_p () const {return style () & TCS_BOTTOM;}
   virtual void dock_edge ();
-  void draw_item (const draw_item_struct &, char *, int,
+  void draw_item (const draw_item_struct &, TCHAR *, int,
                   COLORREF, COLORREF) const;
   virtual void draw_item (const draw_item_struct &) {}
   virtual void update_ui ();
-  int abbrev_text (HDC, char *, int, int) const;
+  int abbrev_text (HDC, TCHAR *, int, int) const;
   virtual void adjust_gripper (HDC, RECT &, const RECT &) const;
   int lbtn_down (int, int);
   int move_tab (int, int);
@@ -314,7 +314,7 @@ public:
   ~tab_bar () {}
   int create (HWND hwnd_parent, DWORD style, UINT id)
     {
-      return dock_bar::create (0, WC_TABCONTROL, "",
+      return dock_bar::create (0, WC_TABCONTROL, _T(""),
                                style, 0, 0, 0, 0, hwnd_parent,
                                (HMENU)id, app.hinst, 0);
     }

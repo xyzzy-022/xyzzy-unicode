@@ -1,6 +1,6 @@
 #include "ed.h"
 
-static char *popup_text;
+static TCHAR *popup_text;
 static RECT popup_rect;
 static HWND hwnd_popup;
 static HFONT hfont_popup;
@@ -48,7 +48,7 @@ check_range (const RECT &scr, const RECT &r, const RECT &pos, POINT &p)
 }
 
 static void
-set_text (const char *text, const RECT &pos)
+set_text (const TCHAR *text, const RECT &pos)
 {
   RECT scr;
   SystemParametersInfo (SPI_GETWORKAREA, 0, &scr, 0);
@@ -57,7 +57,7 @@ set_text (const char *text, const RECT &pos)
   scr.right -= 16;
   scr.bottom -= 16;
 
-  popup_text = (char *)text;
+  popup_text = (TCHAR *)text;
 
   RECT r[4];
 
@@ -179,7 +179,7 @@ wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 static int
 create_popup ()
 {
-  static const char wclass[] = "popup!?";
+  static const TCHAR wclass[] = _T("popup!?");
 
   f_first_time = 1;
   if (hwnd_popup)
@@ -202,7 +202,7 @@ create_popup ()
   if (!RegisterClass (&wc))
     return 0;
 
-  hwnd_popup = CreateWindow (wclass, "",
+  hwnd_popup = CreateWindow (wclass, _T(""),
                              WS_POPUP | WS_BORDER,
                              0, 0, 0, 0,
                              app.toplev, 0, app.hinst, 0);
@@ -219,7 +219,7 @@ create_popup ()
           memset (&cm.lfStatusFont, 0, sizeof cm.lfStatusFont);
           cm.lfStatusFont.lfHeight = MulDiv (9, GetDeviceCaps (hdc, LOGPIXELSY), 72);
           cm.lfStatusFont.lfCharSet = SHIFTJIS_CHARSET;
-          strcpy (cm.lfStatusFont.lfFaceName, "MS UI Gothic");
+          _tcscpy (cm.lfStatusFont.lfFaceName, _T("MS UI Gothic"));
           ReleaseDC (hwnd_popup, hdc);
         }
       hfont_popup = CreateFontIndirect (&cm.lfStatusFont);
@@ -267,7 +267,7 @@ Fpopup_string (lisp lstring, lisp lpoint, lisp ltimeout)
     }
 
   int l = w2sl (lstring) + 1;
-  char *p = (char *)xmalloc (l);
+  TCHAR *p = (TCHAR *)xmalloc (l * sizeof TCHAR);
   w2s (p, lstring);
   set_text (p, r);
   if (timeout > 0)

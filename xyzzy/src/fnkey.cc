@@ -79,7 +79,7 @@ FKWin::paint_text (HDC hdc, int n, const RECT &br, int offset) const
   if (fk_vkey & FVK_CONTROL)
     n += CTRL_OFFSET;
 
-  char buf[1024 + 1];
+  TCHAR buf[1024 + 1];
   lisp label = xvector_contents (xsymbol_value (Vfunction_bar_labels))[n];
   if (stringp (label))
     w2s (buf, xstring_contents (label), min (xstring_length (label), 512));
@@ -87,7 +87,7 @@ FKWin::paint_text (HDC hdc, int n, const RECT &br, int offset) const
     *buf = 0;
 
   ExtTextOut (hdc, r.left + 2, r.top + 2, ETO_CLIPPED | ETO_OPAQUE,
-              &r, buf, strlen (buf), 0);
+              &r, buf, _tcslen (buf), 0);
 
   SetBkColor (hdc, obg);
   SetTextColor (hdc, ofg);
