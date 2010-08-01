@@ -609,6 +609,32 @@ binary_to_internal_stream::refill_internal ()
     }
 }
 
+#ifdef UNICODE
+
+void
+utf_to_internal_stream::putw (ucs2_t wc)
+{
+  if (s_has_bom < 0)
+    {
+      s_has_bom = wc == UNICODE_BOM;
+      if (s_has_bom)
+        return;
+    }
+
+  Char cc = w2i (wc);
+  if (cc != Char (-1))
+    {
+      put (cc);
+    }
+  else
+    {
+      put (utf16_ucs2_to_undef_pair_high (wc));
+      put (utf16_ucs2_to_undef_pair_low (wc));
+    }
+}
+
+#else
+
 utf_to_internal_stream::putw_t
 utf_to_internal_stream::per_lang_putw (int lang)
 {
@@ -722,6 +748,8 @@ utf_to_internal_stream::putw_cn (ucs2_t wc)
       put (utf16_ucs2_to_undef_pair_low (wc));
     }
 }
+
+#endif
 
 inline void
 utf_to_internal_stream::putl (ucs4_t lc)
@@ -981,6 +1009,52 @@ utf5_to_internal_stream::refill_internal ()
     }
 }
 
+#ifdef UNICODE
+
+void
+sbcs_to_internal_stream::refill_internal ()
+{
+  while (room () > 0)
+    {
+      int c = s_in.get ();
+      if (c == eof)
+        break;
+      if (c >= 0x80 && s_translate[c - 0x80] != Char (-1))
+        c = s_translate[c - 0x80];
+      put (c);
+    }
+}
+
+const Char *
+iso8859_to_internal_stream::charset_to_internal (int ccs)
+{
+  switch (ccs)
+    {
+    default:
+      assert (0);
+    case ccs_iso8859_1:
+      return iso8859_1_to_internal;
+    case ccs_iso8859_2:
+      return iso8859_2_to_internal;
+    case ccs_iso8859_3:
+      return iso8859_3_to_internal;
+    case ccs_iso8859_4:
+      return iso8859_4_to_internal;
+    case ccs_iso8859_5:
+      return iso8859_5_to_internal;
+    case ccs_iso8859_7:
+      return iso8859_7_to_internal;
+    case ccs_iso8859_9:
+      return iso8859_9_to_internal;
+    case ccs_iso8859_10:
+      return iso8859_10_to_internal;
+    case ccs_iso8859_13:
+      return iso8859_13_to_internal;
+    }
+}
+
+#else
+
 void
 iso8859_to_internal_stream::refill_internal ()
 {
@@ -1008,6 +1082,8 @@ windows_codepage_to_internal_stream::refill_internal ()
       put (c);
     }
 }
+
+#endif
 
 void
 xwrite_stream::puteol ()
@@ -1551,12 +1627,14 @@ internal_to_utf_stream::getw () const
 
   Char cc = Char (c);
 
+#ifndef UNICODE
   if (!(s_flags & ENCODING_UTF_WINDOWS) && cc != Char (-1))
     {
       int n = cc % _countof (utf_internal2shiftjis_hash);
       if (utf_internal2shiftjis_hash[n].cc == cc)
         return utf_internal2shiftjis_hash[n].wc;
     }
+#endif
 
   ucs2_t wc = i2w (cc);
   if (wc != ucs2_t (-1))
@@ -1925,6 +2003,36 @@ internal_to_iso8859_stream::charset_hash (int ccs)
     }
 }
 
+#ifdef UNICODE
+
+int
+internal_to_sbcs_stream::refill ()
+{
+  begin ();
+  while (room () > 0)
+    {
+      int c = s_in.get ();
+      if (c == eof)
+        break;
+
+      Char cc = c;
+      if (cc >= 128)
+        {
+          cc = lookup_wc2int_hash (s_hash, i2w (cc));
+          if (cc == Char (-1))
+            cc = DEFCHAR;
+        }
+
+      if (cc == '\n')
+        puteol ();
+      else
+        put (u_char (cc));
+    }
+  return finish ();
+}
+
+#else
+
 int
 internal_to_iso8859_stream::refill ()
 {
@@ -1982,6 +2090,8 @@ internal_to_windows_codepage_stream::refill ()
     }
   return finish ();
 }
+
+#endif
 
 int
 xdecode_stream::decode (int nchars, const u_char *i)

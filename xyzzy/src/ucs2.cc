@@ -60,6 +60,37 @@ init_ucs2tab (int min, int max)
   wc2internal_table[0xffff] = o;
 }
 
+#ifdef UNICODE
+
+static void
+init_sbcs (wc2int_hash &hash, wc2int_hash_rep *rep, int size, const Char *to_int)
+{
+  hash.size = size;
+  hash.rep = rep;
+
+  for (int i = 0; i < size; i++)
+    rep[i].wc = ucs2_t (-1);
+
+  for (i = 0; i < 128; i++)
+    {
+      ucs2_t wc = i2w (to_int[i]);
+      if (wc != ucs2_t (-1))
+        {
+          int n = wc % size;
+          rep[n].wc = wc;
+          rep[n].cc = i | 128;
+        }
+    }
+}
+
+static void
+init_wincp (wc2int_hash &hash, wc2int_hash_rep *rep, int size, const Char *to_int)
+{
+  init_sbcs (hash, rep, size, to_int);
+}
+
+#else
+
 static void
 init_iso8859 (wc2int_hash &hash, wc2int_hash_rep *rep, int size, int ccs)
 {
@@ -104,6 +135,8 @@ init_wincp (wc2int_hash &hash, wc2int_hash_rep *rep, int size, const Char *to_in
         }
     }
 }
+
+#endif
 
 static inline void
 init_jisx0212 ()
@@ -536,6 +569,17 @@ init_ucs2_table ()
   init_ujp ();
 #endif
   init_cp932 ();
+#ifdef UNICODE
+  init_sbcs (wc2int_iso8859_13_hash, iso8859_13_rep, ISO8859_13_HASHSIZE, iso8859_13_to_internal);
+  init_sbcs (wc2int_iso8859_10_hash, iso8859_10_rep, ISO8859_10_HASHSIZE, iso8859_10_to_internal);
+  init_sbcs (wc2int_iso8859_9_hash, iso8859_9_rep, ISO8859_9_HASHSIZE, iso8859_9_to_internal);
+  init_sbcs (wc2int_iso8859_7_hash, iso8859_7_rep, ISO8859_7_HASHSIZE, iso8859_7_to_internal);
+  init_sbcs (wc2int_iso8859_5_hash, iso8859_5_rep, ISO8859_5_HASHSIZE, iso8859_5_to_internal);
+  init_sbcs (wc2int_iso8859_4_hash, iso8859_4_rep, ISO8859_4_HASHSIZE, iso8859_4_to_internal);
+  init_sbcs (wc2int_iso8859_3_hash, iso8859_3_rep, ISO8859_3_HASHSIZE, iso8859_3_to_internal);
+  init_sbcs (wc2int_iso8859_2_hash, iso8859_2_rep, ISO8859_2_HASHSIZE, iso8859_2_to_internal);
+  init_sbcs (wc2int_iso8859_1_hash, iso8859_1_rep, ISO8859_1_HASHSIZE, iso8859_1_to_internal);
+#else
   init_iso8859 (wc2int_iso8859_13_hash, iso8859_13_rep, ISO8859_13_HASHSIZE, ccs_iso8859_13 << 7);
   init_iso8859 (wc2int_iso8859_10_hash, iso8859_10_rep, ISO8859_10_HASHSIZE, ccs_iso8859_10 << 7);
   init_iso8859 (wc2int_iso8859_9_hash, iso8859_9_rep, ISO8859_9_HASHSIZE, ccs_iso8859_9 << 7);
@@ -545,6 +589,7 @@ init_ucs2_table ()
   init_iso8859 (wc2int_iso8859_3_hash, iso8859_3_rep, ISO8859_3_HASHSIZE, ccs_iso8859_3 << 7);
   init_iso8859 (wc2int_iso8859_2_hash, iso8859_2_rep, ISO8859_2_HASHSIZE, ccs_iso8859_2 << 7);
   init_iso8859 (wc2int_iso8859_1_hash, iso8859_1_rep, ISO8859_1_HASHSIZE, ccs_iso8859_1 << 7);
+#endif
 
   init_unicode ();
 

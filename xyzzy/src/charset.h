@@ -379,6 +379,22 @@ char_width (Char cc)
   return char_width_table[cc >> 3] & (1 << (cc & 7)) ? 2 : 1;
 }
 
+#ifdef UNICODE
+
+static inline const ucs2_t
+i2w (Char cc)
+{
+  return ucs2_t (cc);
+}
+
+static inline const Char
+w2i (ucs2_t wc)
+{
+  return Char (wc);
+}
+
+#else
+
 static inline const ucs2_t &
 i2w (Char cc)
 {
@@ -392,6 +408,8 @@ w2i (ucs2_t wc)
   extern Char wc2internal_table[];
   return wc2internal_table[wc];
 }
+
+#endif
 
 static inline const Char &
 wc2cp932 (ucs2_t wc)
@@ -487,6 +505,18 @@ lookup_wc2int_hash (const wc2int_hash &hash, ucs2_t wc)
     return hash.rep[n].cc;
   return Char (-1);
 }
+
+#ifdef UNICODE
+extern Char iso8859_1_to_internal[];
+extern Char iso8859_2_to_internal[];
+extern Char iso8859_3_to_internal[];
+extern Char iso8859_4_to_internal[];
+extern Char iso8859_5_to_internal[];
+extern Char iso8859_7_to_internal[];
+extern Char iso8859_9_to_internal[];
+extern Char iso8859_10_to_internal[];
+extern Char iso8859_13_to_internal[];
+#endif
 
 extern wc2int_hash wc2int_iso8859_1_hash;
 extern wc2int_hash wc2int_iso8859_2_hash;

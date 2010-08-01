@@ -251,25 +251,35 @@ public:
 class utf_to_internal_stream: public xbuffered_read_stream
 {
 protected:
+#ifndef UNICODE
   typedef void (utf_to_internal_stream::*putw_t)(ucs2_t);
+#endif
   const int s_flags;
   int s_has_bom;
   const int s_to_full_width;
+#ifdef UNICODE
+  void putw (ucs2_t c);
+#else
   const putw_t s_putw;
   const Char *const s_cjk_translate;
   void putw_jp (ucs2_t);
   void putw_cn (ucs2_t);
   void putw_gen (ucs2_t);
-  void putl (ucs4_t);
   void putw (ucs2_t c) {(this->*s_putw)(c);}
   static putw_t per_lang_putw (int);
+#endif
+  void putl (ucs4_t);
 public:
   utf_to_internal_stream (xinput_stream <u_char> &in, int flags, int lang)
        : xbuffered_read_stream (in), s_flags (flags),
          s_has_bom (flags & ENCODING_UTF_SIGNATURE ? -1 : 0),
-         s_to_full_width (xsymbol_value (Vunicode_to_half_width) == Qnil),
+         s_to_full_width (xsymbol_value (Vunicode_to_half_width) == Qnil)
+#ifndef UNICODE
+         ,
          s_putw (per_lang_putw (lang)),
-         s_cjk_translate (cjk_translate_table (lang)) {}
+         s_cjk_translate (cjk_translate_table (lang))
+#endif
+    {}
   int has_bom_p () const {return s_has_bom > 0;}
 };
 
@@ -348,6 +358,31 @@ public:
        : utf_to_internal_stream (in, flags, lang) {}
 };
 
+#ifdef UNICODE
+
+class sbcs_to_internal_stream: public xbuffered_read_stream
+{
+protected:
+  const Char *const s_translate;
+  virtual void refill_internal ();
+public:
+  sbcs_to_internal_stream (xinput_stream <u_char> &in, const Char *translate)
+       : xbuffered_read_stream (in), s_translate (translate) {}
+};
+
+class iso8859_to_internal_stream: public sbcs_to_internal_stream
+{
+protected:
+  static const Char *charset_to_internal (int);
+public:
+  iso8859_to_internal_stream (xinput_stream <u_char> &in, int ccs)
+       : sbcs_to_internal_stream (in, charset_to_internal (ccs)) {}
+};
+
+typedef sbcs_to_internal_stream windows_codepage_to_internal_stream;
+
+#else
+
 class iso8859_to_internal_stream: public xbuffered_read_stream
 {
 protected:
@@ -367,6 +402,8 @@ public:
   windows_codepage_to_internal_stream (xinput_stream <u_char> &in, const Char *translate)
        : xbuffered_read_stream (in), s_translate (translate) {}
 };
+
+#endif
 
 class xwrite_stream: public xfilter_stream <Char, u_char>,
                      protected xtemp_buffer <u_char, 4096, 16>
@@ -534,6 +571,31 @@ public:
        : internal_to_utf_stream (in, eol, flags) {}
 };
 
+#ifdef UNICODE
+
+class internal_to_sbcs_stream: public xwrite_stream
+{
+protected:
+  const wc2int_hash &s_hash;
+  virtual int refill ();
+public:
+  internal_to_sbcs_stream (xinput_stream <Char> &in, eol_code eol, const wc2int_hash &hash)
+       : xwrite_stream (in, eol), s_hash (hash) {}
+};
+
+class internal_to_iso8859_stream: public internal_to_sbcs_stream
+{
+protected:
+  static const wc2int_hash &charset_hash (int);
+public:
+  internal_to_iso8859_stream (xinput_stream <Char> &in, eol_code eol, int charset)
+       : internal_to_sbcs_stream (in, eol, charset_hash (charset)) {}
+};
+
+typedef internal_to_sbcs_stream internal_to_windows_codepage_stream;
+
+#else
+
 class internal_to_iso8859_stream: public xwrite_stream
 {
 protected:
@@ -556,6 +618,8 @@ public:
   internal_to_windows_codepage_stream (xinput_stream <Char> &in, eol_code eol, const wc2int_hash &hash)
        : xwrite_stream (in, eol), s_hash (hash) {}
 };
+
+#endif
 
 #define XDECODE_STREAM_BUFSIZE 1024
 #define XDECODE_STREAM_PADSIZE 16

@@ -1080,6 +1080,20 @@ main ()
   init_ulatin (ulatin, iso8859, _countof (cs));
 #endif
 
+#ifdef UNICODE
+  for (i = 0; i < _countof (wcp); ++i)
+    {
+      printf ("Char %s_to_internal[] =\n{\n", wcp[i].name);
+      print (wincp[i], 128);
+      printf ("};\n\n");
+    }
+  for (i = 0; i < _countof (cs); ++i)
+    {
+      printf ("Char %s_to_internal[] =\n{\n", cs[i].name);
+      print (iso8859[i], 128);
+      printf ("};\n\n");
+    }
+#else
   for (i = 0; i < _countof (wcp); i++)
     {
       ucs2_t wbuf[128];
@@ -1111,6 +1125,7 @@ main ()
       print (wbuf, 128);
       printf ("};\n\n");
     }
+#endif
 
   read_jisx0212 (jisx0212);
   read_ksc5601 (ksc5601);

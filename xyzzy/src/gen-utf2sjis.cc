@@ -42,9 +42,13 @@ buildhash (const int *from, const int *to, int len, const char *name)
 int
 main ()
 {
+#ifdef UNICODE
+  printf ("/* utf2sjis.h */\n");
+#else
   buildhash (internal, shiftjis, _countof (internal),
              "static const struct {Char cc; ucs2_t wc;} utf_internal2shiftjis_hash");
   buildhash (shiftjis, internal, _countof (internal),
              "static const struct {ucs2_t wc; Char cc;} utf_shiftjis2internal_hash");
+#endif
   return 0;
 }
