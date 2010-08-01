@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <tchar.h>
 #include <malloc.h>
 #include "xyzzycli.h"
 #include "listen.h"
@@ -34,40 +35,43 @@ ForceSetForegroundWindow (HWND hwnd)
 static int
 error (int id)
 {
-  char buf[256];
-  LoadString (GetModuleHandle (0), id, buf, sizeof buf);
+  TCHAR buf[256];
+  LoadString (GetModuleHandle (0), id, buf, _countof (buf));
   MessageBox (0, buf, 0, MB_SYSTEMMODAL	| MB_ICONHAND);
   return 2;
 }
 
-static char *
-stpcpy (char *d, const char *s)
+static TCHAR *
+stpcpy (TCHAR *d, const TCHAR *s)
 {
   while (*d++ = *s++)
     ;
   return d - 1;
 }
 
-static char *
-store (char *d, const char *s)
+static TCHAR *
+store (TCHAR *d, const TCHAR *s)
 {
-  *d++ = '"';
+  *d++ = _T('"');
   while (*s)
     {
+#ifndef UNICODE
       if (IsDBCSLeadByte (*s) && s[1])
         {
           *d++ = *s++;
           *d++ = *s++;
         }
-      else if (*s == '\\' || *s == '"')
+      else
+#endif
+      if (*s == _T('\\') || *s == _T('"'))
         {
-          *d++ = '\\';
+          *d++ = _T('\\');
           *d++ = *s++;
         }
       else
         *d++ = *s++;
     }
-  *d++ = '"';
+  *d++ = _T('"');
   return d;
 }
 
@@ -101,32 +105,32 @@ public:
       return 1;
     }
   xyzzysrv_param *param () const {return (xyzzysrv_param *)m_base;}
-  char *data () const {return param ()->data;}
+  TCHAR *data () const {return param ()->data;}
   HANDLE handle () const {return m_hmap;}
 };
 
 static int
-create_sexp (xyzzysrv &sv, int ac, char **av)
+create_sexp (xyzzysrv &sv, int ac, TCHAR **av)
 {
-  char curdir[MAX_PATH + 1];
-  GetCurrentDirectory (sizeof curdir, curdir);
+  TCHAR curdir[MAX_PATH + 1];
+  GetCurrentDirectory (_countof (curdir), curdir);
   int l = 256 + lstrlen (curdir) * 2;
   for (int i = 0; i < ac; i++)
     l += lstrlen (av[i]) * 2 + 3;
 
-  if (!sv.alloc (l))
+  if (!sv.alloc (l * sizeof TCHAR))
     return 0;
 
-  char *d = stpcpy (sv.data (), "(ed::*xyzzycli-helper ");
+  TCHAR *d = stpcpy (sv.data (), _T("(ed::*xyzzycli-helper "));
 
   d = store (d, curdir);
-  *d++ = ' ';
-  *d++ = '\'';
-  *d++ = '(';
+  *d++ = _T(' ');
+  *d++ = _T('\'');
+  *d++ = _T('(');
   for (i = 0; i < ac; i++)
     d = store (d, av[i]);
-  *d++ = ')';
-  *d++ = ')';
+  *d++ = _T(')');
+  *d++ = _T(')');
   *d = 0;
   return 1;
 }
@@ -134,7 +138,7 @@ create_sexp (xyzzysrv &sv, int ac, char **av)
 static HANDLE
 dup_handle (HANDLE hsrc, DWORD pid)
 {
-  HANDLE hproc = OpenProcess (PROCESS_ALL_ACCESS, 0, pid);
+  HANDLE hproc = OpenProcess (PROCESS_DUP_HANDLE, 0, pid);
   if (!hproc)
     return 0;
   HANDLE hdst;
@@ -181,16 +185,16 @@ find_server (lookup_server &ls)
 }
 
 static int
-run_xyzzy (int argc, char **argv, const char *xyzzy)
+run_xyzzy (int argc, TCHAR **argv, const TCHAR *xyzzy)
 {
   for (int l = lstrlen (xyzzy) + 1, i = 1;
        i < argc; l += lstrlen (argv[i]) + 1, i++)
     ;
-  char *const cl = (char *)_alloca (l);
-  char *p = stpcpy (cl, xyzzy);
+  TCHAR *const cl = (TCHAR *)_alloca (l * sizeof TCHAR);
+  TCHAR *p = stpcpy (cl, xyzzy);
   for (i = 1; i < argc; i++)
     {
-      *p++ = ' ';
+      *p++ = _T(' ');
       p = stpcpy (p, argv[i]);
     }
 
@@ -221,15 +225,15 @@ wait_term (xyzzysrv &sv)
 }
 
 static int
-skip_args (int argc, char **argv)
+skip_args (int argc, TCHAR **argv)
 {
   for (int ac = 1; ac < argc - 1; ac += 2)
-    if (lstrcmp (argv[ac], "-image")
-        && lstrcmp (argv[ac], "-config")
-        && lstrcmp (argv[ac], "-ini"))
+    if (lstrcmp (argv[ac], _T("-image"))
+        && lstrcmp (argv[ac], _T("-config"))
+        && lstrcmp (argv[ac], _T("-ini")))
       break;
-  if (ac < argc && (!lstrcmp (argv[ac], "-q")
-                    || !lstrcmp (argv[ac], "-no-init-file")))
+  if (ac < argc && (!lstrcmp (argv[ac], _T("-q"))
+                    || !lstrcmp (argv[ac], _T("-no-init-file"))))
     ac++;
   return ac;
 }
@@ -238,7 +242,7 @@ class synchronize
 {
   HANDLE h;
 public:
-  synchronize (const char *name)
+  synchronize (const TCHAR *name)
     {
       h = CreateMutex (0, 1, name);
       if (h && GetLastError () == ERROR_ALREADY_EXISTS)
@@ -255,7 +259,7 @@ public:
 };
 
 static int
-xmain (int argc, char **argv, const char *xyzzy, int multi_instance)
+xmain (int argc, TCHAR **argv, const TCHAR *xyzzy, int multi_instance)
 {
   MSG msg;
   PostQuitMessage (0);
@@ -269,7 +273,7 @@ xmain (int argc, char **argv, const char *xyzzy, int multi_instance)
 
   lookup_server ls;
   {
-    synchronize sync ("{FDFB3F8E-65AC-11D4-ADA0-0040053444B8}");
+    synchronize sync (_T("{FDFB3F8E-65AC-11D4-ADA0-0040053444B8}"));
     if (multi_instance || !find_server (ls))
       {
         sv.param ()->kill_ok = 1;
@@ -305,10 +309,10 @@ xmain (int argc, char **argv, const char *xyzzy, int multi_instance)
   return 0;
 }
 
-static const char *
-skip_white (const char *p)
+static const TCHAR *
+skip_white (const TCHAR *p)
 {
-  for (; *p == ' ' || *p == '\t'; p++)
+  for (; *p == _T(' ') || *p == _T('\t'); p++)
     ;
   return p;
 }
@@ -317,10 +321,10 @@ skip_white (const char *p)
 #define COPYARGV(X) (ac++, (av ? *av++ = (X) : 0))
 
 static int
-parse_cmdline1 (const char *p, char *&b0, int &ac, char **&av0, int nchars)
+parse_cmdline1 (const TCHAR *p, TCHAR *&b0, int &ac, TCHAR **&av0, int nchars)
 {
-  char *b = b0;
-  char **av = av0;
+  TCHAR *b = b0;
+  TCHAR **av = av0;
   while (1)
     {
       p = skip_white (p);
@@ -332,15 +336,15 @@ parse_cmdline1 (const char *p, char *&b0, int &ac, char **&av0, int nchars)
       int dq = 0;
       while (1)
         {
-          for (int nbacksl = 0; *p == '\\'; nbacksl++, p++)
+          for (int nbacksl = 0; *p == _T('\\'); nbacksl++, p++)
             ;
 
           int ignore = 0;
-          if (*p == '"')
+          if (*p == _T('"'))
             {
               if (!(nbacksl & 1))
                 {
-                  if (dq && p[1] == '"')
+                  if (dq && p[1] == _T('"'))
                     p++;
                   else
                     ignore = 1;
@@ -352,16 +356,18 @@ parse_cmdline1 (const char *p, char *&b0, int &ac, char **&av0, int nchars)
           while (nbacksl-- > 0)
             COPYCHAR ('\\');
 
-          if (!*p || (!dq && (*p == ' ' || *p == '\t')))
+          if (!*p || (!dq && (*p == _T(' ') || *p == _T('\t'))))
             break;
 
           if (!ignore)
             {
+#ifndef UNICODE
               if (IsDBCSLeadByte (*p) && p[1])
                 {
                   COPYCHAR (*p);
                   p++;
                 }
+#endif
               COPYCHAR (*p);
             }
           p++;
@@ -374,15 +380,15 @@ parse_cmdline1 (const char *p, char *&b0, int &ac, char **&av0, int nchars)
 }
 
 static int
-notepad_parse_cmdline (const char *p, char *&b0, int &ac, char **&av0, int nchars)
+notepad_parse_cmdline (const TCHAR *p, TCHAR *&b0, int &ac, TCHAR **&av0, int nchars)
 {
-  char *b = b0;
-  char **av = av0;
+  TCHAR *b = b0;
+  TCHAR **av = av0;
   p = skip_white (p);
-  if (*p == '/' && (p[1] == 'p' || p[1] == 'P')
-      && (p[2] == ' ' || p[2] == '\t' || !p[2]))
+  if (*p == _T('/') && (p[1] == _T('p') || p[1] == _T('P'))
+      && (p[2] == _T(' ') || p[2] == _T('\t') || !p[2]))
     {
-      COPYARGV ("-p");
+      COPYARGV (_T("-p"));
       p = skip_white (p + 2);
     }
   if (*p)
@@ -390,13 +396,15 @@ notepad_parse_cmdline (const char *p, char *&b0, int &ac, char **&av0, int nchar
       COPYARGV (b);
       do
         {
-          if (*p != '"')
+          if (*p != _T('"'))
             {
+#ifndef UNICODE
               if (IsDBCSLeadByte (*p) && p[1])
                 {
                   COPYCHAR (*p);
                   p++;
                 }
+#endif
               COPYCHAR (*p);
             }
           p++;
@@ -411,45 +419,49 @@ notepad_parse_cmdline (const char *p, char *&b0, int &ac, char **&av0, int nchar
 
 struct config
 {
-  char xyzzy[MAX_PATH];
-  char pre_opt[1024];
-  char post_opt[1024];
+  TCHAR xyzzy[MAX_PATH];
+  TCHAR pre_opt[1024];
+  TCHAR post_opt[1024];
   int notepad;
   int multi_instance;
 };
 
 static int
-parse_cmdline (const char *p, char *b, int &ac, char **av, const config &cf)
+parse_cmdline (const TCHAR *p, TCHAR *b, int &ac, TCHAR **av, const config &cf)
 {
   int nchars = 0;
   ac = -1;
 
   COPYARGV (b);
 
-  if (*p == '"')
+  if (*p == _T('"'))
     {
-      for (p++; *p && *p != '"'; p++)
+      for (p++; *p && *p != _T('"'); p++)
         {
+#ifndef UNICODE
           if (IsDBCSLeadByte (*p) && p[1])
             {
               COPYCHAR (*p);
               p++;
             }
+#endif
           COPYCHAR (*p);
         }
       COPYCHAR (0);
-      if (*p == '"')
+      if (*p == _T('"'))
         p++;
     }
   else
     {
-      for (; *p && *p != ' ' && *p != '\t'; p++)
+      for (; *p && *p != _T(' ') && *p != _T('\t'); p++)
         {
+#ifndef UNICODE
           if (IsDBCSLeadByte (*p) && p[1])
             {
               COPYCHAR (*p);
               p++;
             }
+#endif
           COPYCHAR (*p);
         }
       COPYCHAR (0);
@@ -462,7 +474,7 @@ parse_cmdline (const char *p, char *b, int &ac, char **av, const config &cf)
     }
   else
     {
-      COPYARGV ("-wait");
+      COPYARGV (_T("-wait"));
       nchars = parse_cmdline1 (cf.pre_opt, b, ac, av, nchars);
       nchars = notepad_parse_cmdline (p, b, ac, av, nchars);
     }
@@ -474,18 +486,20 @@ parse_cmdline (const char *p, char *b, int &ac, char **av, const config &cf)
 #undef COPYARGV
 }
 
-static char *
-basename (char *path)
+static TCHAR *
+basename (TCHAR *path)
 {
-  char *base = 0;
-  char *p = path;
+  TCHAR *base = 0;
+  TCHAR *p = path;
   while (*p)
     {
+#ifndef UNICODE
       if (IsDBCSLeadByte (*p) && p[1])
         p += 2;
       else
+#endif
         {
-          if (*p == '\\')
+          if (*p == _T('\\'))
             base = p + 1;
           p++;
         }
@@ -496,23 +510,23 @@ basename (char *path)
 static void
 read_config (config &cf)
 {
-  char path[MAX_PATH + 16];
+  TCHAR path[MAX_PATH + 16];
   GetModuleFileName (0, path, MAX_PATH);
-  cf.notepad = !lstrcmpi (basename (path), "notepad.exe");
+  cf.notepad = !lstrcmpi (basename (path), _T("notepad.exe"));
   int l = lstrlen (path);
-  if (l > 4 && !lstrcmpi (&path[l - 4], ".exe"))
-    lstrcpy (&path[l - 3], "ini");
+  if (l > 4 && !lstrcmpi (&path[l - 4], _T(".exe")))
+    lstrcpy (&path[l - 3], _T("ini"));
   else
-    lstrcpy (path + l, ".ini");
-  GetPrivateProfileString ("xyzzy", "path", "xyzzy.exe",
-                           cf.xyzzy, sizeof cf.xyzzy, path);
+    lstrcpy (path + l, _T(".ini"));
+  GetPrivateProfileString (_T("xyzzy"), _T("path"), _T("xyzzy.exe"),
+                           cf.xyzzy, _countof (cf.xyzzy), path);
   if (!cf.notepad)
-    cf.notepad = GetPrivateProfileInt ("xyzzy", "compatNotepad", 0, path);
-  cf.multi_instance = GetPrivateProfileInt ("xyzzy", "multipleInstances", 0, path);
-  GetPrivateProfileString ("xyzzy", "precedingOptions", "",
-                           cf.pre_opt, sizeof cf.pre_opt, path);
-  GetPrivateProfileString ("xyzzy", "followingOptions", "",
-                           cf.post_opt, sizeof cf.post_opt, path);
+    cf.notepad = GetPrivateProfileInt (_T("xyzzy"), _T("compatNotepad"), 0, path);
+  cf.multi_instance = GetPrivateProfileInt (_T("xyzzy"), _T("multipleInstances"), 0, path);
+  GetPrivateProfileString (_T("xyzzy"), _T("precedingOptions"), _T(""),
+                           cf.pre_opt, _countof (cf.pre_opt), path);
+  GetPrivateProfileString (_T("xyzzy"), _T("followingOptions"), _T(""),
+                           cf.post_opt, _countof (cf.post_opt), path);
 }
 
 extern "C" void __cdecl
@@ -521,10 +535,10 @@ process_startup ()
   config cf;
   read_config (cf);
 
-  const char *const cl = GetCommandLine ();
+  const TCHAR *const cl = GetCommandLine ();
   int ac;
   int nchars = parse_cmdline (cl, 0, ac, 0, cf);
-  char **av = (char **)_alloca (sizeof *av * (ac + 1) + nchars);
-  parse_cmdline (cl, (char *)(av + ac + 1), ac, av, cf);
+  TCHAR **av = (TCHAR **)_alloca (sizeof *av * (ac + 1) + nchars * sizeof TCHAR);
+  parse_cmdline (cl, (TCHAR *)(av + ac + 1), ac, av, cf);
   ExitProcess (xmain (ac, av, cf.xyzzy, cf.multi_instance));
 }
