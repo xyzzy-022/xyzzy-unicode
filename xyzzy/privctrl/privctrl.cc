@@ -1,11 +1,12 @@
 #include <windows.h>
+#include <tchar.h>
 #include <commctrl.h>
 #define EXTERN
 #include "privctlimpl.h"
 
 static BOOL PrivateControlsInitialized;
-static const char PropName[] = "PropPrivCtrl";
-static const char OwnerDrawName[] = "PropOwnerDraw";
+static const TCHAR PropName[] = _T("PropPrivCtrl");
+static const TCHAR OwnerDrawName[] = _T("PropOwnerDraw");
 
 static LRESULT CALLBACK
 ParentWndProc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)

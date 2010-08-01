@@ -16,9 +16,22 @@ extern "C" {
 # define WC_URLCLASSA "URLLink"
 # define WC_URLCLASSW L"URLLink"
 
+# ifdef UNICODE
+#  define WC_URLCLASS WC_URLCLASSW
+# else
+#  define WC_URLCLASS WC_URLCLASSA
+# endif
+
 # define URLN_CLICKED 0
 
-# define WC_LISTVIEWEX "SysListViewEx32"
+# define WC_LISTVIEWEXA "SysListViewEx32"
+# define WC_LISTVIEWEXW L"SysListViewEx32"
+
+# ifdef UNICODE
+#  define WC_LISTVIEWEX WC_LISTVIEWEXW
+# else
+#  define WC_LISTVIEWEX WC_LISTVIEWEXA
+# endif
 
 # define LVN_PROCESSKEY (LVN_LAST + 1)
 typedef struct _LV_PROCESSKEY

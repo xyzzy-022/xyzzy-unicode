@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <tchar.h>
 #include "privctlimpl.h"
 #include <malloc.h>
 #include <stdio.h>
@@ -21,15 +22,15 @@ dopaint (HWND hwnd, HDC hdc)
       hbr = 0;
     }
 
-  char *s[3];
+  TCHAR *s[3];
   int l = GetWindowTextLength (hwnd);
-  s[0] = (char *)_alloca (l + 1);
+  s[0] = (TCHAR *)_alloca ((l + 1) * sizeof TCHAR);
   GetWindowText (hwnd, s[0], l + 1);
-  s[1] = strchr (s[0], '\001');
+  s[1] = _tcschr (s[0], _T('\001'));
   if (s[1])
     {
       *s[1]++ = 0;
-      s[2] = strchr (s[1], '\002');
+      s[2] = _tcschr (s[1], _T('\002'));
       if (s[2])
         *s[2]++ = 0;
     }
@@ -54,7 +55,7 @@ dopaint (HWND hwnd, HDC hdc)
       if (!s[i])
         break;
       SIZE sz;
-      l = strlen (s[i]);
+      l = _tcslen (s[i]);
       SetTextColor (hdc, i == 1 ? hl : bg);
       GetTextExtentPoint32 (hdc, s[i], l, &sz);
       r.right = min (r.left + sz.cx, xmax);
@@ -70,7 +71,7 @@ dopaint (HWND hwnd, HDC hdc)
               u.right = r.right;
               u.bottom = min (sz.cy + 1, r.bottom);
               u.top = u.bottom - 1;
-              ExtTextOut (hdc, 0, 0, ETO_OPAQUE, &u, "", 0, 0);
+              ExtTextOut (hdc, 0, 0, ETO_OPAQUE, &u, _T(""), 0, 0);
               SetBkColor (hdc, obg);
             }
         }
@@ -223,7 +224,7 @@ init_url_class ()
   wc.hCursor = hcur_harrow;
   wc.hbrBackground = 0;
   wc.lpszMenuName = 0;
-  wc.lpszClassName = WC_URLCLASSA;
+  wc.lpszClassName = WC_URLCLASS;
   return RegisterClass (&wc);
 }
 

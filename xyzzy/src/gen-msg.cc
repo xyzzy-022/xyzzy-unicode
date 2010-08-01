@@ -3,7 +3,7 @@
 #include "cdecl.h"
 #include "chtype.h"
 
-#include "chtab.cc"
+#include "chtab.gen.cc"
 
 struct msgdef
 {
