@@ -1,10 +1,12 @@
 syntax: glob
-xyzzy.ncb
+ipch
+xyzzy.opensdf
+xyzzy.sdf
 xyzzy.suo
 Debug
 DebugANSI
 Release
 ReleaseANSI
-*.vcproj.*.user
+*.vcxproj.user
 unicode
 zlib

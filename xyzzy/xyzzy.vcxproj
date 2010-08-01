@@ -1,0 +1,388 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugANSI|Win32">
+      <Configuration>DebugANSI</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseANSI|Win32">
+      <Configuration>ReleaseANSI</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0267AF5C-C0AC-43FF-87F9-F1C181012AB4}</ProjectGuid>
+    <RootNamespace>xyzzy</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">$(Configuration)\$(ProjectName)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)privctrl;$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CallingConvention>StdCall</CallingConvention>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)src\zlib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>33554432</StackReserveSize>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)privctrl;$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>StdCall</CallingConvention>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)src\zlib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>33554432</StackReserveSize>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)privctrl;$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CallingConvention>StdCall</CallingConvention>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)src\zlib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>33554432</StackReserveSize>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(SolutionDir)privctrl;$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Async</ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CallingConvention>StdCall</CallingConvention>
+    </ClCompile>
+    <ResourceCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)gen\$(Configuration);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <AdditionalDependencies>comctl32.lib;imm32.lib;mpr.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)src\zlib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <StackReserveSize>33554432</StackReserveSize>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\alloc.cc" />
+    <ClCompile Include="src\arc-if.cc" />
+    <ClCompile Include="src\archiver.cc" />
+    <ClCompile Include="src\array.cc" />
+    <ClCompile Include="src\assert.cc" />
+    <ClCompile Include="src\backq.cc" />
+    <ClCompile Include="src\bignum.cc" />
+    <ClCompile Include="src\binfo.cc" />
+    <ClCompile Include="src\buffer-bar.cc" />
+    <ClCompile Include="src\Buffer.cc" />
+    <ClCompile Include="src\byte-stream.cc" />
+    <ClCompile Include="src\bytecode.cc" />
+    <ClCompile Include="src\ces.cc" />
+    <ClCompile Include="src\char.cc" />
+    <ClCompile Include="src\chname.cc" />
+    <ClCompile Include="src\ChooseFont.cc" />
+    <ClCompile Include="src\chunk.cc" />
+    <ClCompile Include="src\ColorDialog.cc" />
+    <ClCompile Include="src\colors.cc" />
+    <ClCompile Include="src\com.cc" />
+    <ClCompile Include="src\conf.cc" />
+    <ClCompile Include="src\ctl3d.cc" />
+    <ClCompile Include="src\data.cc" />
+    <ClCompile Include="src\dde.cc" />
+    <ClCompile Include="src\dialogs.cc" />
+    <ClCompile Include="src\disp.cc" />
+    <ClCompile Include="src\dll.cc" />
+    <ClCompile Include="src\DnD.cc" />
+    <ClCompile Include="src\doc.cc" />
+    <ClCompile Include="src\dockbar.cc" />
+    <ClCompile Include="src\edict.cc" />
+    <ClCompile Include="src\encdec.cc" />
+    <ClCompile Include="src\encoding.cc" />
+    <ClCompile Include="src\environ.cc" />
+    <ClCompile Include="src\eval.cc" />
+    <ClCompile Include="src\except.cc" />
+    <ClCompile Include="src\fileio.cc" />
+    <ClCompile Include="src\filer.cc" />
+    <ClCompile Include="src\fnkey.cc" />
+    <ClCompile Include="src\font.cc" />
+    <ClCompile Include="src\gime.cc" />
+    <ClCompile Include="src\glob.cc" />
+    <ClCompile Include="src\guid.cc" />
+    <ClCompile Include="src\gzip.cc" />
+    <ClCompile Include="src\hash.cc" />
+    <ClCompile Include="src\hashpjw.cc" />
+    <ClCompile Include="src\init.cc" />
+    <ClCompile Include="src\insdel.cc" />
+    <ClCompile Include="src\ipc.cc" />
+    <ClCompile Include="src\kanji.cc" />
+    <ClCompile Include="src\kbd.cc" />
+    <ClCompile Include="src\keymap.cc" />
+    <ClCompile Include="src\largeint.cc" />
+    <ClCompile Include="src\ldialog.cc" />
+    <ClCompile Include="src\lex.cc" />
+    <ClCompile Include="src\list.cc" />
+    <ClCompile Include="src\listen.cc" />
+    <ClCompile Include="src\lprint.cc" />
+    <ClCompile Include="src\lread.cc" />
+    <ClCompile Include="src\md5c.cc" />
+    <ClCompile Include="src\menu.cc" />
+    <ClCompile Include="src\minibuf.cc" />
+    <ClCompile Include="src\mman.cc" />
+    <ClCompile Include="src\mouse.cc" />
+    <ClCompile Include="src\move.cc" />
+    <ClCompile Include="src\msgbox.cc" />
+    <ClCompile Include="src\number.cc" />
+    <ClCompile Include="src\oledata.cc" />
+    <ClCompile Include="src\package.cc" />
+    <ClCompile Include="src\pane.cc" />
+    <ClCompile Include="src\pathname.cc" />
+    <ClCompile Include="src\popup.cc" />
+    <ClCompile Include="src\popupl.cc" />
+    <ClCompile Include="src\pred.cc" />
+    <ClCompile Include="src\preview.cc" />
+    <ClCompile Include="src\print.cc" />
+    <ClCompile Include="src\printdlg.cc" />
+    <ClCompile Include="src\process.cc" />
+    <ClCompile Include="src\random.cc" />
+    <ClCompile Include="src\regex.cc" />
+    <ClCompile Include="src\resolver.cc" />
+    <ClCompile Include="src\search.cc" />
+    <ClCompile Include="src\sequence.cc" />
+    <ClCompile Include="src\sha1.cc" />
+    <ClCompile Include="src\signal.cc" />
+    <ClCompile Include="src\sock.cc" />
+    <ClCompile Include="src\sockinet.cc" />
+    <ClCompile Include="src\statarea.cc" />
+    <ClCompile Include="src\stdctl.cc" />
+    <ClCompile Include="src\StrBuf.cc" />
+    <ClCompile Include="src\stream.cc" />
+    <ClCompile Include="src\string.cc" />
+    <ClCompile Include="src\structure.cc" />
+    <ClCompile Include="src\symbol.cc" />
+    <ClCompile Include="src\syntax.cc" />
+    <ClCompile Include="src\sysdep.cc" />
+    <ClCompile Include="src\thread.cc" />
+    <ClCompile Include="src\toplev.cc" />
+    <ClCompile Include="src\ucs2.cc" />
+    <ClCompile Include="src\undo.cc" />
+    <ClCompile Include="src\usertab.cc" />
+    <ClCompile Include="src\usertool.cc" />
+    <ClCompile Include="src\utils.cc" />
+    <ClCompile Include="src\utimer.cc" />
+    <ClCompile Include="src\vector.cc" />
+    <ClCompile Include="src\version.cc" />
+    <ClCompile Include="src\vfs.cc" />
+    <ClCompile Include="src\wheel.cc" />
+    <ClCompile Include="src\Window.cc" />
+    <ClCompile Include="src\winhelp.cc" />
+    <ClCompile Include="src\wstream.cc" />
+    <ClCompile Include="src\xdde.cc" />
+    <ClCompile Include="src\xlist.cc" />
+    <ClCompile Include="src\chtab.cc" />
+    <ClCompile Include="src\dumpver.cc" />
+    <ClCompile Include="src\msgdef.cc" />
+    <ClCompile Include="src\symtable.cc" />
+    <ClCompile Include="privctrl\listviewex.cc" />
+    <ClCompile Include="privctrl\privctrl.cc" />
+    <ClCompile Include="privctrl\url.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\xyzzy.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="gen\dpp.vcxproj">
+      <Project>{a2c59236-6e41-487f-ab4a-e988d1c627d8}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-char-width.vcxproj">
+      <Project>{7558425f-6f8c-4bdc-9d85-40e18e7e3f95}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-ctab.vcxproj">
+      <Project>{39aa1e32-6e74-4e03-8821-58534eee1996}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-fontrange.vcxproj">
+      <Project>{826320de-2c42-4d81-a389-cb4000044b1a}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-ibmext.vcxproj">
+      <Project>{aea9aa5e-4a48-490e-97db-8839b0bb21d0}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-iso2022state.vcxproj">
+      <Project>{3cabbe7a-3e4d-4119-a864-6a885d5e414a}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-jisx0212-hash.vcxproj">
+      <Project>{51e2c591-5983-4628-a681-9c78388fe5e6}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-jisx0212-width.vcxproj">
+      <Project>{2d27de14-c4eb-4e45-8936-c58514ba3104}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-ktab.vcxproj">
+      <Project>{e6fd9f8d-cb71-4afb-a86b-7b8ec9d9ecdb}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-lucida-width.vcxproj">
+      <Project>{405eb36d-fe42-4e78-ac5f-0db0422673a4}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-msg.vcxproj">
+      <Project>{009d9799-3749-4f66-bbc4-83976e5ea7a7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-syms.vcxproj">
+      <Project>{ffbb3683-9116-4d7e-84a9-a51337a17d64}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-ucs2tab.vcxproj">
+      <Project>{0bb0913d-1945-4c2a-9e0c-ca56f622dc4e}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-utf2sjis.vcxproj">
+      <Project>{f3cc8760-6c73-4299-a3ad-3ab9683a62e7}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="gen\gen-vinf.vcxproj">
+      <Project>{160082da-390d-4dd3-ae60-9db800c56502}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
