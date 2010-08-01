@@ -122,12 +122,12 @@ ChooseFontP::change_font_size (HWND hwnd, int size)
   struct {int index, point;} min, max;
   min.index = max.index = -1;
 
-  char b[16];
+  TCHAR b[16];
   int n = SendDlgItemMessage (hwnd, IDC_SIZELIST, LB_GETCOUNT, 0, 0);
   for (i = 0; i < n; i++)
     if (SendDlgItemMessage (hwnd, IDC_SIZELIST, LB_GETTEXT, i, LPARAM (b)) != LB_ERR)
       {
-        int x = atoi (b);
+        int x = _ttoi (b);
         if (x <= size && (min.index == -1 || x > min.point))
           {
             min.index = i;
@@ -186,10 +186,10 @@ ChooseFontP::notify_font_name (HWND hwnd, int code)
   int i = SendDlgItemMessage (hwnd, IDC_SIZELIST, LB_GETCURSEL, 0, 0);
   if (i == LB_ERR)
     return;
-  char b[16];
+  TCHAR b[16];
   if (SendDlgItemMessage (hwnd, IDC_SIZELIST, LB_GETTEXT, i, LPARAM (b)) == LB_ERR)
     return;
-  change_font_size (hwnd, atoi (b));
+  change_font_size (hwnd, _ttoi (b));
 }
 
 void
@@ -215,14 +215,14 @@ ChooseFontP::notify_font_size (HWND hwnd, int code)
   int j = SendDlgItemMessage (hwnd, IDC_SIZELIST, LB_GETCURSEL, 0, 0);
   if (j == LB_ERR)
     return;
-  char b[16];
+  TCHAR b[16];
   if (SendDlgItemMessage (hwnd, IDC_SIZELIST, LB_GETTEXT, j, LPARAM (b)) == LB_ERR)
     return;
 
   BYTE charset = BYTE (SendDlgItemMessage (hwnd, IDC_NAMELIST, LB_GETITEMDATA, i, 0) >> 8);
   LOGFONT lf;
   bzero (&lf, sizeof lf);
-  lf.lfHeight = cf_param.fs_size_pixel ? atoi (b) : MulDiv (atoi (b), cf_dpi, 72);
+  lf.lfHeight = cf_param.fs_size_pixel ? _ttoi (b) : MulDiv (_ttoi (b), cf_dpi, 72);
   lf.lfCharSet = charset;
   _tcscpy (lf.lfFaceName, name);
 
