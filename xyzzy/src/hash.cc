@@ -230,7 +230,7 @@ hash_table_good_size (int size)
       1103, 1499, 1999, 2999, 4001, 4999, 6007, 7001, 8009, 8999,
       10007, 19997, 29989, 39989, 49999, 59999, 70001, 79999, 90001, 99991,
     };
-  for (int i = 0; i < numberof (prime); i++)
+  for (int i = 0; i < _countof (prime); i++)
     if (size < prime[i])
       return prime[i];
   if (!(size & 1))

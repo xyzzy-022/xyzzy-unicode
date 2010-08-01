@@ -1291,7 +1291,7 @@ FORMATETC text_enum_FORMATETC::tef_etc[] =
 
 inline
 text_enum_FORMATETC::text_enum_FORMATETC ()
-     : ole_enum_FORMATETC (numberof (tef_etc), tef_etc)
+     : ole_enum_FORMATETC (_countof (tef_etc), tef_etc)
 {
   tef_etc[0].cfFormat = CF_XYZZYTEXT;
 }

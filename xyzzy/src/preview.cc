@@ -339,7 +339,7 @@ preview_page_window::set_scale (int scale, int update, POINT *pt)
 {
   if (scale == p_scale)
     return 0;
-  for (int i = 0; i < numberof (ids2scales); i++)
+  for (int i = 0; i < _countof (ids2scales); i++)
     if (scale == ids2scales[i].scale)
       {
         p_scale = scale;
@@ -755,7 +755,7 @@ void
 preview_dialog::set_scale_combo ()
 {
   int cur = -1;
-  for (int i = 0; i < numberof (preview_page_window::ids2scales); i++)
+  for (int i = 0; i < _countof (preview_page_window::ids2scales); i++)
     if (preview_page_window::ids2scales[i].scale == p_page.get_scale ())
       {
         SendDlgItemMessage (p_hwnd, IDC_SCALE, CB_SETCURSEL, i, 0);
@@ -788,7 +788,7 @@ preview_dialog::init_dialog (HWND)
   if (!p_page.create (p_hwnd, r))
     return -1;
 
-  for (int i = 0; i < numberof (preview_page_window::ids2scales); i++)
+  for (int i = 0; i < _countof (preview_page_window::ids2scales); i++)
     {
       TCHAR b[128];
       LoadString (app.hinst, preview_page_window::ids2scales[i].ids,

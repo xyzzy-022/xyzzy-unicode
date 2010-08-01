@@ -71,19 +71,19 @@ set_text (const TCHAR *text, const RECT &pos)
   ReleaseDC (hwnd_popup, hdc);
   InvalidateRect (hwnd_popup, 0, 1);
 
-  for (int i = 0; i < numberof (r); i++)
+  for (int i = 0; i < _countof (r); i++)
     OffsetRect (&r[i], XPAD, YPAD);
 
   POINT p;
-  for (i = 0; i < numberof (r); i++)
+  for (i = 0; i < _countof (r); i++)
     if (check_range (scr, r[i], pos, p)
         && p.y != pos.bottom)
       break;
-  if (i >= numberof (r) - 1)
-    for (i = 0; i < numberof (r); i++)
+  if (i >= _countof (r) - 1)
+    for (i = 0; i < _countof (r); i++)
       if (check_range (scr, r[i], pos, p))
         break;
-  if (i < numberof (r))
+  if (i < _countof (r))
     popup_rect = r[i];
   else
     {

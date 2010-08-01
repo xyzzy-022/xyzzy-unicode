@@ -81,7 +81,7 @@ class Char_output_wstream: public Char_output_stream
 {
   Char s_buf[1024];
 protected:
-  Char_output_wstream () : Char_output_stream (s_buf, s_buf + numberof (s_buf)) {}
+  Char_output_wstream () : Char_output_stream (s_buf, s_buf + _countof (s_buf)) {}
   virtual Char *sflush (Char *b, Char *e, int)
     {if (b != e) swrite (b, e - b); return b;}
   virtual void swrite (const Char *, int) = 0;

@@ -1715,7 +1715,7 @@ Regexp::record_failure::find (const Char *pat, point_t point, point_t max) const
 inline void
 Regexp::record_failure::add (const Char *pat, const re_point &point)
 {
-  if (m_ep != m_entbuf + numberof (m_entbuf))
+  if (m_ep != m_entbuf + _countof (m_entbuf))
     {
       u_int h = hashval (pat, point.p_point, point.p_max) % TABSIZE;
       m_ep->pat = pat;

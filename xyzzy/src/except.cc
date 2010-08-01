@@ -55,7 +55,7 @@ se_handler (u_int code, EXCEPTION_POINTERS *ep)
     throw Win32Exception (code, ep);
 #else
 # if 0
-  for (int i = 0; i < numberof (Win32Exception::known_excep); i++)
+  for (int i = 0; i < _countof (Win32Exception::known_excep); i++)
     if (code == Win32Exception::known_excep[i].code)
       throw Win32Exception (code, ep);
 # else
@@ -363,7 +363,7 @@ void
 cleanup_exception ()
 {
   const TCHAR *desc = _T("Unknown exception");
-  for (int i = 0; i < numberof (Win32Exception::known_excep); i++)
+  for (int i = 0; i < _countof (Win32Exception::known_excep); i++)
     if (Win32Exception::code == Win32Exception::known_excep[i].code)
       {
         desc = Win32Exception::known_excep[i].desc;

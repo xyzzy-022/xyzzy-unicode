@@ -86,7 +86,7 @@ SelectColor::SelectColor ()
   if (!initialized)
     {
       initialized = 1;
-      for (int i = 0; i < numberof (cust); i++)
+      for (int i = 0; i < _countof (cust); i++)
         {
           TCHAR name[16];
           _stprintf (name, _T("%s%d"), cfgCustColor, i);
@@ -95,14 +95,14 @@ SelectColor::SelectColor ()
         }
     }
   HDC hdc = GetDC (0);
-  for (int i = 0; i < numberof (colors); i++)
+  for (int i = 0; i < _countof (colors); i++)
     colors[i] = GetNearestColor (hdc, PALETTEINDEX (i));
   ReleaseDC (0, hdc);
 }
 
 SelectColor::~SelectColor ()
 {
-  for (int i = 0; i < numberof (cust); i++)
+  for (int i = 0; i < _countof (cust); i++)
     {
       TCHAR name[16];
       _stprintf (name, _T("%s%d"), cfgCustColor, i);
@@ -117,7 +117,7 @@ SelectColor::find_match (const XCOLORREF &c) const
   if (c.syscolor_index () >= 0)
     return -1;
   COLORREF cr (c);
-  for (int i = 0; i < numberof (colors); i++)
+  for (int i = 0; i < _countof (colors); i++)
     if (colors[i] == cr)
       return i + IDC_BUTTON1;
   return -1;

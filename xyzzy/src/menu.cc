@@ -184,11 +184,11 @@ static lisp
 create_new_item (int &id, lisp tag, lisp command, lisp init)
 {
   bitset (used_id, 0);
-  id = find_zero_bit (used_id, numberof (used_id));
+  id = find_zero_bit (used_id, _countof (used_id));
   if (id < 0)
     {
       gc (1);
-      id = find_zero_bit (used_id, numberof (used_id));
+      id = find_zero_bit (used_id, _countof (used_id));
       if (id < 0)
         FEprogram_error (Etoo_many_menu_items);
     }
@@ -642,7 +642,7 @@ modify_menu_string (lisp lmenu)
             Char b[5];
             Char *be = lookup_command_keyseq (xwin32_menu_command (item),
                                               map[i], map, i,
-                                              b, b, b + numberof (b));
+                                              b, b, b + _countof (b));
             if (be)
               {
                 modify_menu_string (xwin32_menu_handle (lmenu),

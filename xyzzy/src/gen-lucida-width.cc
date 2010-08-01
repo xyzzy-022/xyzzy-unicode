@@ -52,7 +52,7 @@ main ()
     abc[0x333 - UNICODE_SMLCDM_MIN] =
       abc[0x305 - UNICODE_SMLCDM_MIN];
 
-  for (int i = 0; i < numberof (abc); i++)
+  for (int i = 0; i < _countof (abc); i++)
     {
       if (abc[i].abcA < SCHAR_MIN || abc[i].abcA > SCHAR_MAX)
         {
@@ -68,7 +68,7 @@ main ()
         }
     }
 
-  print (abc, numberof (abc));
+  print (abc, _countof (abc));
 
   return 0;
 }

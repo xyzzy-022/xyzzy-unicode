@@ -224,11 +224,11 @@ user_tool_bar::set_item (tool_item &i, lisp x)
         }
       else
         i.ti_init = Qnil;
-      i.ti_id = find_zero_bit (u_command_id, numberof (u_command_id));
+      i.ti_id = find_zero_bit (u_command_id, _countof (u_command_id));
       if (i.ti_id < 0)
         {
           gc (1);
-          i.ti_id = find_zero_bit (u_command_id, numberof (u_command_id));
+          i.ti_id = find_zero_bit (u_command_id, _countof (u_command_id));
           if (i.ti_id < 0)
             FEprogram_error (Etoo_many_tool_items);
         }

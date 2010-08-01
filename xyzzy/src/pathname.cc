@@ -2027,7 +2027,7 @@ static const u_char fat32_devcat[] = {0x48, 0x08};
 static int
 win9x_lock_logical_volume (HANDLE hvwin32, int drive, int lock_level, int perm)
 {
-  for (int i = 0; i < numberof (fat32_devcat); i++)
+  for (int i = 0; i < _countof (fat32_devcat); i++)
     {
       DIOC_REGISTERS regs = {0};
       regs.reg_EAX = 0x440d;
@@ -2048,7 +2048,7 @@ win9x_lock_logical_volume (HANDLE hvwin32, int drive, int lock_level, int perm)
 static int
 win9x_unlock_logical_volume (HANDLE hvwin32, int drive)
 {
-  for (int i = 0; i < numberof (fat32_devcat); i++)
+  for (int i = 0; i < _countof (fat32_devcat); i++)
     {
       DIOC_REGISTERS regs = {0};
       regs.reg_EAX = 0x440d;

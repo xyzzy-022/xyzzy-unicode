@@ -2744,11 +2744,11 @@ make_symbol_name (symbols *p, int n, const char *)
 static void
 do_all (void (*fn)(symbols *, int, const char *))
 {
-  fn (lsp, numberof (lsp), "lsp");
-  fn (sys, numberof (sys), "sys");
-  fn (kwd, numberof (kwd), "kwd");
-  fn (ed, numberof (ed), "ed");
-  fn (unint, numberof (unint), "unint");
+  fn (lsp, _countof (lsp), "lsp");
+  fn (sys, _countof (sys), "sys");
+  fn (kwd, _countof (kwd), "kwd");
+  fn (ed, _countof (ed), "ed");
+  fn (unint, _countof (unint), "unint");
 }
 
 static int soffset;
@@ -2834,8 +2834,8 @@ putq (const char *p)
 static void
 process_interactive ()
 {
-  const char **intr = (const char **)alloca (sizeof (char *) * numberof (ed));
-  for (int i = 0, j = 0; i < numberof (ed); i++)
+  const char **intr = (const char **)alloca (sizeof (char *) * _countof (ed));
+  for (int i = 0, j = 0; i < _countof (ed); i++)
     if (ed[i].interactive)
       intr[j++] = ed[i].interactive;
   if (!j)
@@ -2851,7 +2851,7 @@ process_interactive ()
       intr[j++] = intr[i];
   n = j;
 
-  for (i = 0; i < numberof (ed); i++)
+  for (i = 0; i < _countof (ed); i++)
     if (ed[i].interactive)
       {
         for (j = 0; j < n; j++)

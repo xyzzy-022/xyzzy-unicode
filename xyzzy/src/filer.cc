@@ -29,7 +29,7 @@ FilerView::cleanup_chunk ()
 
 FilerView::FilerView (lisp dir, lisp last_path)
      : fv_chunk (0), fv_hwnd (0), fv_hwnd_mask (0), fv_hwnd_path (0),
-       fv_hwnd_marks (0), fv_gcpro (fv_lobjs, numberof (fv_lobjs)),
+       fv_hwnd_marks (0), fv_gcpro (fv_lobjs, _countof (fv_lobjs)),
        fv_subscribed (0), fv_marks_changed (0), fv_sort (0), fv_parent (0),
        fv_hevent (0), fv_hthread (0),
        fv_stop_thread (0), fv_sequence (0), fv_icon_path (0)
@@ -886,7 +886,7 @@ void
 FilerView::disk_space (double nbytes, TCHAR *buf, int c)
 {
   const TCHAR *const u[] = {_T("B"), _T("KB"), _T("MB"), _T("GB"), _T("TB")};
-  for (int i = 0; i < numberof (u) - 1 && c != *u[i] && nbytes >= 1024.0;
+  for (int i = 0; i < _countof (u) - 1 && c != *u[i] && nbytes >= 1024.0;
        i++, nbytes /= 1024.0)
     ;
   _stprintf (buf, _T("%.2f"), nbytes);
@@ -1466,7 +1466,7 @@ int Filer::f_mlactive;
 Filer::Filer (lisp dir, lisp sdir, lisp name, lisp last_path,
               lisp multi, lisp title, lisp dual, lisp left, int auto_delete)
      : f_multi (multi != Qnil),
-       f_gcpro (f_lobjs, numberof (f_lobjs)), f_fdispatch (0),
+       f_gcpro (f_lobjs, _countof (f_lobjs)), f_fdispatch (0),
        f_fv1 (dir, last_path), f_fv2 (sdir, last_path), f_viewer_on (0),
        f_changed_view (0), IdleDialog (auto_delete), f_idle_timer (0),
        f_ctx_menu2 (0)

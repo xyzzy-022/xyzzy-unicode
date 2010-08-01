@@ -545,7 +545,7 @@ print_engine::init_font (HDC hdc)
       pe_glyph_width.hdc = hdc;
       pe_glyph_width.hfonts = pe_hfonts;
       pe_glyph_width.height = pe_print_cell.cy;
-      for (i = 0; i < numberof (pe_glyph_width.pixel); i++)
+      for (i = 0; i < _countof (pe_glyph_width.pixel); i++)
         pe_glyph_width.pixel[i] = -1;
       for (i = ' '; i < CC_DEL; i++)
         get_glyph_width (i, pe_glyph_width);

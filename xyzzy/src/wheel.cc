@@ -178,7 +178,7 @@ do_auto_scroll (auto_scroll_param &param)
       param.interval = 0;
     }
 
-  param.interval = min (param.interval, (int)numberof (timer_intervals) - 1);
+  param.interval = min (param.interval, (int)_countof (timer_intervals) - 1);
   if (param.state != ostate
       || param.interval != ointerval)
     {

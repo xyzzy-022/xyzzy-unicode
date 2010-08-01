@@ -589,14 +589,14 @@ reg2ini ()
       return 0;
   }
 
-  reg2ini (_T(""), cfgMisc, misc, numberof (misc));
-  reg2ini (cfgBufferSelector, 0, buffer_selector, numberof (buffer_selector));
-  reg2ini (cfgColors, 0, colors, numberof (colors));
+  reg2ini (_T(""), cfgMisc, misc, _countof (misc));
+  reg2ini (cfgBufferSelector, 0, buffer_selector, _countof (buffer_selector));
+  reg2ini (cfgColors, 0, colors, _countof (colors));
   reg2ini_colors ();
-  reg2ini (cfgFiler, 0, filer, numberof (filer));
-  reg2ini (cfgFont, 0, font, numberof (font));
-  reg2ini (cfgPrint, 0, print, numberof (print));
-  reg2ini (cfgPrintPreview, 0, preview, numberof (preview));
+  reg2ini (cfgFiler, 0, filer, _countof (filer));
+  reg2ini (cfgFont, 0, font, _countof (font));
+  reg2ini (cfgPrint, 0, print, _countof (print));
+  reg2ini (cfgPrintPreview, 0, preview, _countof (preview));
   reg2ini_geometry ();
   flush_conf ();
   return 1;

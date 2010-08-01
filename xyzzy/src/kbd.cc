@@ -473,7 +473,7 @@ exkey_index (UINT c, int syskey)
   if (c == VK_HANKAKU)
     c = VK_ZENKAKU;
 
-  for (int i = 0; i < numberof (exkey); i++)
+  for (int i = 0; i < _countof (exkey); i++)
     if (c == exkey[i])
       return i;
   return -1;
@@ -1286,7 +1286,7 @@ lisp
 Fget_recent_keys ()
 {
   Char b[128];
-  int n = app.kbdq.copy_queue (b, numberof (b));
+  int n = app.kbdq.copy_queue (b, _countof (b));
   return make_string (b, n);
 }
 

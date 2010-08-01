@@ -1202,7 +1202,7 @@ Fcopy_to_clipboard (lisp string)
   if (open_clipboard (app.toplev))
     {
       if (EmptyClipboard ())
-        for (int i = 0; i < numberof (clp) && clp[i].hgl; i++)
+        for (int i = 0; i < _countof (clp) && clp[i].hgl; i++)
           {
             if (!SetClipboardData (clp[i].fmt, clp[i].hgl))
               break;
@@ -1211,7 +1211,7 @@ Fcopy_to_clipboard (lisp string)
           }
       CloseClipboard ();
     }
-  for (int i = 0; i < numberof (clp); i++)
+  for (int i = 0; i < _countof (clp); i++)
     if (clp[i].hgl)
       GlobalFree (clp[i].hgl);
   xsymbol_value (Vclipboard_newer_than_kill_ring_p) = Qnil;

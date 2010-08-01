@@ -255,7 +255,7 @@ sweep_object (ldataP &ld, u_int size, void (*delete_fn)(void *), int &xnuses, in
       char *d = lp->dr_data;
       char *de = d + size * LDATASIZE_NOBJS (size);
 
-      for (int i = 0; i < numberof (lp->dr_gc); i++)
+      for (int i = 0; i < _countof (lp->dr_gc); i++)
         if (lp->dr_gc[i])
           goto doit;
 
@@ -325,7 +325,7 @@ ldata <T, F>::sweep ()
       T *d = (T *)lp->dr_data;
       T *de = d + LDATA_NOBJS (T);
 
-      for (int i = 0; i < numberof (lp->dr_gc); i++)
+      for (int i = 0; i < _countof (lp->dr_gc); i++)
         if (lp->dr_gc[i])
           goto doit;
 

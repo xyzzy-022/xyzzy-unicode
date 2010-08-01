@@ -403,7 +403,7 @@ main ()
   printf ("\n");
 
   printf ("static const Char ibmext2internal_table[] =\n{");
-  for (int i = 0; i < numberof (sjis2eucjp); i++)
+  for (int i = 0; i < _countof (sjis2eucjp); i++)
     {
       if (!(i % 8))
         printf ("\n ");
@@ -417,7 +417,7 @@ main ()
 
   printf ("static const Char ibmext_eucjp2sjis_table[] =\n{");
   int j = 0;
-  for (i = 0; i < numberof (sjis2eucjp); i++)
+  for (i = 0; i < _countof (sjis2eucjp); i++)
     if (sjis2eucjp[i].eucjp >= 0x8ff3f3)
       {
         if (!(j % 8))
@@ -451,7 +451,7 @@ main ()
 
   printf ("static const Char ibmext2necext_table[] =\n{");
 
-  for (i = 0; i < numberof (sjis2eucjp); i++)
+  for (i = 0; i < _countof (sjis2eucjp); i++)
     {
       if (!(i % 8))
         printf ("\n ");

@@ -641,7 +641,7 @@ utf_to_internal_stream::putw_jp (ucs2_t wc)
 
   if (!(s_flags & ENCODING_UTF_WINDOWS))
     {
-      int n = wc % numberof (utf_shiftjis2internal_hash);
+      int n = wc % _countof (utf_shiftjis2internal_hash);
       if (utf_shiftjis2internal_hash[n].wc == wc)
         {
           put (utf_shiftjis2internal_hash[n].cc);
@@ -1553,7 +1553,7 @@ internal_to_utf_stream::getw () const
 
   if (!(s_flags & ENCODING_UTF_WINDOWS) && cc != Char (-1))
     {
-      int n = cc % numberof (utf_internal2shiftjis_hash);
+      int n = cc % _countof (utf_internal2shiftjis_hash);
       if (utf_internal2shiftjis_hash[n].cc == cc)
         return utf_internal2shiftjis_hash[n].wc;
     }

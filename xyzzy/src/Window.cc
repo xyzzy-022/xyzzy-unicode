@@ -648,22 +648,22 @@ Window::init_colors (const XCOLORREF *colors, const XCOLORREF *mlcolors,
     for (i = 0; i < USER_DEFINABLE_COLORS; i++)
       default_xcolors[i] = colors[i];
   if (mlcolors)
-    for (i = 0; i < numberof (modeline_xcolors); i++)
+    for (i = 0; i < _countof (modeline_xcolors); i++)
       modeline_xcolors[i] = mlcolors[i];
   if (fg_colors)
-    for (i = 1; i < numberof (w_textprop_xforecolor); i++)
+    for (i = 1; i < _countof (w_textprop_xforecolor); i++)
       w_textprop_xforecolor[i] = fg_colors[i];
   if (bg_colors)
-    for (i = 1; i < numberof (w_textprop_xbackcolor); i++)
+    for (i = 1; i < _countof (w_textprop_xbackcolor); i++)
       w_textprop_xbackcolor[i] = bg_colors[i];
 
   for (i = 0; i < USER_DEFINABLE_COLORS; i++)
     default_colors[i] = default_xcolors[i];
-  for (i = 0; i < numberof (modeline_xcolors); i++)
+  for (i = 0; i < _countof (modeline_xcolors); i++)
     modeline_colors[i] = modeline_xcolors[i];
-  for (i = 1; i < numberof (w_textprop_xforecolor); i++)
+  for (i = 1; i < _countof (w_textprop_xforecolor); i++)
     w_textprop_forecolor[i] = w_textprop_xforecolor[i];
-  for (i = 1; i < numberof (w_textprop_xbackcolor); i++)
+  for (i = 1; i < _countof (w_textprop_xbackcolor); i++)
     w_textprop_backcolor[i] = w_textprop_xbackcolor[i];
 
   default_colors[WCOLOR_GRAY] = sysdep.gray_text;
@@ -673,11 +673,11 @@ Window::init_colors (const XCOLORREF *colors, const XCOLORREF *mlcolors,
   HDC hdc = GetDC (0);
   for (i = 0; i < WCOLOR_MAX; i++)
     default_colors[i] = GetNearestColor (hdc, default_colors[i]);
-  for (i = 0; i < numberof (modeline_xcolors); i++)
+  for (i = 0; i < _countof (modeline_xcolors); i++)
     modeline_colors[i] = GetNearestColor (hdc, modeline_colors[i]);
-  for (i = 1; i < numberof (w_textprop_forecolor); i++)
+  for (i = 1; i < _countof (w_textprop_forecolor); i++)
     w_textprop_forecolor[i] = GetNearestColor (hdc, w_textprop_forecolor[i]);
-  for (i = 1; i < numberof (w_textprop_backcolor); i++)
+  for (i = 1; i < _countof (w_textprop_backcolor); i++)
     w_textprop_backcolor[i] = GetNearestColor (hdc, w_textprop_backcolor[i]);
   ReleaseDC (0, hdc);
 
@@ -685,7 +685,7 @@ Window::init_colors (const XCOLORREF *colors, const XCOLORREF *mlcolors,
     write_conf (cfgColors, wcolor_index_names[i].name, default_xcolors[i].rgb, 1);
   write_conf (cfgColors, cfgModeLineFg, modeline_xcolors[MLCI_FOREGROUND].rgb, 1);
   write_conf (cfgColors, cfgModeLineBg, modeline_xcolors[MLCI_BACKGROUND].rgb, 1);
-  for (i = 1; i < numberof (w_textprop_forecolor); i++)
+  for (i = 1; i < _countof (w_textprop_forecolor); i++)
     {
       TCHAR b[32];
       _stprintf (b, _T("%s%d"), cfgFg, i);

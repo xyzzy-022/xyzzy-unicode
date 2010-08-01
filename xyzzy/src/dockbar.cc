@@ -2466,7 +2466,7 @@ tool_bm::load_mapped_bitmap (const TCHAR *filename, HBITMAP &hbm)
   for (int i = 0; i < ncolors; i++)
     {
       dst[i] = src[i];
-      for (int j = 0; j < numberof (cm); j++)
+      for (int j = 0; j < _countof (cm); j++)
         if (src[i] == cm[j].from)
           {
             dst[i] = cm[j].to;

@@ -524,7 +524,7 @@ word_state::char_category (const syntax_table *tab, Char c)
   if (DBCP (c))
     {
       ucs2_t wc = i2w (c);
-      for (int i = 0; i < numberof (ws_range); i++)
+      for (int i = 0; i < _countof (ws_range); i++)
         {
           if (wc < ws_range[i].from)
             return WC2symbol;

@@ -50,7 +50,7 @@ main ()
   int chars_max = 1;
 
   memset (chars_buf, 0, sizeof chars_buf);
-  for (int i = 0; i < numberof (escseq); i++)
+  for (int i = 0; i < _countof (escseq); i++)
     for (const char *p = escseq[i].s; *p; p++)
       if (!chars[*p])
         {
@@ -63,7 +63,7 @@ main ()
   memset (state, 0, sizeof state);
   int state_max = 0;
 
-  for (i = 0; i < numberof (escseq); i++)
+  for (i = 0; i < _countof (escseq); i++)
     {
       int cur_state = 0;
       for (const char *p = escseq[i].s; *p; p++)
@@ -93,7 +93,7 @@ main ()
         }
     }
 
-  for (i = 0; i < numberof (escseq); i++)
+  for (i = 0; i < _countof (escseq); i++)
     {
       int c = chars[*escseq[i].s];
       for (int j = 1; j <= state_max; j++)
@@ -101,7 +101,7 @@ main ()
           state[c][j] |= state[c][0];
     }
 
-  for (i = 0; i < numberof (intermediate_chars); i++)
+  for (i = 0; i < _countof (intermediate_chars); i++)
     for (const char *p = intermediate_chars[i] + 1; *p; p++)
       chars[*p] = chars[intermediate_chars[i][0]];
 

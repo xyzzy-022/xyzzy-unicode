@@ -143,8 +143,6 @@ bfill (T *p0, int size, T x)
   return bfill (p0, 0, size, x);
 }
 
-# define numberof(a) (sizeof (a) / sizeof *(a))
-
 # ifdef DEBUG
 int assert_failed (const char *, int);
 #  define assert(f) \

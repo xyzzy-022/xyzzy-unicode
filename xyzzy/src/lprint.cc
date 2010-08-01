@@ -3871,12 +3871,12 @@ Fmessage_box (lisp lmsg, lisp ltitle, lisp styles, lisp args)
   msgbox_style (mb, styles);
 
   lisp lcaptions[5];
-  const TCHAR *captions[numberof (lcaptions)];
+  const TCHAR *captions[_countof (lcaptions)];
   memset (lcaptions, 0, sizeof lcaptions);
   memset (captions, 0, sizeof captions);
   msgbox_captions (lcaptions, args);
 
-  for (int i = 0; i < numberof (lcaptions); i++)
+  for (int i = 0; i < _countof (lcaptions); i++)
     {
       lisp x = lcaptions[i];
       if (x && x != Qnil)
@@ -3894,7 +3894,7 @@ Fmessage_box (lisp lmsg, lisp ltitle, lisp styles, lisp args)
 
   return msgbox_result (MsgBoxEx (get_active_window (), msg, title,
                                   mb.type, mb.def, mb.icon, 1,
-                                  captions, numberof (captions), 1,
+                                  captions, _countof (captions), 1,
                                   find_keyword_bool (Kno_wrap, args)));
 }
 

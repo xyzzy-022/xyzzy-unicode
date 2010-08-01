@@ -257,12 +257,12 @@ make_wc2cp932_table ()
     wc2cp932_table[i] = i;
 
   COPY_DIFF_TABLE (wc2cp932_table,
-                   "wc2cp932", wc2cp932_diff, numberof (wc2cp932_diff),
-                   wc2cp932_diff_both_incr, numberof (wc2cp932_diff_both_incr),
-                   wc2cp932_diff_wsame, numberof (wc2cp932_diff_wsame),
-                   wc2cp932_diff_iincr, numberof (wc2cp932_diff_iincr),
-                   wc2cp932_diff_wincr, numberof (wc2cp932_diff_wincr),
-                   wc2cp932_diff_rest, numberof (wc2cp932_diff_rest));
+                   "wc2cp932", wc2cp932_diff, _countof (wc2cp932_diff),
+                   wc2cp932_diff_both_incr, _countof (wc2cp932_diff_both_incr),
+                   wc2cp932_diff_wsame, _countof (wc2cp932_diff_wsame),
+                   wc2cp932_diff_iincr, _countof (wc2cp932_diff_iincr),
+                   wc2cp932_diff_wincr, _countof (wc2cp932_diff_wincr),
+                   wc2cp932_diff_rest, _countof (wc2cp932_diff_rest));
 }
 
 #ifndef RUNTIME_TEST_DIFF_TABLE
@@ -304,12 +304,12 @@ init_wc2big5_table ()
   if (!initialized)
     {
       INIT_WC2PERLANG_TABLE (wc2big5_table, CCS_BIG5_MIN, CCS_BIG5_MAX,
-                             "wc2big5", wc2big5_diff, numberof (wc2big5_diff),
-                             wc2big5_diff_both_incr, numberof (wc2big5_diff_both_incr),
-                             wc2big5_diff_wsame, numberof (wc2big5_diff_wsame),
-                             wc2big5_diff_iincr, numberof (wc2big5_diff_iincr),
-                             wc2big5_diff_wincr, numberof (wc2big5_diff_wincr),
-                             wc2big5_diff_rest, numberof (wc2big5_diff_rest));
+                             "wc2big5", wc2big5_diff, _countof (wc2big5_diff),
+                             wc2big5_diff_both_incr, _countof (wc2big5_diff_both_incr),
+                             wc2big5_diff_wsame, _countof (wc2big5_diff_wsame),
+                             wc2big5_diff_iincr, _countof (wc2big5_diff_iincr),
+                             wc2big5_diff_wincr, _countof (wc2big5_diff_wincr),
+                             wc2big5_diff_rest, _countof (wc2big5_diff_rest));
       initialized = 1;
     }
 }
@@ -321,12 +321,12 @@ init_wc2ksc5601_table ()
   if (!initialized)
     {
       INIT_WC2PERLANG_TABLE (wc2ksc5601_table, CCS_KSC5601_MIN, CCS_KSC5601_MAX,
-                             "wc2ksc5601", wc2ksc5601_diff, numberof (wc2ksc5601_diff),
-                             wc2ksc5601_diff_both_incr, numberof (wc2ksc5601_diff_both_incr),
-                             wc2ksc5601_diff_wsame, numberof (wc2ksc5601_diff_wsame),
-                             wc2ksc5601_diff_iincr, numberof (wc2ksc5601_diff_iincr),
-                             wc2ksc5601_diff_wincr, numberof (wc2ksc5601_diff_wincr),
-                             wc2ksc5601_diff_rest, numberof (wc2ksc5601_diff_rest));
+                             "wc2ksc5601", wc2ksc5601_diff, _countof (wc2ksc5601_diff),
+                             wc2ksc5601_diff_both_incr, _countof (wc2ksc5601_diff_both_incr),
+                             wc2ksc5601_diff_wsame, _countof (wc2ksc5601_diff_wsame),
+                             wc2ksc5601_diff_iincr, _countof (wc2ksc5601_diff_iincr),
+                             wc2ksc5601_diff_wincr, _countof (wc2ksc5601_diff_wincr),
+                             wc2ksc5601_diff_rest, _countof (wc2ksc5601_diff_rest));
       initialized = 1;
     }
 }
@@ -338,12 +338,12 @@ init_wc2gb2312_table ()
   if (!initialized)
     {
       INIT_WC2PERLANG_TABLE (wc2gb2312_table, CCS_GB2312_MIN, CCS_GB2312_MAX,
-                             "wc2gb2312", wc2gb2312_diff, numberof (wc2gb2312_diff),
-                             wc2gb2312_diff_both_incr, numberof (wc2gb2312_diff_both_incr),
-                             wc2gb2312_diff_wsame, numberof (wc2gb2312_diff_wsame),
-                             wc2gb2312_diff_iincr, numberof (wc2gb2312_diff_iincr),
-                             wc2gb2312_diff_wincr, numberof (wc2gb2312_diff_wincr),
-                             wc2gb2312_diff_rest, numberof (wc2gb2312_diff_rest));
+                             "wc2gb2312", wc2gb2312_diff, _countof (wc2gb2312_diff),
+                             wc2gb2312_diff_both_incr, _countof (wc2gb2312_diff_both_incr),
+                             wc2gb2312_diff_wsame, _countof (wc2gb2312_diff_wsame),
+                             wc2gb2312_diff_iincr, _countof (wc2gb2312_diff_iincr),
+                             wc2gb2312_diff_wincr, _countof (wc2gb2312_diff_wincr),
+                             wc2gb2312_diff_rest, _countof (wc2gb2312_diff_rest));
       initialized = 1;
     }
 }
@@ -378,9 +378,9 @@ init_cns11643_table ()
   if (!initialized)
     {
       make_cns_table (cns11643_1_to_internal, CNS11643_1_START_CHAR,
-                      cns11643_1_tab, numberof (cns11643_1_tab));
+                      cns11643_1_tab, _countof (cns11643_1_tab));
       make_cns_table (cns11643_2_to_internal, CNS11643_2_START_CHAR,
-                      cns11643_2_tab, numberof (cns11643_2_tab));
+                      cns11643_2_tab, _countof (cns11643_2_tab));
       initialized = 1;
     }
 }
@@ -392,7 +392,7 @@ init_big5cns_table ()
   if (!initialized)
     {
       make_cns_table (big5cns_table, BIG5CNS_START_CHAR,
-                      big5cns_tab, numberof (big5cns_tab));
+                      big5cns_tab, _countof (big5cns_tab));
       initialized = 1;
     }
 }
@@ -403,24 +403,24 @@ test_cns_table ()
 {
   int x;
   x = make_cns_table (cns11643_1_to_internal, CNS11643_1_START_CHAR,
-                      cns11643_1_tab, numberof (cns11643_1_tab));
-  if (x != numberof (cns11643_1_to_internal)
+                      cns11643_1_tab, _countof (cns11643_1_tab));
+  if (x != _countof (cns11643_1_to_internal)
       || sizeof cns11643_1_to_internal != sizeof test_cns11643_1_to_internal
       || memcmp (cns11643_1_to_internal, test_cns11643_1_to_internal,
                  sizeof cns11643_1_to_internal))
     printf ("Create cns11643_1_to_internal failed\n");
 
   x = make_cns_table (cns11643_2_to_internal, CNS11643_2_START_CHAR,
-                      cns11643_2_tab, numberof (cns11643_2_tab));
-  if (x != numberof (cns11643_2_to_internal)
+                      cns11643_2_tab, _countof (cns11643_2_tab));
+  if (x != _countof (cns11643_2_to_internal)
       || sizeof cns11643_2_to_internal != sizeof test_cns11643_2_to_internal
       || memcmp (cns11643_2_to_internal, test_cns11643_2_to_internal,
                  sizeof cns11643_2_to_internal))
     printf ("Create cns11643_2_to_internal failed\n");
 
   x = make_cns_table (big5cns_table, BIG5CNS_START_CHAR,
-                      big5cns_tab, numberof (big5cns_tab));
-  if (x != numberof (big5cns_table)
+                      big5cns_tab, _countof (big5cns_tab));
+  if (x != _countof (big5cns_table)
       || sizeof big5cns_table != sizeof test_big5cns_table
       || memcmp (big5cns_table, test_big5cns_table, sizeof big5cns_table))
     printf ("Create big5cns_table failed\n");
@@ -520,7 +520,7 @@ init_ucs2_table ()
 {
   make_wc2cp932_table ();
 
-  for (int i = 0; i < numberof (wc2internal_table); i++)
+  for (int i = 0; i < _countof (wc2internal_table); i++)
     wc2internal_table[i] = Char (-1);
 
   init_charset_category ();
@@ -599,7 +599,7 @@ w2i_half_width (ucs2_t wc)
 {
   Char cc = w2i (wc);
   if (cc != Char (-1) && char_width (cc) != 1)
-    for (int i = 0; i < numberof (to_half_width_hashtabs); i++)
+    for (int i = 0; i < _countof (to_half_width_hashtabs); i++)
       {
         Char t = lookup_wc2int_hash (*to_half_width_hashtabs[i], wc);
         if (t != Char (-1))

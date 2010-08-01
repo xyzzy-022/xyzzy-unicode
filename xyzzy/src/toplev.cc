@@ -1396,7 +1396,7 @@ class keyvec
   lisp *v_vec;
   int v_finished;
 public:
-  keyvec () : v_length (0), v_size (numberof (v_buf)), v_vec (v_buf), v_finished (1) {}
+  keyvec () : v_length (0), v_size (_countof (v_buf)), v_vec (v_buf), v_finished (1) {}
   ~keyvec () {if (v_vec != v_buf) free (v_vec);}
   void init ();
   void finish () {v_finished = 1;}

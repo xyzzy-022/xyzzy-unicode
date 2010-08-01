@@ -73,13 +73,13 @@ main (int argc, char **argv)
     exit (2);
   if (!strcmp (argv[1], "-def"))
     {
-      for (int i = 0; i < numberof (msg); i++)
+      for (int i = 0; i < _countof (msg); i++)
         printf ("#define %s %d\n", msg[i].ident, i);
     }
   else if (!strcmp (argv[1], "-enum"))
     {
       printf ("enum message_code\n{\n");
-      for (int i = 0; i < numberof (msg) - 1; i++)
+      for (int i = 0; i < _countof (msg) - 1; i++)
         printf ("  %s,\n", msg[i].ident);
       printf ("  %s\n", msg[i].ident);
       printf ("};\n");
@@ -88,7 +88,7 @@ main (int argc, char **argv)
     {
       printf ("#include <tchar.h>\n\n");
       printf ("const TCHAR SSM[] =\n");
-      for (int i = 0; i < numberof (msg); i++)
+      for (int i = 0; i < _countof (msg); i++)
         {
           printf ("  _T(\"");
           print_quote (msg[i].text);
@@ -100,7 +100,7 @@ main (int argc, char **argv)
       printf ("static const TCHAR *const message_string[] =\n");
       printf ("{\n");
       int l = 0;
-      for (i = 0; i < numberof (msg); i++)
+      for (i = 0; i < _countof (msg); i++)
         {
           printf ("  SSM + %d,\n", l);
           l += _tcslen (msg[i].text) + 1;
@@ -115,7 +115,7 @@ main (int argc, char **argv)
     {
       printf ("STRINGTABLE DISCARDABLE\n");
       printf ("BEGIN\n");
-      for (int i = 0; i < numberof (msg); i++)
+      for (int i = 0; i < _countof (msg); i++)
         {
           printf ("  %d \"", i + 1024);
           print_quote_rc (msg[i].text);

@@ -42,9 +42,9 @@ buildhash (const int *from, const int *to, int len, const char *name)
 int
 main ()
 {
-  buildhash (internal, shiftjis, numberof (internal),
+  buildhash (internal, shiftjis, _countof (internal),
              "static const struct {Char cc; ucs2_t wc;} utf_internal2shiftjis_hash");
-  buildhash (shiftjis, internal, numberof (internal),
+  buildhash (shiftjis, internal, _countof (internal),
              "static const struct {ucs2_t wc; Char cc;} utf_shiftjis2internal_hash");
   return 0;
 }

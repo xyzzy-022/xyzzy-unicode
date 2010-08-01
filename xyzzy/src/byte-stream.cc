@@ -62,7 +62,7 @@ byte_output_wstream::sflush (u_char *b0, u_char *be, int eofp)
 int
 Char_input_streams_stream::refill ()
 {
-  Char *b = s_buf, *const be = s_buf + numberof (s_buf);
+  Char *b = s_buf, *const be = s_buf + _countof (s_buf);
   while (b < be)
     {
       lChar lcc = readc_stream (s_stream);

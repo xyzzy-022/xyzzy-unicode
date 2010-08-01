@@ -111,7 +111,7 @@ Char
 standard_char_name2Char (const Char *name, int l)
 {
   for (const print_char_name *p = standard_char_names,
-       *pe = p + numberof (standard_char_names);
+       *pe = p + _countof (standard_char_names);
        p < pe; p++)
     if (l == p->l && seql (name, (const _TUCHAR *)p->name))
       return p->code;
@@ -122,7 +122,7 @@ Char
 function_char_name2Char (const Char *name, int l)
 {
   for (const print_char_name *p = function_char_names,
-       *pe = p + numberof (function_char_names);
+       *pe = p + _countof (function_char_names);
        p < pe; p++)
     if (l == p->l && sequal (name, (const _TUCHAR *)p->name))
       return p->code;
@@ -133,7 +133,7 @@ Char
 char_bit_name2Char (const Char *name, int l, int &xl)
 {
   for (const print_char_name *p = char_bit_names,
-       *pe = p + numberof (char_bit_names);
+       *pe = p + _countof (char_bit_names);
        p < pe; p++)
     if (l >= p->l && seql (name, (const _TUCHAR *)p->name))
       {
@@ -147,7 +147,7 @@ const TCHAR *
 function_Char2name (Char c)
 {
   for (const print_char_name *p = function_char_names,
-       *pe = p + numberof (function_char_names);
+       *pe = p + _countof (function_char_names);
        p < pe; p++)
     if (p->code == c)
       return p->name;
@@ -158,7 +158,7 @@ const TCHAR *
 standard_Char2name (Char c)
 {
   for (const print_char_name *p = standard_char_names,
-       *pe = p + numberof (standard_char_names);
+       *pe = p + _countof (standard_char_names);
        p < pe; p++)
     if (p->code == c)
       return p->name;

@@ -1150,7 +1150,7 @@ Window::kwdmatch (lisp kwdhash, const Char *p, const Chunk *cp,
               || (xchar_syntax (tab, cc) != SCword
                   && xchar_syntax (tab, cc) != SCsymbol))
             break;
-          if (sl < numberof (buf))
+          if (sl < _countof (buf))
             buf[sl] = cc;
           else
             {
@@ -1164,7 +1164,7 @@ Window::kwdmatch (lisp kwdhash, const Char *p, const Chunk *cp,
     }
 
   symlen = l;
-  if (sl < numberof (buf))
+  if (sl < _countof (buf))
     {
       temporary_string t (buf, sl);
       lisp x = Fgethash (t.string (), kwdhash, Qnil);

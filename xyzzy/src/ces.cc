@@ -135,7 +135,7 @@ static const struct {lisp *obj; int ccs;} obj2ccs[] =
 static int
 to_charset (lisp lcharset)
 {
-  for (int i = 0; i < numberof (obj2ccs); i++)
+  for (int i = 0; i < _countof (obj2ccs); i++)
     if (lcharset == *obj2ccs[i].obj)
       return obj2ccs[i].ccs;
   FEsimple_error (Eunknown_charset, lcharset);
@@ -145,7 +145,7 @@ to_charset (lisp lcharset)
 static lisp
 from_charset (int charset)
 {
-  for (int i = 0; i < numberof (obj2ccs); i++)
+  for (int i = 0; i < _countof (obj2ccs); i++)
     if (charset == obj2ccs[i].ccs)
       return *obj2ccs[i].obj;
   assert (0);

@@ -743,7 +743,7 @@ make_cns11643 (const ucs2_t *const big5, const ucs2_t *const gb2312)
   fclose (fp);
 
   Char wc2int[65536];
-  clear (wc2int, numberof (wc2int));
+  clear (wc2int, _countof (wc2int));
 
   for (int i = 0; i < 94 * 94; i++)
     if (gb2312[i] != ucs2_t (-1))
@@ -781,7 +781,7 @@ make_cns11643 (const ucs2_t *const big5, const ucs2_t *const gb2312)
   printf ("};\n\n");
 #endif /* RUNTIME_TEST_CNS_TABLE */
 
-  clear (wc2int, numberof (wc2int));
+  clear (wc2int, _countof (wc2int));
   for (i = 0; i < 94 * 94; i++)
     if (gb2312[i] != ucs2_t (-1))
       wc2int[gb2312[i]] = i / 94 * 256 + i % 94 + 0x2121 + BIG5CNS_GB2312;
@@ -793,7 +793,7 @@ make_cns11643 (const ucs2_t *const big5, const ucs2_t *const gb2312)
       wc2int[cns2wc1[i]] = i / 94 * 256 + i % 94 + 0x2121 + BIG5CNS_CNS11643_1;
 
   ucs2_t big5cns[BIG5_TABSIZE];
-  clear (big5cns, numberof (big5cns));
+  clear (big5cns, _countof (big5cns));
   for (i = 0; i < BIG5_TABSIZE; i++)
     big5cns[i] = wc2int[big5[i]];
 
@@ -933,7 +933,7 @@ init_ulatin (ucs2_t *ulatin, ucs2_t (*iso8859)[128], int n)
         f[iso8859[i][j] / 8] |= 1 << iso8859[i][j] % 8;
 
   memset (r, 0, sizeof r);
-  for (i = 0; i < numberof (courier_new_range); i++)
+  for (i = 0; i < _countof (courier_new_range); i++)
     if (courier_new_range[i].w == 8)
       r[courier_new_range[i].c / 8] |= 1 << courier_new_range[i].c % 8;
 
@@ -1004,7 +1004,7 @@ init_ujp (ucs2_t *int2wc)
       f[int2wc[i] / 8] |= 1 << int2wc[i] % 8;
 
   memset (r, 0, sizeof r);
-  for (i = 0; i < numberof (ms_gothic_range); i++)
+  for (i = 0; i < _countof (ms_gothic_range); i++)
     if (ms_gothic_range[i].w == 8)
       r[ms_gothic_range[i].c / 8] |= 1 << ms_gothic_range[i].c % 8;
 
@@ -1015,7 +1015,7 @@ init_ujp (ucs2_t *int2wc)
       f[int2wc[i] / 8] |= 1 << int2wc[i] % 8;
 
   memset (r, 0, sizeof r);
-  for (i = 0; i < numberof (ms_gothic_range); i++)
+  for (i = 0; i < _countof (ms_gothic_range); i++)
     if (ms_gothic_range[i].w != 8)
       r[ms_gothic_range[i].c / 8] |= 1 << ms_gothic_range[i].c % 8;
 
@@ -1058,52 +1058,52 @@ main ()
       {"unicode/KOI8-U.TXT", "koi8u", ccs_iso8859_5, 0},
     };
 
-  ucs2_t iso8859[numberof (cs)][128];
-  ucs2_t wincp[numberof (wcp)][128];
+  ucs2_t iso8859[_countof (cs)][128];
+  ucs2_t wincp[_countof (wcp)][128];
   ucs2_t jisx0212[94 * 94];
   ucs2_t ksc5601[94 * 94];
   ucs2_t gb2312[94 * 94];
   ucs2_t big5[BIG5_TABSIZE];
   ucs2_t int2wc[65536];
 
-  for (int i = 0; i < numberof (wcp); i++)
+  for (int i = 0; i < _countof (wcp); i++)
     read_wincp (wincp[i], wcp[i].file, wcp[i].name);
   printf ("\n");
 
-  for (i = 0; i < numberof (cs); i++)
+  for (i = 0; i < _countof (cs); i++)
     read_iso8859 (iso8859[i], cs[i].file, cs[i].name,
-                  i < numberof (wcp) && wcp[i].f ? wincp[i] : 0);
+                  i < _countof (wcp) && wcp[i].f ? wincp[i] : 0);
   printf ("\n");
 
 #ifdef CCS_ULATIN_MIN
   ucs2_t ulatin[CCS_ULATIN_MAX - CCS_ULATIN_MIN + 1];
-  init_ulatin (ulatin, iso8859, numberof (cs));
+  init_ulatin (ulatin, iso8859, _countof (cs));
 #endif
 
-  for (i = 0; i < numberof (wcp); i++)
+  for (i = 0; i < _countof (wcp); i++)
     {
       ucs2_t wbuf[128];
-      clear (wbuf, numberof (wbuf));
-      for (int j = 0; j < numberof (cs); j++)
+      clear (wbuf, _countof (wbuf));
+      for (int j = 0; j < _countof (cs); j++)
         if (cs[j].charset == wcp[i].base)
           {
             wincp2int (wincp[i], wbuf, iso8859[j], cs[j].charset << 7);
             break;
           }
-      for (j = 0; j < numberof (cs); j++)
+      for (j = 0; j < _countof (cs); j++)
         if (cs[j].charset != wcp[i].base)
           wincp2int (wincp[i], wbuf, iso8859[j], cs[j].charset << 7);
       for (j = 0; j < 128; j++)
         if (wincp[i][j] != ucs2_t (-1) && wbuf[j] == ucs2_t (-1))
           {
 #ifdef CCS_ULATIN_MIN
-            for (int k = 0; k < numberof (ulatin); k++)
+            for (int k = 0; k < _countof (ulatin); k++)
               if (wincp[i][j] == ulatin[k])
                 {
                   wbuf[j] = CCS_ULATIN_MIN + k;
                   break;
                 }
-            if (k == numberof (ulatin))
+            if (k == _countof (ulatin))
 #endif
               fprintf (stderr, "Warning: %s: 0x%02x: not found\n", wcp[i].file, j + 128);
           }
@@ -1122,12 +1122,12 @@ main ()
 
   make_cp932 (int2wc);
 
-  merge_int2wc (int2wc, jisx0212, numberof (jisx0212), CCS_JISX0212_MIN);
-  merge_int2wc (int2wc, ksc5601, numberof (ksc5601), CCS_KSC5601_MIN);
-  merge_int2wc (int2wc, gb2312, numberof (gb2312), CCS_GB2312_MIN);
-  merge_int2wc (int2wc, big5, numberof (big5), CCS_BIG5_MIN);
-  for (i = 0; i < numberof (cs); i++)
-    merge_int2wc (int2wc, iso8859[i], numberof (iso8859[i]), cs[i].charset << 7);
+  merge_int2wc (int2wc, jisx0212, _countof (jisx0212), CCS_JISX0212_MIN);
+  merge_int2wc (int2wc, ksc5601, _countof (ksc5601), CCS_KSC5601_MIN);
+  merge_int2wc (int2wc, gb2312, _countof (gb2312), CCS_GB2312_MIN);
+  merge_int2wc (int2wc, big5, _countof (big5), CCS_BIG5_MIN);
+  for (i = 0; i < _countof (cs); i++)
+    merge_int2wc (int2wc, iso8859[i], _countof (iso8859[i]), cs[i].charset << 7);
   merge_unicode (int2wc);
 
 #ifdef CCS_ULATIN_MIN

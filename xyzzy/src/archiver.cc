@@ -1028,7 +1028,7 @@ archiver_error (int e, lisp path, message_code mc)
       };
   if (e < 0x8000)
     return;
-  for (int i = 0; i < numberof (ec); i++)
+  for (int i = 0; i < _countof (ec); i++)
     if (e == ec[i].xe)
       {
         if (ec[i].warn)
