@@ -9,7 +9,7 @@ static HDDEDATA help_callback (DdeCallbackInfo *);
 static HDDEDATA eval_callback (DdeCallbackInfo *);
 static int eval_matcher (const DdeItemList *, HSZ);
 
-const char DdeServerName[] = "Xyzzy";
+const TCHAR DdeServerName[] = _T("Xyzzy");
 
 static DdeItemList system_item_list[] =
 {
@@ -24,7 +24,7 @@ static DdeItemList system_item_list[] =
 
 static DdeItemList lisp_item_list[] =
 {
-  {0, eval_callback, "Eval", eval_matcher},
+  {0, eval_callback, _T("Eval"), eval_matcher},
   {0, eval_callback, DDE_EXECUTE_ITEM},
   {0},
 };
@@ -32,7 +32,7 @@ static DdeItemList lisp_item_list[] =
 DdeTopicList DdeServerTopicList[] =
 {
   {0, system_item_list, SZDDESYS_TOPIC},
-  {0, lisp_item_list, "Lisp"},
+  {0, lisp_item_list, _T("Lisp")},
   {0},
 };
 
@@ -89,9 +89,17 @@ Fdde_initiate (lisp lserv, lisp ltopic)
   lserv = Fstring (lserv);
   ltopic = Fstring (ltopic);
   lisp lconv = make_win32_dde_handle ();
+#ifdef UNICODE
+  TCHAR *serv = (TCHAR *)alloca ((xstring_length (lserv) + 1) * sizeof TCHAR);
+#else
   char *serv = (char *)alloca (xstring_length (lserv) * 2 + 1);
+#endif
   w2s (serv, lserv);
+#ifdef UNICODE
+  TCHAR *topic = (TCHAR *)alloca ((xstring_length (ltopic) + 1) * sizeof TCHAR);
+#else
   char *topic = (char *)alloca (xstring_length (ltopic) * 2 + 1);
+#endif
   w2s (topic, ltopic);
   CALL_DDE (xwin32_dde_handle_hconv (lconv) = Dde::initiate (serv, topic));
   return lconv;
@@ -125,7 +133,7 @@ Fdde_execute (lisp lconv, lisp ldata)
   HCONV hconv = check_hconv (lconv);
   ldata = Fstring (ldata);
   int l = w2sl (ldata) + 1;
-  safe_ptr <char> data (new char [l]);
+  safe_ptr <TCHAR> data (new TCHAR [l]);
   w2s (data, ldata);
   CALL_DDE (Dde::execute (hconv, dde_timeout (), data, l));
   return Qt;
@@ -136,11 +144,15 @@ Fdde_poke (lisp lconv, lisp litem, lisp ldata)
 {
   HCONV hconv = check_hconv (lconv);
   litem = Fstring (litem);
+#ifdef UNICODE
+  TCHAR *item = (TCHAR *)alloca ((xstring_length (litem) + 1) * sizeof TCHAR);
+#else
   char *item = (char *)alloca (xstring_length (litem) * 2 + 1);
+#endif
   w2s (item, litem);
   ldata = Fstring (ldata);
   int l = w2sl (ldata) + 1;
-  safe_ptr <char> data (new char [l]);
+  safe_ptr <TCHAR> data (new TCHAR [l]);
   w2s (data, ldata);
   CALL_DDE (Dde::poke (hconv, dde_timeout (), item, data, l));
   return Qt;
@@ -193,7 +205,7 @@ req_value (dde_reqtype type, const DdeData &data)
     default:
       assert (0);
     case dr_text:
-      return make_string (data.data ());
+      return make_string ((TCHAR *)data.data ());
 
     case dr_binary:
       {
@@ -222,7 +234,7 @@ Fdde_request (lisp lconv, lisp ldata, lisp type)
   HCONV hconv = check_hconv (lconv);
   ldata = Fstring (ldata);
   dde_reqtype dr_type = req_type (type);
-  safe_ptr <char> data (new char [w2sl (ldata) + 1]);
+  safe_ptr <TCHAR> data (new TCHAR [w2sl (ldata) + 1]);
   w2s (data, ldata);
   lisp result = Qnil;
   try
@@ -244,15 +256,15 @@ topic_list_callback (DdeCallbackInfo *dci)
   if (dci->type != XTYP_REQUEST && dci->type != XTYP_ADVREQ)
     return 0;
 
-  int nbytes = 0;
+  int nchars = 0;
   for (DdeTopicList *t = DdeServerTopicList; t->topic; t++)
-    nbytes += strlen (t->topic) + 1;
+    nchars += _tcslen (t->topic) + 1;
 
-  HDDEDATA hdata = DdeCreateDataHandle (Dde::instance (), 0, 0, nbytes,
+  HDDEDATA hdata = DdeCreateDataHandle (Dde::instance (), 0, 0, nchars * sizeof TCHAR,
                                         dci->item, dci->fmt, 0);
   if (!hdata)
     return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
-  char *data = (char *)DdeAccessData (hdata, 0);
+  TCHAR *data = (TCHAR *)DdeAccessData (hdata, 0);
   if (!hdata)
     {
       DdeFreeDataHandle (hdata);
@@ -261,7 +273,7 @@ topic_list_callback (DdeCallbackInfo *dci)
   for (t = DdeServerTopicList; t->topic; t++)
     {
       data = stpcpy (data, t->topic);
-      *data++ = '\t';
+      *data++ = _T('\t');
     }
   data[-1] = 0;
   DdeUnaccessData (hdata);
@@ -282,16 +294,16 @@ item_list_callback (DdeCallbackInfo *dci)
   if (!t->topic)
     return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
 
-  int nbytes = 0;
+  int nchars = 0;
   for (DdeItemList *il = t->items; il->item; il++)
     if (il->item != DDE_EXECUTE_ITEM)
-      nbytes += strlen (il->item) + 1;
+      nchars += _tcslen (il->item) + 1;
 
-  HDDEDATA hdata = DdeCreateDataHandle (Dde::instance (), 0, 0, nbytes,
+  HDDEDATA hdata = DdeCreateDataHandle (Dde::instance (), 0, 0, nchars * sizeof TCHAR,
                                         dci->item, dci->fmt, 0);
   if (!hdata)
     return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
-  char *data = (char *)DdeAccessData (hdata, 0);
+  TCHAR *data = (TCHAR *)DdeAccessData (hdata, 0);
   if (!hdata)
     {
       DdeFreeDataHandle (hdata);
@@ -301,7 +313,7 @@ item_list_callback (DdeCallbackInfo *dci)
     if (il->item != DDE_EXECUTE_ITEM)
       {
         data = stpcpy (data, il->item);
-        *data++ = '\t';
+        *data++ = _T('\t');
       }
   data[-1] = 0;
   DdeUnaccessData (hdata);
@@ -315,17 +327,26 @@ formats_callback (DdeCallbackInfo *dci)
     return HDDEDATA (1);
   if (dci->type != XTYP_REQUEST && dci->type != XTYP_ADVREQ)
     return 0;
-  HDDEDATA hdata = DdeCreateDataHandle (Dde::instance (), 0, 0, sizeof "CF_TEXT",
+  HDDEDATA hdata = DdeCreateDataHandle (Dde::instance (), 0, 0,
+#ifdef UNICODE
+                                        sizeof _T("UNICODETEXT"),
+#else
+                                        sizeof "TEXT",
+#endif
                                         dci->item, dci->fmt, 0);
   if (!hdata)
     return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
-  char *data = (char *)DdeAccessData (hdata, 0);
+  TCHAR *data = (TCHAR *)DdeAccessData (hdata, 0);
   if (!hdata)
     {
       DdeFreeDataHandle (hdata);
       return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
     }
-  strcpy (data, "CF_TEXT");
+#ifdef UNICODE
+  _tcscpy (data, _T("UNICODETEXT"));
+#else
+  strcpy (data, "TEXT");
+#endif
   DdeUnaccessData (hdata);
   return hdata;
 }
@@ -343,10 +364,10 @@ help_callback (DdeCallbackInfo *dci)
 static int
 eval_matcher (const DdeItemList *il, HSZ hsz)
 {
-  char b[6];
-  if (!DdeQueryString (Dde::instance (), hsz, b, sizeof b, CP_WINANSI))
+  TCHAR b[6];
+  if (!DdeQueryString (Dde::instance (), hsz, b, _countof (b), CP_WINNEUTRAL))
     return 0;
-  return !_stricmp ("eval:", b);
+  return !_tcsicmp (_T("eval:"), b);
 }
 
 static HDDEDATA
@@ -361,9 +382,9 @@ eval_callback (DdeCallbackInfo *dci)
     case XTYP_REQUEST:
     case XTYP_ADVREQ:
       {
-        int l = DdeQueryString (Dde::instance (), dci->item, 0, 0, CP_WINANSI);
-        safe_ptr <char> data (new char [l + 2]);
-        DdeQueryString (Dde::instance (), dci->item, data, l + 1, CP_WINANSI);
+        int l = DdeQueryString (Dde::instance (), dci->item, 0, 0, CP_WINNEUTRAL);
+        safe_ptr <TCHAR> data (new TCHAR [l + 2]);
+        DdeQueryString (Dde::instance (), dci->item, data, l + 1, CP_WINNEUTRAL);
         string = make_string (data + 5);
         break;
       }
@@ -372,7 +393,7 @@ eval_callback (DdeCallbackInfo *dci)
     case XTYP_EXECUTE:
       {
         DdeDataAccess data (dci->hdata);
-        string = make_string (data.data ());
+        string = make_string ((TCHAR *)data.data ());
         break;
       }
 
@@ -410,7 +431,7 @@ eval_callback (DdeCallbackInfo *dci)
                                               dci->item, dci->fmt, 0);
         if (!hdata)
           return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
-        char *data = (char *)DdeAccessData (hdata, 0);
+        TCHAR *data = (TCHAR *)DdeAccessData (hdata, 0);
         if (!hdata)
           {
             DdeFreeDataHandle (hdata);

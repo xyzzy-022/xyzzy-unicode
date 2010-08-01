@@ -241,13 +241,13 @@ Dde::wild_connect (HSZ topic, HSZ service, CONVCONTEXT *cc)
 void
 Dde::create_strings ()
 {
-  hsz_server = DdeCreateStringHandle (dde_inst, DdeServerName, CP_WINANSI);
+  hsz_server = DdeCreateStringHandle (dde_inst, DdeServerName, CP_WINNEUTRAL);
   for (DdeTopicList *t = DdeServerTopicList; t->topic; t++)
     {
-      t->hsz_topic = DdeCreateStringHandle (dde_inst, t->topic, CP_WINANSI);
+      t->hsz_topic = DdeCreateStringHandle (dde_inst, t->topic, CP_WINNEUTRAL);
       for (DdeItemList *i = t->items; i->item; i++)
         if (i->item != DDE_EXECUTE_ITEM)
-          i->hsz_item = DdeCreateStringHandle (dde_inst, i->item, CP_WINANSI);
+          i->hsz_item = DdeCreateStringHandle (dde_inst, i->item, CP_WINNEUTRAL);
     }
 }
 

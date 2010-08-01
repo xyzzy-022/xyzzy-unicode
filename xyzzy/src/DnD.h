@@ -117,17 +117,17 @@ private:
 
   int check_self (const POINTL &);
   DWORD query_drop (DWORD, const POINTL &, DWORD *);
-  void target_path (char *, const POINTL &);
+  void target_path (TCHAR *, const POINTL &);
   int target_path_length () const;
   int process_drop (IDataObject *, const POINTL &, DWORD);
   void hilite_item (int);
   void ask_user (DWORD *, DWORD);
   int in_client_p (const POINTL &) const;
   void scroll_view (const POINTL &) const;
-  static int check_self (const char *path, char *base, char *target);
-  static int check_self (const wchar_t *w, char *base, char *target);
-  static lisp make_drop_file (const char *, const char *, char *, int);
-  static lisp make_drop_file (const wchar_t *, const char *, char *, int);
+  static int check_self (const char *path, TCHAR *base, TCHAR *target);
+  static int check_self (const wchar_t *w, TCHAR *base, TCHAR *target);
+  static lisp make_drop_file (const char *, const TCHAR *, TCHAR *, int);
+  static lisp make_drop_file (const wchar_t *, const TCHAR *, TCHAR *, int);
 
 public:
   filer_drop_target ()

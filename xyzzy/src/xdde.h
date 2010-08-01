@@ -17,13 +17,13 @@ struct DdeCallbackInfo
   DWORD data2;
 };
 
-# define DDE_EXECUTE_ITEM ((char *)1)
+# define DDE_EXECUTE_ITEM ((TCHAR *)1)
 
 struct DdeItemList
 {
   HSZ hsz_item;
   HDDEDATA (__stdcall *callback)(DdeCallbackInfo *);
-  const char *item;
+  const TCHAR *item;
   int (__stdcall *matcher)(const DdeItemList *, HSZ);
 };
 
@@ -31,10 +31,10 @@ struct DdeTopicList
 {
   HSZ hsz_topic;
   DdeItemList *items;
-  const char *topic;
+  const TCHAR *topic;
 };
 
-extern const char DdeServerName[];
+extern const TCHAR DdeServerName[];
 extern DdeTopicList DdeServerTopicList[];
 
 #endif /* not DDE_CLIENT_ONLY */
@@ -61,7 +61,7 @@ protected:
       DdeString (const DdeString &);
       DdeString &operator = (const DdeString &);
     public:
-      DdeString (const char *string);
+      DdeString (const TCHAR *string);
       ~DdeString ();
       operator HSZ () const;
     };
@@ -84,13 +84,13 @@ public:
   ~Dde ();
   static void initialize ();
   static DWORD instance ();
-  static HCONV initiate (const char *, const char *);
+  static HCONV initiate (const TCHAR *, const TCHAR *);
   static void terminate (HCONV);
-  static void execute (HCONV, long, const char *, int);
-  static void execute (HCONV, long, const char *);
-  static void poke (HCONV, long, const char *, const char *, int);
-  static void poke (HCONV, long, const char *, const char *);
-  static HDDEDATA request (HCONV, long, const char *);
+  static void execute (HCONV, long, const TCHAR *, int);
+  static void execute (HCONV, long, const TCHAR *);
+  static void poke (HCONV, long, const TCHAR *, const TCHAR *, int);
+  static void poke (HCONV, long, const TCHAR *, const TCHAR *);
+  static HDDEDATA request (HCONV, long, const TCHAR *);
 };
 
 class DdeDataP
@@ -143,9 +143,9 @@ Dde::Exception::Exception ()
 }
 
 inline
-Dde::DdeString::DdeString (const char *string)
+Dde::DdeString::DdeString (const TCHAR *string)
 {
-  hsz = DdeCreateStringHandle (instance (), *string ? string : " ", CP_WINANSI);
+  hsz = DdeCreateStringHandle (instance (), *string ? string : _T(" "), CP_WINNEUTRAL);
   if (!hsz)
     throw Exception ();
 }
@@ -164,7 +164,7 @@ Dde::DdeString::operator HSZ () const
 }
 
 inline HCONV
-Dde::initiate (const char *serv, const char *topic)
+Dde::initiate (const TCHAR *serv, const TCHAR *topic)
 {
   DdeString xserv (serv), xtopic (topic);
   HCONV h = DdeConnect (instance (), xserv, xtopic, 0);
@@ -181,36 +181,41 @@ Dde::terminate (HCONV h)
 }
 
 inline void
-Dde::execute (HCONV hconv, long timeout, const char *data, int l)
+Dde::execute (HCONV hconv, long timeout, const TCHAR *data, int l)
 {
-  if (!DdeClientTransaction ((BYTE *)data, l, hconv, 0, 0,
+  if (!DdeClientTransaction ((BYTE *)data, l * sizeof TCHAR, hconv, 0, 0,
                              XTYP_EXECUTE, timeout, 0))
     throw Exception ();
 }
 
 inline void
-Dde::execute (HCONV hconv, long timeout, const char *data)
+Dde::execute (HCONV hconv, long timeout, const TCHAR *data)
 {
-  execute (hconv, timeout, data, strlen (data) + 1);
+  execute (hconv, timeout, data, _tcslen (data) + 1);
 }
 
 inline void
-Dde::poke (HCONV hconv, long timeout, const char *item, const char *data, int l)
+Dde::poke (HCONV hconv, long timeout, const TCHAR *item, const TCHAR *data, int l)
 {
   DdeString xitem (item);
-  if (!DdeClientTransaction ((BYTE *)data, l, hconv, xitem,
-                             CF_TEXT, XTYP_POKE, timeout, 0))
+  if (!DdeClientTransaction ((BYTE *)data, l * sizeof TCHAR, hconv, xitem,
+#ifdef UNICODE
+                             CF_UNICODETEXT,
+#else
+                             CF_TEXT,
+#endif
+                             XTYP_POKE, timeout, 0))
     throw Exception ();
 }
 
 inline void
-Dde::poke (HCONV hconv, long timeout, const char *item, const char *data)
+Dde::poke (HCONV hconv, long timeout, const TCHAR *item, const TCHAR *data)
 {
-  poke (hconv, timeout, item, data, strlen (data) + 1);
+  poke (hconv, timeout, item, data, _tcslen (data) + 1);
 }
 
 inline HDDEDATA
-Dde::request (HCONV hconv, long timeout, const char *item)
+Dde::request (HCONV hconv, long timeout, const TCHAR *item)
 {
   DdeString xitem (item);
   HDDEDATA data = DdeClientTransaction (0, 0, hconv, xitem,
