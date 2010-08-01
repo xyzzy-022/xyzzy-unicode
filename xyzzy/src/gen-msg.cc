@@ -74,17 +74,18 @@ main (int argc, char **argv)
     }
   else if (!strcmp (argv[1], "-c"))
     {
-      printf ("const char SSM[] =\n");
+      printf ("#include <tchar.h>\n\n");
+      printf ("const TCHAR SSM[] =\n");
       for (int i = 0; i < numberof (msg); i++)
         {
-          printf ("  \"");
+          printf ("  _T(\"");
           print_quote (msg[i].text);
-          printf ("\\0\"\n");
+          printf ("\\0\")\n");
         }
       printf (";\n\n");
 
 
-      printf ("static const char *const message_string[] =\n");
+      printf ("static const TCHAR *const message_string[] =\n");
       printf ("{\n");
       int l = 0;
       for (i = 0; i < numberof (msg); i++)
@@ -94,7 +95,7 @@ main (int argc, char **argv)
         }
       printf ("};\n\n");
 
-      printf ("const char *\n"
+      printf ("const TCHAR *\n"
               "get_message_string (int code)\n"
               "{return message_string[code];}\n");
     }

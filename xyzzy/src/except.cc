@@ -101,7 +101,7 @@ get_section_name (void *base, void *p, TCHAR *buf, int size)
         {
           USES_CONVERSION;
           int l = min ((int)sizeof sec.Name, size - 1);
-          memcpy (buf, A2T ((char *)sec.Name), l * sizeof TCHAR);
+          _tmemcpy (buf, A2T ((char *)sec.Name), l);
           buf[l] = 0;
           return 1;
         }

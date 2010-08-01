@@ -1251,36 +1251,43 @@ Farchiver_dll_config_dialog (lisp dll, lisp mode)
                                               mode && mode != Qnil));
 }
 
+#endif /* __XYZZY__ */
+
 #else
 
 lisp
 Fextract_archive (lisp lpath, lisp ldir, lisp lfiles)
 {
   file_error (Euncompress_not_supported, lpath);
+  return Qnil;
 }
 
 lisp
 Fdelete_file_in_archive (lisp lpath, lisp lfiles)
 {
   file_error (Eremove_not_supported, lpath);
+  return Qnil;
 }
 
 lisp
 Fcreate_archive (lisp larcname, lisp lfiles, lisp ldir)
 {
   file_error (Ecompress_not_supported, larcname);
+  return Qnil;
 }
 
 lisp
 Fconvert_to_SFX (lisp larcname, lisp lopt)
 {
   FEarchiver_error (ARC_ERROR_NOT_ARC_FILE, larcname);
+  return Qnil;
 }
 
 lisp
 Flist_archive (lisp larcname, lisp file_name_only)
 {
   FEarchiver_error (ARC_ERROR_NOT_ARC_FILE, larcname);
+  return Qnil;
 }
 
 lisp
@@ -1296,5 +1303,3 @@ Farchiver_dll_config_dialog (lisp dll, lisp mode)
 }
 
 #endif /* UNICODE */
-
-#endif /* __XYZZY__ */

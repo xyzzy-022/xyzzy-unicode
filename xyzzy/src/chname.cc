@@ -2,87 +2,87 @@
 
 struct print_char_name
 {
-  const char *name;
+  const TCHAR *name;
   int l;
   Char code;
 };
 
-#define X(A, B) {A, sizeof A - 1, B}
+#define X(A, B) {A, _countof (A) - 1, B}
 
 static const print_char_name standard_char_names[] =
 {
-  X ("TAB", CC_TAB),
-  X ("SPC", CC_SPC),
-  X ("LFD", CC_NL),
-  X ("RET", CC_CR),
-  X ("ESC", CC_ESC),
-  X ("DEL", CC_DEL),
-  X ("NUL", 0),
+  X (_T("TAB"), CC_TAB),
+  X (_T("SPC"), CC_SPC),
+  X (_T("LFD"), CC_NL),
+  X (_T("RET"), CC_CR),
+  X (_T("ESC"), CC_ESC),
+  X (_T("DEL"), CC_DEL),
+  X (_T("NUL"), 0),
 };
 
 static const print_char_name function_char_names[] =
 {
-  X ("PageUp", CCF_PRIOR),
-  X ("PageDown", CCF_NEXT),
-  X ("End", CCF_END),
-  X ("Home", CCF_HOME),
-  X ("Left", CCF_LEFT),
-  X ("Up", CCF_UP),
-  X ("Right", CCF_RIGHT),
-  X ("Down", CCF_DOWN),
-  X ("Pause", CCF_PAUSE),
-  X ("MouseMove", CCF_MOUSEMOVE),
-  X ("Scroll", CCF_SCROLL),
-  X ("Apps", CCF_APPS),
-  X ("Insert", CCF_INSERT),
-  X ("Delete", CCF_DELETE),
-  X ("Help", CCF_HELP),
-  X ("F24", CCF_F24),
-  X ("F23", CCF_F23),
-  X ("F22", CCF_F22),
-  X ("F21", CCF_F21),
-  X ("F20", CCF_F20),
-  X ("F19", CCF_F19),
-  X ("F18", CCF_F18),
-  X ("F17", CCF_F17),
-  X ("F16", CCF_F16),
-  X ("F15", CCF_F15),
-  X ("F14", CCF_F14),
-  X ("F13", CCF_F13),
-  X ("F12", CCF_F12),
-  X ("F11", CCF_F11),
-  X ("F10", CCF_F10),
-  X ("F9", CCF_F9),
-  X ("F8", CCF_F8),
-  X ("F7", CCF_F7),
-  X ("F6", CCF_F6),
-  X ("F5", CCF_F5),
-  X ("F4", CCF_F4),
-  X ("F3", CCF_F3),
-  X ("F2", CCF_F2),
-  X ("F1", CCF_F1),
-  X ("LBtnDown", CCF_LBTNDOWN),
-  X ("LBtnUp", CCF_LBTNUP),
-  X ("LBtnMove", CCF_LBTNMOVE),
-  X ("RBtnDown", CCF_RBTNDOWN),
-  X ("RBtnUp", CCF_RBTNUP),
-  X ("RBtnMove", CCF_RBTNMOVE),
-  X ("MBtnDown", CCF_MBTNDOWN),
-  X ("MBtnUp", CCF_MBTNUP),
-  X ("MBtnMove", CCF_MBTNMOVE),
-  X ("XBtn1Down", CCF_XBTN1DOWN),
-  X ("XBtn1Up", CCF_XBTN1UP),
-  X ("XBtn1Move", CCF_XBTN1MOVE),
-  X ("XBtn2Down", CCF_XBTN2DOWN),
-  X ("XBtn2Up", CCF_XBTN2UP),
-  X ("XBtn2Move", CCF_XBTN2MOVE),
+  X (_T("PageUp"), CCF_PRIOR),
+  X (_T("PageDown"), CCF_NEXT),
+  X (_T("End"), CCF_END),
+  X (_T("Home"), CCF_HOME),
+  X (_T("Left"), CCF_LEFT),
+  X (_T("Up"), CCF_UP),
+  X (_T("Right"), CCF_RIGHT),
+  X (_T("Down"), CCF_DOWN),
+  X (_T("Pause"), CCF_PAUSE),
+  X (_T("MouseMove"), CCF_MOUSEMOVE),
+  X (_T("Scroll"), CCF_SCROLL),
+  X (_T("Apps"), CCF_APPS),
+  X (_T("Insert"), CCF_INSERT),
+  X (_T("Delete"), CCF_DELETE),
+  X (_T("Help"), CCF_HELP),
+  X (_T("F24"), CCF_F24),
+  X (_T("F23"), CCF_F23),
+  X (_T("F22"), CCF_F22),
+  X (_T("F21"), CCF_F21),
+  X (_T("F20"), CCF_F20),
+  X (_T("F19"), CCF_F19),
+  X (_T("F18"), CCF_F18),
+  X (_T("F17"), CCF_F17),
+  X (_T("F16"), CCF_F16),
+  X (_T("F15"), CCF_F15),
+  X (_T("F14"), CCF_F14),
+  X (_T("F13"), CCF_F13),
+  X (_T("F12"), CCF_F12),
+  X (_T("F11"), CCF_F11),
+  X (_T("F10"), CCF_F10),
+  X (_T("F9"), CCF_F9),
+  X (_T("F8"), CCF_F8),
+  X (_T("F7"), CCF_F7),
+  X (_T("F6"), CCF_F6),
+  X (_T("F5"), CCF_F5),
+  X (_T("F4"), CCF_F4),
+  X (_T("F3"), CCF_F3),
+  X (_T("F2"), CCF_F2),
+  X (_T("F1"), CCF_F1),
+  X (_T("LBtnDown"), CCF_LBTNDOWN),
+  X (_T("LBtnUp"), CCF_LBTNUP),
+  X (_T("LBtnMove"), CCF_LBTNMOVE),
+  X (_T("RBtnDown"), CCF_RBTNDOWN),
+  X (_T("RBtnUp"), CCF_RBTNUP),
+  X (_T("RBtnMove"), CCF_RBTNMOVE),
+  X (_T("MBtnDown"), CCF_MBTNDOWN),
+  X (_T("MBtnUp"), CCF_MBTNUP),
+  X (_T("MBtnMove"), CCF_MBTNMOVE),
+  X (_T("XBtn1Down"), CCF_XBTN1DOWN),
+  X (_T("XBtn1Up"), CCF_XBTN1UP),
+  X (_T("XBtn1Move"), CCF_XBTN1MOVE),
+  X (_T("XBtn2Down"), CCF_XBTN2DOWN),
+  X (_T("XBtn2Up"), CCF_XBTN2UP),
+  X (_T("XBtn2Move"), CCF_XBTN2MOVE),
 };
 
 static const print_char_name char_bit_names[] =
 {
-  X ("C-", CCF_CTRL_BIT),
-  X ("M-", CCF_META),
-  X ("S-", CCF_SHIFT_BIT),
+  X (_T("C-"), CCF_CTRL_BIT),
+  X (_T("M-"), CCF_META),
+  X (_T("S-"), CCF_SHIFT_BIT),
 };
 
 static inline int
@@ -139,7 +139,7 @@ char_bit_name2Char (const Char *name, int l, int &xl)
   return 0;
 }
 
-const char *
+const TCHAR *
 function_Char2name (Char c)
 {
   for (const print_char_name *p = function_char_names,
@@ -150,7 +150,7 @@ function_Char2name (Char c)
   return 0;
 }
 
-const char *
+const TCHAR *
 standard_Char2name (Char c)
 {
   for (const print_char_name *p = standard_char_names,

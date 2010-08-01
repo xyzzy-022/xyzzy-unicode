@@ -32,6 +32,7 @@ int streq (const Char *, int, const TCHAR *);
 int strequal (const TCHAR *, const Char *);
 int strequal (const TCHAR *, const Char *, int);
 #ifdef UNICODE
+#define strcasecmp _tcsicmp
 static inline int
 strcaseeq (const TCHAR *w1, const TCHAR *w2)
 {
