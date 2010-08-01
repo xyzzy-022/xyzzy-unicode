@@ -21,16 +21,16 @@ get_mouse_scroll_lines ()
     }
 
   HKEY hkey;
-  if (RegOpenKeyEx (HKEY_CURRENT_USER,  _T("Control Panel\\Desktop"),
+  if (RegOpenKeyEx (HKEY_CURRENT_USER, _T("Control Panel\\Desktop"),
                     0, KEY_QUERY_VALUE, &hkey) == ERROR_SUCCESS)
     {
-      char buf[64];
+      TCHAR buf[64];
       DWORD type;
       DWORD size = sizeof buf;
       if (RegQueryValueEx (hkey, _T("WheelScrollLines"), 0, &type,
                            (BYTE *)buf, &size) == ERROR_SUCCESS
           && type == REG_SZ)
-        nlines = strtoul (buf, 0, 10);
+        nlines = _tcstoul (buf, 0, 10);
       RegCloseKey (hkey);
       if (nlines)
         return nlines;

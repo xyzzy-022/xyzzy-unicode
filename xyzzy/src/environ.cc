@@ -634,7 +634,7 @@ init_environ ()
   else
     xsymbol_value (Vuser_name) = make_string (_T("unknown"));
 
-  n = sizeof b;
+  n = _countof (b);
   if (GetComputerName (b, &n))
     xsymbol_value (Vmachine_name) = make_string (b);
   else

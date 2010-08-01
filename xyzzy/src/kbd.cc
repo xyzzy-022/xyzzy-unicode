@@ -1064,7 +1064,7 @@ void
 key_sequence::notice (int n, int cont)
 {
   TCHAR buf[256];
-  TCHAR *b = buf, *be = b + sizeof buf - 32;
+  TCHAR *b = buf, *be = b + _countof (buf) - 32;
   n--;
   for (int i = 0; b < be; i++)
     {

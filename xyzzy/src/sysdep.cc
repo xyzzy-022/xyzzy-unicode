@@ -19,7 +19,7 @@ Sysdep::Sysdep ()
       WINFS::SetCurrentDirectory (curdir);
     }
 
-  DWORD len = sizeof host_name;
+  DWORD len = _countof (host_name);
   if (!GetComputerName (host_name, &len))
     *host_name = 0;
 

@@ -984,7 +984,7 @@ Fmake_temp_file_name (lisp lprefix, lisp lsuffix, lisp dir, lisp dirp)
         file_error (Enot_a_directory, dir);
       pathname2cstr (dir, temp);
     }
-  else if (!GetTempPath (sizeof temp, temp))
+  else if (!GetTempPath (_countof (temp), temp))
     file_error (Ecannot_make_temp_file_name);
   TCHAR *sl = find_last_slash (temp);
   if (!sl)

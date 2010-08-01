@@ -228,7 +228,7 @@ init_user_inifile_path (const TCHAR *ini_file)
     {
       TCHAR path[PATH_MAX], *tem;
       int l = WINFS::GetFullPathName (ini_file, _countof (path), path, &tem);
-      if (l && l < sizeof path)
+      if (l && l < _countof (path))
         {
           HANDLE h = CreateFile (path, GENERIC_READ, 0, 0, OPEN_ALWAYS,
                                  FILE_ATTRIBUTE_ARCHIVE, 0);

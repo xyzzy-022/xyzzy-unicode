@@ -789,7 +789,7 @@ Ffile_name_dialog (lisp keys)
   ofn.lCustData = DWORD (&ofn);
 
   TCHAR buf[1024 * 32];
-  if (stringp (ldefault) && xstring_length (ldefault) < sizeof buf / 2 - 1)
+  if (stringp (ldefault) && xstring_length (ldefault) < _countof (buf) / 2 - 1)
     {
       w2s (buf, ldefault);
       map_sl_to_backsl (buf);
@@ -1123,7 +1123,7 @@ Fdirectory_name_dialog (lisp keys)
   odn.lpfnHook = directory_name_dialog_hook;
   odn.lpTemplateName = MAKEINTRESOURCE (IDD_DIRECTORY);
 
-  if (xstring_length (ldefault) < sizeof odn.odn_result / 2 - 1)
+  if (xstring_length (ldefault) < _countof (odn.odn_result) / 2 - 1)
     {
       w2s (odn.odn_result, ldefault);
       map_sl_to_backsl (odn.odn_result);
