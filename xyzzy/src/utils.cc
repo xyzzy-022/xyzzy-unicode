@@ -31,10 +31,8 @@ xrealloc (void *p, size_t size)
 void
 xfree (void *p)
 {
-/*
   if (p)
     free (p);
-    */
 }
 
 TCHAR *

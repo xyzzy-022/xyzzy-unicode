@@ -1,3 +1,5 @@
+#include <tchar.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "cdecl.h"
@@ -8,7 +10,7 @@
 struct msgdef
 {
   const char *ident;
-  const char *text;
+  const TCHAR *text;
 };
 
 #define MSG(a, b) {#a, b}
@@ -19,37 +21,45 @@ static const msgdef msg[] =
 };
 
 static void
-print_quote (const char *p)
+print_quote (const TCHAR *p)
 {
   while (*p)
     {
-      if ((*p & 0xff) < ' ')
+      if (_TUCHAR (*p) < _T(' '))
         printf ("\\%03o", *p++);
       else
         {
-          if (*p == '\\' || *p == '"')
-            putchar ('\\');
-          putchar (*p);
+          if (*p == _T('\\') || *p == _T('"'))
+            _puttchar (_T('\\'));
+          _puttchar (*p);
+#ifdef UNICODE
+          p++;
+#else
           if (SJISP (*p++ & 0xff))
             putchar (*p++);
+#endif
         }
     }
 }
 
 static void
-print_quote_rc (const char *p)
+print_quote_rc (const TCHAR *p)
 {
   while (*p)
     {
-      if ((*p & 0xff) < ' ')
+      if (_TUCHAR (*p) < _T(' '))
         printf ("\\%03o", *p++);
       else
         {
-          if (*p == '\\' || *p == '"')
-            putchar (*p);
-          putchar (*p);
+          if (*p == _T('\\') || *p == _T('"'))
+            _puttchar (*p);
+          _puttchar (*p);
+#ifdef UNICODE
+          p++;
+#else
           if (SJISP (*p++ & 0xff))
             putchar (*p++);
+#endif
         }
     }
 }
@@ -57,6 +67,8 @@ print_quote_rc (const char *p)
 void
 main (int argc, char **argv)
 {
+  _tsetlocale(LC_ALL, _T(""));
+
   if (argc == 1)
     exit (2);
   if (!strcmp (argv[1], "-def"))
@@ -91,7 +103,7 @@ main (int argc, char **argv)
       for (i = 0; i < numberof (msg); i++)
         {
           printf ("  SSM + %d,\n", l);
-          l += strlen (msg[i].text) + 1;
+          l += _tcslen (msg[i].text) + 1;
         }
       printf ("};\n\n");
 

@@ -476,6 +476,7 @@ funcall_builtin (lisp f, lisp arglist)
 #ifdef DEBUG_GC
   MARK_FUNCALL (f);
 #endif
+#if 1
   lfunction_proc lf = xfunction_fn (f);
   lisp _ret;
   __asm {
@@ -495,6 +496,9 @@ funcall_builtin (lisp f, lisp arglist)
     mov  _ret, eax;
   }
   return _ret;
+#else
+  return lfunction_proc_0 (xfunction_fn (f)) ();
+#endif
 #else
 # error "Not tested"
 #endif
