@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <tchar.h>
 #include "gime.h"
 #ifndef DECLSPEC_UUID
 # define DECLSPEC_UUID(X)
@@ -16,7 +17,7 @@
 GlobalIME::GlobalIME ()
      : gi_app (0), gi_pump (0)
 {
-  ImmGetPropertyProc = (IMMGETPROPERTYPROC)GetProcAddress (GetModuleHandle ("imm32.dll"),
+  ImmGetPropertyProc = (IMMGETPROPERTYPROC)GetProcAddress (GetModuleHandle (_T("imm32.dll")),
                                                            "ImmGetProperty");
 }
 
@@ -137,13 +138,17 @@ GlobalIME::ImmSetCompositionFont (HIMC himc, LOGFONT *lf)
 {
 #ifdef HAVE_DIMM_H
   if (gi_app)
+# ifdef UNICODE
+    return gi_app->SetCompositionFontW (himc, lf) == S_OK;
+# else
     return gi_app->SetCompositionFontA (himc, lf) == S_OK;
+# endif
 #endif /* HAVE_DIMM_H */
   return ::ImmSetCompositionFont (himc, lf);
 }
 
 LONG
-GlobalIME::ImmGetCompositionString (HIMC himc, DWORD index, void *buf, DWORD bufl)
+GlobalIME::ImmGetCompositionStringA (HIMC himc, DWORD index, void *buf, DWORD bufl)
 {
 #ifdef HAVE_DIMM_H
   if (gi_app)
@@ -152,7 +157,7 @@ GlobalIME::ImmGetCompositionString (HIMC himc, DWORD index, void *buf, DWORD buf
       return gi_app->GetCompositionStringA (himc, index, bufl, &len, buf) == S_OK ? len : 0;
     }
 #endif /* HAVE_DIMM_H */
-  return ::ImmGetCompositionString (himc, index, buf, bufl);
+  return ::ImmGetCompositionStringA (himc, index, buf, bufl);
 }
 
 LONG
@@ -194,8 +199,13 @@ GlobalIME::ImmSetCompositionString (HIMC himc, DWORD index, void *comp,
 {
 #ifdef HAVE_DIMM_H
   if (gi_app)
+# ifdef UNICODE
+    return gi_app->SetCompositionStringW (himc, index, comp,
+                                          compl, read, readl) == S_OK;
+# else
     return gi_app->SetCompositionStringA (himc, index, comp,
                                           compl, read, readl) == S_OK;
+# endif
 #endif /* HAVE_DIMM_H */
   return ::ImmSetCompositionString (himc, index, comp, compl, read, readl);
 }
@@ -205,7 +215,11 @@ GlobalIME::ImmConfigureIME (HKL hkl, HWND hwnd, DWORD mode, REGISTERWORD *data)
 {
 #ifdef HAVE_DIMM_H
   if (gi_app)
+# ifdef UNICODE
+    return gi_app->ConfigureIMEW (hkl, hwnd, mode, data) == S_OK;
+# else
     return gi_app->ConfigureIMEA (hkl, hwnd, mode, data) == S_OK;
+# endif
 #endif /* HAVE_DIMM_H */
   return ::ImmConfigureIME (hkl, hwnd, mode, data);
 }
@@ -230,7 +244,11 @@ GlobalIME::ImmGetDescription (HKL hkl, LPTSTR buf, UINT size)
   if (gi_app)
     {
       UINT n;
+# ifdef UNICODE
+      return gi_app->GetDescriptionW (hkl, size, buf, &n) == S_OK ? n : 0;
+# else
       return gi_app->GetDescriptionA (hkl, size, buf, &n) == S_OK ? n : 0;
+# endif
     }
 #endif /* HAVE_DIMM_H */
   return ::ImmGetDescription (hkl, buf, size);

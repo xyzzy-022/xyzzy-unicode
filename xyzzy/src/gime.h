@@ -27,7 +27,7 @@ public:
   int enable_p () const {return int (gi_app);}
   LRESULT DefWindowProc (HWND, UINT, WPARAM, LPARAM);
   BOOL TranslateMessage (const MSG *);
-  LONG ImmGetCompositionString (HIMC, DWORD, void *, DWORD);
+  LONG ImmGetCompositionStringA (HIMC, DWORD, void *, DWORD);
   LONG ImmGetCompositionStringW (HIMC, DWORD, void *, DWORD);
   HIMC ImmGetContext (HWND);
   BOOL ImmGetOpenStatus (HIMC);

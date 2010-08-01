@@ -1,10 +1,10 @@
 #include "ed.h"
 
-const char status_area::s_nil[] = " ";
-const char status_area::s_eof[] = " EOF ";
+const TCHAR status_area::s_nil[] = _T(" ");
+const TCHAR status_area::s_eof[] = _T(" EOF ");
 
 int
-status_area::char_max_ext (HDC hdc, char c1, char c2)
+status_area::char_max_ext (HDC hdc, TCHAR c1, TCHAR c2)
 {
   int cx = 0;
   for (; c1 <= c2; c1++)
@@ -34,13 +34,13 @@ status_area::reload_settings ()
   HDC hdc = GetDC (s_hwnd);
   HGDIOBJ of = SelectObject (hdc, s_hfont);
 
-  int spc = char_ext (hdc, ' ');
-  int colon = char_ext (hdc, ':');
-  int dig = char_max_ext (hdc, '0', '9');
-  int hex = char_max_ext (hdc, 'A', 'F');
+  int spc = char_ext (hdc, _T(' '));
+  int colon = char_ext (hdc, _T(':'));
+  int dig = char_max_ext (hdc, _T('0'), _T('9'));
+  int hex = char_max_ext (hdc, _T('A'), _T('F'));
   hex = max (hex, dig);
-  int u = char_ext (hdc, 'U');
-  int plus = char_ext (hdc, '+');
+  int u = char_ext (hdc, _T('U'));
+  int plus = char_ext (hdc, _T('+'));
 
   SelectObject (hdc, of);
   ReleaseDC (s_hwnd, hdc);
@@ -90,23 +90,23 @@ status_area::update_all ()
 }
 
 int
-status_area::get_extent (const char *s) const
+status_area::get_extent (const TCHAR *s) const
 {
   HDC hdc = GetDC (s_hwnd);
   HGDIOBJ of = SelectObject (hdc, s_hfont);
   SIZE sz;
-  GetTextExtentPoint32 (hdc, s, strlen (s), &sz);
+  GetTextExtentPoint32 (hdc, s, _tcslen (s), &sz);
   SelectObject (hdc, of);
   ReleaseDC (s_hwnd, hdc);
   return sz.cx;
 }
 
 int
-status_area::calc_extent (int n, const char *b)
+status_area::calc_extent (int n, const TCHAR *b)
 {
-  if (!strcmp (b, s_lbuf[n]))
+  if (!_tcscmp (b, s_lbuf[n]))
     return 0;
-  strcpy (s_lbuf[n], b);
+  _tcscpy (s_lbuf[n], b);
   int w = get_extent (b);
   w = max (w, s_min_ext[n]);
   if (w == s_extent[n])
@@ -121,8 +121,8 @@ status_area::position ()
   Window *wp = selected_window ();
   if (!wp)
     return calc_extent (ST_POS, s_nil);
-  char b[32];
-  sprintf (b, " %5d:%d ", wp->w_plinenum, wp->w_column + 1);
+  TCHAR b[32];
+  _stprintf (b, _T(" %5d:%d "), wp->w_plinenum, wp->w_column + 1);
   return calc_extent (ST_POS, b);
 }
 
@@ -134,9 +134,9 @@ status_area::char_code ()
     return calc_extent (ST_CODE, s_nil);
   if (wp->w_bufp->eobp (wp->w_point))
     return calc_extent (ST_CODE, s_eof);
-  char b[8];
+  TCHAR b[8];
   Char c = wp->w_point.ch ();
-  sprintf (b, c < 0x100 ? " %02X " : " %04X ", c);
+  _stprintf (b, c < 0x100 ? _T(" %02X ") : _T(" %04X "), c);
   return calc_extent (ST_CODE, b);
 }
 
@@ -151,8 +151,8 @@ status_area::char_unicode ()
   ucs2_t wc = i2w (wp->w_point.ch ());
   if (wc == ucs2_t (-1))
     return calc_extent (ST_UNICODE, s_nil);
-  char b[16];
-  sprintf (b, " U+%04X ", wc);
+  TCHAR b[16];
+  _stprintf (b, _T(" U+%04X "), wc);
   return calc_extent (ST_UNICODE, b);
 }
 
@@ -161,17 +161,21 @@ status_area::time ()
 {
   SYSTEMTIME st;
   GetLocalTime (&st);
-  char b[32];
+  TCHAR b[32];
+  static const TCHAR * const dow[] =
+    {
+      _T("ì˙"), _T("åé"), _T("âŒ"), _T("êÖ"), _T("ñÿ"), _T("ã‡"), _T("ìy")
+    };
 
   if (!s_dow)
-    sprintf (b, " %02d/%02d %02d:%02d ",
-             st.wMonth, st.wDay,
-             st.wHour, st.wMinute);
+    _stprintf (b, _T(" %02d/%02d %02d:%02d "),
+               st.wMonth, st.wDay,
+               st.wHour, st.wMinute);
   else
-    sprintf (b, " %02d/%02d(%2.2s) %02d:%02d ",
-             st.wMonth, st.wDay,
-             "ì˙åéâŒêÖñÿã‡ìy" + st.wDayOfWeek % 7 * 2,
-             st.wHour, st.wMinute);
+    _stprintf (b, _T(" %02d/%02d(%s) %02d:%02d "),
+               st.wMonth, st.wDay,
+               dow[st.wDayOfWeek % 7],
+               st.wHour, st.wMinute);
   return calc_extent (ST_TIME, b);
 }
 
@@ -237,7 +241,7 @@ status_area::update ()
         parse_format (xstring_contents (fmt), xstring_length (fmt));
       else
         {
-          Char c = 't';
+          Char c = _T('t');
           parse_format (&c, 1);
         }
     }
@@ -276,25 +280,25 @@ status_area::parse_format (const Char *p, int l)
         default:
           continue;
 
-        case 'T':
+        case _T('T'):
           n = ST_TIME;
           s_dow = 1;
           break;
 
-        case 't':
+        case _T('t'):
           n = ST_TIME;
           s_dow = 0;
           break;
 
-        case 'p':
+        case _T('p'):
           n = ST_POS;
           break;
 
-        case 'c':
+        case _T('c'):
           n = ST_CODE;
           break;
 
-        case 'u':
+        case _T('u'):
           n = ST_UNICODE;
           break;
         }
