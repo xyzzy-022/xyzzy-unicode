@@ -1,7 +1,16 @@
 #ifndef _Window_h_
 # define _Window_h_
 
+#ifdef UNICODE
+typedef u_long attr_t;
+struct glyph_t {
+  attr_t attr;
+  TCHAR ch;
+};
+#else
+typedef u_long attr_t;
 typedef u_long glyph_t;
+#endif
 
 /*
  GLYPH BITS
@@ -139,22 +148,150 @@ typedef u_long glyph_t;
 
 # define GLYPH_MAX_KEYWORDS      6
 
+#ifdef UNICODE
+
+static inline glyph_t
+glyph_of (attr_t attr, TCHAR ch)
+{
+  glyph_t c = { attr & 0xffffff00, ch };
+  return c;
+}
+
+static inline glyph_t
+glyph_of_char (TCHAR ch)
+{
+  return glyph_of (0, ch);
+}
+
+static inline glyph_t
+glyph_of_value (int val)
+{
+  return glyph_of (val, val & 0xff);
+}
+
+static inline glyph_t
+glyph_zero ()
+{
+  return glyph_of (0, 0);
+}
+
+static inline attr_t
+glyph_attr (const glyph_t &c)
+{
+  return c.attr;
+}
+
+static inline TCHAR
+glyph_char (const glyph_t &c)
+{
+  return c.ch;
+}
+
+static inline void
+glyph_attr_or (glyph_t &c, attr_t attr)
+{
+  c.attr |= attr & 0xffffff00;
+}
+
+static inline void
+glyph_attr_and (glyph_t &c, attr_t attr)
+{
+  c.attr &= attr;
+}
+
+static inline void
+glyph_attr_set (glyph_t &c, attr_t mask, attr_t pat)
+{
+  c.attr = (c.attr & mask) | (pat & 0xffffff00);
+}
+
+static inline int
+glyph_equal_p (const glyph_t &x, const glyph_t &y)
+{
+  return x.attr == y.attr && x.ch == y.ch;
+}
+
+#else
+
+static inline glyph_t
+glyph_of (attr_t attr, char ch)
+{
+  return (attr & 0xffffff00) | (ch & 0xff);
+}
+
+static inline glyph_t
+glyph_of_char (char ch)
+{
+  return glyph_of (0, ch);
+}
+
+static inline glyph_t
+glyph_of_value (int val)
+{
+  return val;
+}
+
+static inline glyph_t
+glyph_zero ()
+{
+  return glyph_of_value (0);
+}
+
+static inline attr_t
+glyph_attr (glyph_t c)
+{
+  return c & 0xffffff00;
+}
+
+static inline char
+glyph_char (glyph_t c)
+{
+  return c & 0xff;
+}
+
+static inline void
+glyph_attr_or (glyph_t &c, attr_t attr)
+{
+  c |= attr & 0xffffff00;
+}
+
+static inline void
+glyph_attr_and (glyph_t &c, attr_t attr)
+{
+  c &= attr | 0xff;
+}
+
+static inline void
+glyph_attr_set (glyph_t &c, attr_t mask, attr_t pat)
+{
+  glyph_attr_and (c, mask);
+  glyph_attr_or (c, pat);
+}
+
+static inline int
+glyph_equal_p (glyph_t x, glyph_t y)
+{
+  return x == y;
+}
+
+#endif
+
 static inline void
 glyph_make_junk (glyph_t *g)
 {
-  *g = (*g & ~GLYPH_CATEGORY_MASK) | GLYPH_JUNK;
+  glyph_attr_set (*g, ~GLYPH_CATEGORY_MASK, GLYPH_JUNK);
 }
 
 static inline int
 glyph_lead_p (glyph_t c)
 {
-  return (c & GLYPH_CATEGORY_MASK) == GLYPH_LEAD;
+  return (glyph_attr (c) & GLYPH_CATEGORY_MASK) == GLYPH_LEAD;
 }
 
 static inline int
 glyph_trail_p (glyph_t c)
 {
-  return (c & GLYPH_CATEGORY_MASK) == GLYPH_TRAIL;
+  return (glyph_attr (c) & GLYPH_CATEGORY_MASK) == GLYPH_TRAIL;
 }
 
 struct glyph_data
@@ -618,24 +755,26 @@ Window::paint_window (HDC hdc) const
 inline COLORREF
 Window::glyph_forecolor (glyph_t c) const
 {
-  u_int y = c & ((GLYPH_TEXTPROP_NCOLORS - 1) << GLYPH_TEXTPROP_FG_SHIFT_BITS);
-  return (c & GLYPH_TEXTPROP_FG_BIT
-          ? w_textprop_forecolor[(c & ((GLYPH_TEXTPROP_NCOLORS - 1)
+  attr_t a = glyph_attr (c);
+  u_int y = a & ((GLYPH_TEXTPROP_NCOLORS - 1) << GLYPH_TEXTPROP_FG_SHIFT_BITS);
+  return (a & GLYPH_TEXTPROP_FG_BIT
+          ? w_textprop_forecolor[(a & ((GLYPH_TEXTPROP_NCOLORS - 1)
                                        << GLYPH_TEXTPROP_FG_SHIFT_BITS))
                                  >> GLYPH_TEXTPROP_FG_SHIFT_BITS]
-          : w_colors[forecolor_indexes[(c & GLYPH_FOREGROUND_MASK)
+          : w_colors[forecolor_indexes[(a & GLYPH_FOREGROUND_MASK)
                                        >> GLYPH_COLOR_SHIFT_BITS]]);
 }
 
 inline COLORREF
 Window::glyph_backcolor (glyph_t c) const
 {
-  u_int y = c & ((GLYPH_TEXTPROP_NCOLORS - 1) << GLYPH_TEXTPROP_BG_SHIFT_BITS);
-  if ((c & GLYPH_BACKGROUND_MASK) || !y)
+  attr_t a = glyph_attr (c);
+  u_int y = a & ((GLYPH_TEXTPROP_NCOLORS - 1) << GLYPH_TEXTPROP_BG_SHIFT_BITS);
+  if ((a & GLYPH_BACKGROUND_MASK) || !y)
     {
-      if (c & GLYPH_TEXTPROP_FG_BIT)
-        c &= ~((GLYPH_TEXTPROP_NCOLORS - 1) << GLYPH_TEXTPROP_FG_SHIFT_BITS);
-      return w_colors[backcolor_indexes[(c & GLYPH_FOREGROUND_MASK)
+      if (a & GLYPH_TEXTPROP_FG_BIT)
+        a &= ~((GLYPH_TEXTPROP_NCOLORS - 1) << GLYPH_TEXTPROP_FG_SHIFT_BITS);
+      return w_colors[backcolor_indexes[(a & GLYPH_FOREGROUND_MASK)
                                         >> GLYPH_COLOR_SHIFT_BITS]];
     }
   return w_textprop_backcolor[y >> GLYPH_TEXTPROP_BG_SHIFT_BITS];

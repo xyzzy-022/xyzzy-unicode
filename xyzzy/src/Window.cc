@@ -346,7 +346,7 @@ glyph_rep::glyph_rep (int w, int h)
       gr_oglyph[i] = (glyph_data *)p;
       gr_oglyph[i]->gd_len = 0;
       gr_oglyph[i]->gd_mod = 0;
-      gr_oglyph[i]->gd_cc[0] = 0;
+      gr_oglyph[i]->gd_cc[0] = glyph_zero ();
       p += sizeof (glyph_data) + sizeof (glyph_t) * (w + 1);
     }
   assert (p - (char *)this == size (w, h));
@@ -365,16 +365,16 @@ glyph_rep::copy (const glyph_rep *src)
           for (glyph_t *g = gr_oglyph[y]->gd_cc + w,
                *ge = gr_oglyph[y]->gd_cc + gr_size.cx;
                g < ge; g++)
-            *g = GLYPH_JUNK;
-          *g = 0;
+            *g = glyph_of_value (GLYPH_JUNK);
+          *g = glyph_zero ();
           gr_oglyph[y]->gd_len = short (gr_size.cx);
         }
 
       for (; y < gr_size.cy; y++)
         {
           for (glyph_t *g = gr_oglyph[y]->gd_cc, *ge = g + gr_size.cx; g < ge; g++)
-            *g = GLYPH_JUNK;
-          *g = 0;
+            *g = glyph_of_value (GLYPH_JUNK);
+          *g = glyph_zero ();
           gr_oglyph[y]->gd_len = short (gr_size.cx);
         }
 
@@ -392,8 +392,8 @@ glyph_rep::copy (const glyph_rep *src)
       for (int y = 0; y < gr_size.cy; y++)
         {
           for (glyph_t *g = gr_oglyph[y]->gd_cc, *ge = g + gr_size.cx; g < ge; g++)
-            *g = GLYPH_JUNK;
-          *g = 0;
+            *g = glyph_of_value (GLYPH_JUNK);
+          *g = glyph_zero ();
           gr_oglyph[y]->gd_len = short (gr_size.cx);
         }
     }

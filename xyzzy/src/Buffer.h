@@ -459,7 +459,7 @@ struct Buffer
   const Char *b_prompt;
   int b_prompt_length;
   int b_prompt_columns;
-  char b_prompt_arg[16];
+  TCHAR b_prompt_arg[16];
 
   UndoInfo *b_undo;
   UndoInfo *b_redo;

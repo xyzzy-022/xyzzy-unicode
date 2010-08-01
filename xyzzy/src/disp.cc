@@ -452,7 +452,7 @@ paint_chars_lucida (HDC hdc, int x, int y, int flags, const RECT &r,
 
 static void
 paint_chars (HDC hdc, int x, int y, int flags, const RECT &r,
-             glyph_t charset, const TCHAR *string, int len, const INT *padding)
+             attr_t charset, const TCHAR *string, int len, const INT *padding)
 {
 #define PAINT_FULL_WIDTH_CHARS(FONT) \
   paint_full_width_chars (hdc, x, y, flags, r, string, len, app.text_font.font (FONT))
@@ -570,7 +570,7 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
   r.top = y + yoffset;
   r.bottom = y + app.text_font.cell ().cy;
   r.right = x;
-  glyph_t gsum = 0;
+  attr_t asum = 0;
   const glyph_t *gfrom = g;
 
   while (g < ge)
@@ -578,13 +578,14 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
       const glyph_t *g0 = g;
       TCHAR *be = buf;
       glyph_t c = *g++;
-      gsum |= c;
-      *be++ = TCHAR (c);
-      c &= GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK;
-      while (g < ge && (*g & (GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK)) == c)
+      attr_t a = glyph_attr (c);
+      asum |= a;
+      *be++ = glyph_char (c);
+      a &= GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK;
+      while (g < ge && (glyph_attr (*g) & (GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK)) == a)
         {
-          gsum |= *g;
-          *be++ = TCHAR (*g++);
+          asum |= glyph_attr (*g);
+          *be++ = glyph_char (*g++);
         }
 
       r.left = r.right;
@@ -597,14 +598,15 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
         }
 
       TCHAR *b = buf;
-      if (!(c & GLYPH_CHARSET_MASK))
+      if (!(a & GLYPH_CHARSET_MASK))
         {
           for (; b < be && *b == _T(' '); b++)
             ;
           g0 += b - buf;
         }
       for (const glyph_t *g1 = g;
-           g1 > g0 && (g1[-1] & ~GLYPH_COLOR_MASK) == _T(' ');
+           g1 > g0 && glyph_equal_p (glyph_of (glyph_attr (g1[-1]) & ~GLYPH_COLOR_MASK, glyph_char (g1[-1])),
+                                     glyph_of_char (_T(' ')));
            g1--)
         ;
       be -= g - g1;
@@ -612,7 +614,7 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
       COLORREF ofg = SetTextColor (hdc, glyph_forecolor (c));
       COLORREF obg = SetBkColor (hdc, glyph_backcolor (c));
 
-      if (c & GLYPH_BITMAP_BIT)
+      if (a & GLYPH_BITMAP_BIT)
         {
           int x = r.left + (b - buf) * app.text_font.cell ().cx;
           for (; b < be; b++, x += app.text_font.cell ().cx)
@@ -628,17 +630,17 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
         }
       else
         paint_chars (hdc, r.left + (b - buf) * app.text_font.cell ().cx, y,
-                     ETO_OPAQUE | ETO_CLIPPED, r, GLYPH_CHARSET (c), b, be - b, padding);
+                     ETO_OPAQUE | ETO_CLIPPED, r, GLYPH_CHARSET (a), b, be - b, padding);
 
       SetTextColor (hdc, ofg);
       SetBkColor (hdc, obg);
     }
 
-  if (gsum & GLYPH_BOLD)
+  if (asum & GLYPH_BOLD)
     {
       int omode = SetBkMode (hdc, TRANSPARENT);
       g = gfrom;
-      if (g > gstart && g[-1] & GLYPH_BOLD)
+      if (g > gstart && glyph_attr (g[-1]) & GLYPH_BOLD)
         {
           g--;
           if (glyph_trail_p (*g))
@@ -647,19 +649,19 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
 
       while (1)
         {
-          for (; g < ge && !(*g & GLYPH_BOLD); g++)
+          for (; g < ge && !(glyph_attr (*g) & GLYPH_BOLD); g++)
             ;
           if (g == ge)
             break;
           TCHAR *be = buf;
           const glyph_t *g0 = g;
           glyph_t c0 = *g++;
-          *be++ = TCHAR (c0);
-          glyph_t c = c0 & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
-                            | GLYPH_CHARSET_MASK | GLYPH_BOLD);
-          for (; g < ge && (*g & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
-                                  | GLYPH_CHARSET_MASK | GLYPH_BOLD)) == c; g++)
-            *be++ = TCHAR (*g);
+          *be++ = glyph_char (c0);
+          attr_t a = glyph_attr (c0) & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
+                                        | GLYPH_CHARSET_MASK | GLYPH_BOLD);
+          for (; g < ge && (glyph_attr (*g) & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
+                                               | GLYPH_CHARSET_MASK | GLYPH_BOLD)) == a; g++)
+            *be++ = glyph_char (*g);
 
           COLORREF ofg = SetTextColor (hdc, glyph_forecolor (c0));
 
@@ -672,7 +674,7 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
                 break;
             }
 
-          if (c & GLYPH_BITMAP_BIT)
+          if (a & GLYPH_BITMAP_BIT)
             {
               COLORREF obg = SetBkColor (hdc, glyph_backcolor (c0));
               TCHAR *b = buf;
@@ -690,7 +692,7 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
               SetBkColor (hdc, obg);
             }
           else
-            paint_chars (hdc, r.left, y, ETO_CLIPPED, r, GLYPH_CHARSET (c),
+            paint_chars (hdc, r.left, y, ETO_CLIPPED, r, GLYPH_CHARSET (a),
                          buf, be - buf, padding);
 
           SetTextColor (hdc, ofg);
@@ -698,18 +700,19 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
       SetBkMode (hdc, omode);
     }
 
-  if (gsum & (!yoffset ? GLYPH_UNDERLINE | GLYPH_STRIKEOUT : GLYPH_UNDERLINE))
+  if (asum & (!yoffset ? GLYPH_UNDERLINE | GLYPH_STRIKEOUT : GLYPH_UNDERLINE))
     {
       g = gfrom;
       while (1)
         {
-          for (; g < ge && !(*g & (GLYPH_UNDERLINE | GLYPH_STRIKEOUT)); g++)
+          for (; g < ge && !(glyph_attr (*g) & (GLYPH_UNDERLINE | GLYPH_STRIKEOUT)); g++)
             ;
           if (g == ge)
             break;
           const glyph_t *g0 = g;
-          glyph_t c = *g++ & (GLYPH_FORE_COLOR_MASK | GLYPH_UNDERLINE | GLYPH_STRIKEOUT);
-          for (; g < ge && (*g & (GLYPH_FORE_COLOR_MASK | GLYPH_UNDERLINE | GLYPH_STRIKEOUT)) == c; g++)
+          glyph_t c = *g++;
+          attr_t a = glyph_attr (c) & (GLYPH_FORE_COLOR_MASK | GLYPH_UNDERLINE | GLYPH_STRIKEOUT);
+          for (; g < ge && (glyph_attr (*g) & (GLYPH_FORE_COLOR_MASK | GLYPH_UNDERLINE | GLYPH_STRIKEOUT)) == a; g++)
             ;
 
           COLORREF obg = SetBkColor (hdc, glyph_forecolor (c));
@@ -722,13 +725,13 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
                 break;
             }
 
-          if (c & GLYPH_UNDERLINE)
+          if (a & GLYPH_UNDERLINE)
             {
               r.bottom = y + app.text_font.size ().cy;
               r.top = r.bottom - app.text_font.line_width ();
               ExtTextOut (hdc, r.left, r.top, ETO_OPAQUE, &r, _T(""), 0, 0);
             }
-          if (!yoffset && c & GLYPH_STRIKEOUT)
+          if (!yoffset && a & GLYPH_STRIKEOUT)
             {
               r.top = y + app.text_font.size ().cy / 2;
               r.bottom = r.top + app.text_font.line_width ();
@@ -747,13 +750,13 @@ Window::paint_line (HDC hdc, HDC hdcmem, glyph_data *ogd, const glyph_data *ngd,
   const glyph_t *n = ngd->gd_cc, *ne = n + ngd->gd_len;
   glyph_t *o = ogd->gd_cc, *oe = o + ogd->gd_len;
 
-  for (; n < ne && o < oe && *n == *o; n++, o++)
+  for (; n < ne && o < oe && glyph_equal_p (*n, *o); n++, o++)
     ;
   if (n == ne && o == oe)
     return;
   if (glyph_trail_p (*n))
     n--, o--;
-  if (o > ogd->gd_cc && o[-1] & GLYPH_BOLD)
+  if (o > ogd->gd_cc && glyph_attr (o[-1]) & GLYPH_BOLD)
     {
       n--, o--;
       if (glyph_trail_p (*n))
@@ -763,11 +766,11 @@ Window::paint_line (HDC hdc, HDC hdcmem, glyph_data *ogd, const glyph_data *ngd,
   const glyph_t *nfd = n;
   glyph_t *ofd = o;
 
-  for (n = ne, o = oe; n > nfd && o > ofd && n[-1] == o[-1]; n--, o--)
+  for (n = ne, o = oe; n > nfd && o > ofd && glyph_equal_p (n[-1], o[-1]); n--, o--)
     ;
   if (n < ne && glyph_trail_p (*n))
     n++, o++;
-  if (o > ogd->gd_cc && o[-1] & GLYPH_BOLD)
+  if (o > ogd->gd_cc && glyph_attr (o[-1]) & GLYPH_BOLD)
     {
       if (o < oe)
         {
@@ -870,7 +873,7 @@ Window::paint_line (HDC hdc, HDC hdcmem, glyph_data *ogd, const glyph_data *ngd,
         }
       for (o = ofd, n = nfd; n < ne;)
         *o++ = *n++;
-      *o = 0;
+      *o = glyph_zero ();
       ogd->gd_len = ngd->gd_len;
     }
 }
@@ -1316,8 +1319,8 @@ glyph_dbchar (glyph_t *g, Char cc, int f, int flags)
     default:
       if (flags & Window::WF_FULLSPC && cc == 0x8140U)
         {
-          *g++ = (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_LEAD | GLYPH_BM_FULLSPC1;
-          *g++ = (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_TRAIL | GLYPH_BM_FULLSPC2;
+          *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_LEAD | GLYPH_BM_FULLSPC1);
+          *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_TRAIL | GLYPH_BM_FULLSPC2);
         }
       else
         {
@@ -1325,8 +1328,8 @@ glyph_dbchar (glyph_t *g, Char cc, int f, int flags)
           c2 = u_char (cc & 0xff);
           if (!c2 || !SJISP (c1))
             goto undef_char;
-          *g++ = f | c1 | GLYPH_LEAD | GLYPH_CHARSET_JISX0208;
-          *g++ = f | c2 | GLYPH_TRAIL | GLYPH_CHARSET_JISX0208;
+          *g++ = glyph_of (f | GLYPH_LEAD | GLYPH_CHARSET_JISX0208, c1);
+          *g++ = glyph_of (f | GLYPH_TRAIL | GLYPH_CHARSET_JISX0208, c2);
         }
       break;
 
@@ -1357,13 +1360,13 @@ glyph_dbchar (glyph_t *g, Char cc, int f, int flags)
         goto undef_char;
       c1 = u_char (cc >> 8);
       c2 = u_char (cc & 0xff);
-      *g++ = f | c1 | GLYPH_LEAD;
-      *g++ = f | c2 | GLYPH_TRAIL;
+      *g++ = glyph_of (f | GLYPH_LEAD, c1);
+      *g++ = glyph_of (f | GLYPH_TRAIL, c2);
       break;
 
     undef_char:
-      *g++ = f | GLYPH_LEAD | GLYPH_BM_WBLANK1;
-      *g++ = f | GLYPH_TRAIL | GLYPH_BM_WBLANK2;
+      *g++ = glyph_of_value (f | GLYPH_LEAD | GLYPH_BM_WBLANK1);
+      *g++ = glyph_of_value (f | GLYPH_TRAIL | GLYPH_BM_WBLANK2);
       break;
     }
   return g;
@@ -1379,101 +1382,103 @@ glyph_sbchar (glyph_t *g, Char cc, int f, int flags)
     case ccs_iso8859_2:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 255) | GLYPH_CHARSET_ISO8859_1_2;
+      *g++ = glyph_of (f | GLYPH_CHARSET_ISO8859_1_2, cc & 255);
       break;
 
     case ccs_iso8859_3:
     case ccs_iso8859_4:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 255) | GLYPH_CHARSET_ISO8859_3_4;
+      *g++ = glyph_of (f | GLYPH_CHARSET_ISO8859_3_4, cc & 255);
       break;
 
     case ccs_iso8859_5:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 127) | GLYPH_CHARSET_ISO8859_5;
+      *g++ = glyph_of (f | GLYPH_CHARSET_ISO8859_5, cc & 127);
       break;
 
     case ccs_iso8859_7:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 127) | GLYPH_CHARSET_ISO8859_7;
+      *g++ = glyph_of (f | GLYPH_CHARSET_ISO8859_7, cc & 127);
       break;
 
     case ccs_iso8859_9:
     case ccs_iso8859_10:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 255) | GLYPH_CHARSET_ISO8859_9_10;
+      *g++ = glyph_of (f | GLYPH_CHARSET_ISO8859_9_10, cc & 255);
       break;
 
     case ccs_iso8859_13:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 255) | GLYPH_CHARSET_ISO8859_13;
+      *g++ = glyph_of (f | GLYPH_CHARSET_ISO8859_13, cc & 255);
       break;
 
     case ccs_jisx0212:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = (f | GLYPH_CHARSET_JISX0212_HALF
-              | jisx0212_half_width_hash[cc % JISX0212_HALF_WIDTH_HASH_SIZE]);
+      *g++ = glyph_of (f | GLYPH_CHARSET_JISX0212_HALF,
+                       jisx0212_half_width_hash[cc % JISX0212_HALF_WIDTH_HASH_SIZE]);
       break;
 
     case ccs_jisx0201_kana:
       if (SJISP (cc))
         goto bad_char;
-      *g++ = f | GLYPH_CHARSET_JISX0201_KANA | cc;
+      *g++ = glyph_of (f | GLYPH_CHARSET_JISX0201_KANA, cc);
       break;
 
     case ccs_georgian:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 127) | GLYPH_CHARSET_GEORGIAN;
+      *g++ = glyph_of (f | GLYPH_CHARSET_GEORGIAN, cc & 127);
       break;
 
     case ccs_ipa:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 127) | GLYPH_CHARSET_IPA;
+      *g++ = glyph_of (f | GLYPH_CHARSET_IPA, cc & 127);
       break;
 
     case ccs_smlcdm:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = f | (cc & 255) | GLYPH_CHARSET_SMLCDM;
+      *g++ = glyph_of (f | GLYPH_CHARSET_SMLCDM, cc & 255);
       break;
 
     case ccs_usascii:
-      if (app.text_font.use_backsl_p () && cc == '\\')
-        *g++ = f | GLYPH_BM_BACKSL;
-      else if (flags & Window::WF_HALFSPC && cc == ' ')
-        *g++ = (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_BM_HALFSPC;
+      if (app.text_font.use_backsl_p () && cc == _T('\\'))
+        *g++ = glyph_of_value (f | GLYPH_BM_BACKSL);
+      else if (flags & Window::WF_HALFSPC && cc == _T(' '))
+        *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_BM_HALFSPC);
       else
-        *g++ = f | cc;
+        *g++ = glyph_of (f, cc);
       break;
 
 #ifdef CCS_ULATIN_MIN
     case ccs_ulatin:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = (f | (cc & 255) | (GLYPH_CHARSET_ULATIN1
-                                + MAKE_GLYPH_CHARSET ((cc - CCS_ULATIN_MIN) >> 8)));
+      *g++ = glyph_of (f | (GLYPH_CHARSET_ULATIN1
+                            + MAKE_GLYPH_CHARSET ((cc - CCS_ULATIN_MIN) >> 8)),
+                       cc & 255);
       break;
 #endif
 #ifdef CCS_UJP_MIN
     case ccs_ujp:
       if (i2w (cc) == ucs2_t (-1))
         goto bad_char;
-      *g++ = (f | (cc & 255) | (GLYPH_CHARSET_UJP_H1
-                                + MAKE_GLYPH_CHARSET ((cc - CCS_UJP_MIN) >> 8)));
+      *g++ = glyph_of (f | (GLYPH_CHARSET_UJP_H1
+                            + MAKE_GLYPH_CHARSET ((cc - CCS_UJP_MIN) >> 8)),
+                       cc & 255);
       break;
 #endif
 
     default:
     bad_char:
-      *g++ = f | GLYPH_BM_BLANK;
+      *g++ = glyph_of_value (f | GLYPH_BM_BLANK);
       break;
     }
   return g;
@@ -1485,13 +1490,13 @@ glyph_bmchar (glyph_t *g, Char bm, lisp ch, int f, int n)
   ch = xsymbol_value (ch);
   if (ch == Qnil)
     for (int i = 0; i < n; i++)
-      *g++ = f | ' ';
+      *g++ = glyph_of (f, _T(' '));
   else if (charp (ch) && char_width (xchar_code (ch)) == 1)
     for (int i = 0; i < n; i++)
       g = glyph_sbchar (g, xchar_code (ch), f, 0);
   else
     for (int i = 0; i < n; i++)
-      *g++ = f | bm;
+      *g++ = glyph_of_value (f | bm);
   return g;
 }
 
@@ -1833,7 +1838,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
   glyph_t *const ge = g + w_ch_max.cx;
 
   if (g < ge)
-    *g++ = ' ';
+    *g++ = glyph_of_char (_T(' '));
 
   for (; tprop; tprop = tprop->t_next)
     if (*tprop > point.p_point)
@@ -1842,16 +1847,16 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
   int wflags = flags ();
   if (wflags & WF_LINE_NUMBER)
     {
-      glyph_t f = (vlinenum == w_last_mark_linenum
-                   ? (GLYPH_REVERSED | GLYPH_LINENUM)
-                   : GLYPH_LINENUM);
+      attr_t f = (vlinenum == w_last_mark_linenum
+                  ? (GLYPH_REVERSED | GLYPH_LINENUM)
+                  : GLYPH_LINENUM);
       if (plinenum != -1 && point.p_point && point.prevch () != '\n')
         {
-          f |= ' ';
+          glyph_t c = glyph_of (f, _T(' '));
           for (glyph_t *e = min (ge, g + LINENUM_COLUMNS); g < e; g++)
-            *g = f;
+            *g = c;
           if (g < ge)
-            *g++ = GLYPH_LINENUM | GLYPH_BM_SEP;
+            *g++ = glyph_of_value (GLYPH_LINENUM | GLYPH_BM_SEP);
         }
       else
         {
@@ -1862,27 +1867,27 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
               glyph_t *p = g + LINENUM_COLUMNS;
               do
                 {
-                  *--p = f | (plinenum % 10 + '0');
+                  *--p = glyph_of (f, plinenum % 10 + _T('0'));
                   plinenum /= 10;
                 }
               while (p > g && plinenum);
               while (p > g)
-                *--p = f | ' ';
+                *--p = glyph_of (f, _T(' '));
               g += LINENUM_COLUMNS;
-              *g++ = GLYPH_LINENUM | GLYPH_BM_SEP;
+              *g++ = glyph_of_value (GLYPH_LINENUM | GLYPH_BM_SEP);
             }
           else
             {
-              char buf[32];
+              TCHAR buf[32];
               if (plinenum >= 1000000)
-                sprintf (buf, "%06d", plinenum % 1000000);
+                _stprintf (buf, _T("%06d"), plinenum % 1000000);
               else
-                sprintf (buf, "%6d", plinenum);
+                _stprintf (buf, _T("%6d"), plinenum);
               int n = min (6, int (w_ch_max.cx));
               for (int i = 0; i < n; i++)
-                *g++ = f | buf[i];
+                *g++ = glyph_of (f, buf[i]);
               if (g < ge)
-                *g++ = GLYPH_LINENUM | GLYPH_BM_SEP;
+                *g++ = glyph_of_value (GLYPH_LINENUM | GLYPH_BM_SEP);
             }
         }
 
@@ -1890,7 +1895,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
           && *tprop > point.p_point
           && tprop->t_attrib & 0xff
           && g == gd->gd_cc + LINENUM_COLUMNS + 2)
-        g[-2] = tprop->t_attrib & ~TEXTPROP_EXTEND_EOL_BIT;
+        g[-2] = glyph_of (tprop->t_attrib & ~TEXTPROP_EXTEND_EOL_BIT, tprop->t_attrib & 0xff);
     }
 
   if (w_bufp->b_prompt_columns)
@@ -1900,26 +1905,26 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
         ge2 = ge;
       if (vlinenum == 1)
         {
-          for (const u_char *u = (u_char *)w_bufp->b_prompt_arg; *u && g < ge;)
-            *g++ = *u++;
+          for (const TCHAR *u = w_bufp->b_prompt_arg; *u && g < ge;)
+            *g++ = glyph_of_char (*u++);
           const Char *s = w_bufp->b_prompt;
           const Char *se = s + w_bufp->b_prompt_length;
           while (s < se && g < ge)
             {
               Char cc = *s++;
-              if (cc < ' ')
+              if (cc < _T(' '))
                 {
                   if (g + 1 == ge)
                     break;
-                  *g++ = GLYPH_CTRL | '^';
-                  *g++ = cc + (GLYPH_CTRL | '@');
+                  *g++ = glyph_of (GLYPH_CTRL, _T('^'));
+                  *g++ = glyph_of (GLYPH_CTRL, cc + _T('@'));
                 }
               else if (cc == CC_DEL)
                 {
                   if (g + 1 == ge)
                     break;
-                  *g++ = GLYPH_CTRL | '^';
-                  *g++ = GLYPH_CTRL | '?';
+                  *g++ = glyph_of (GLYPH_CTRL, _T('^'));
+                  *g++ = glyph_of (GLYPH_CTRL, _T('?'));
                 }
               else if (char_width (cc) == 2)
                 {
@@ -1932,7 +1937,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
             }
         }
       while (g < ge2)
-        *g++ = ' ';
+        *g++ = glyph_of_char (_T(' '));
     }
 
   int seltype = w_selection_type & Buffer::SELECTION_TYPE_MASK;
@@ -1975,12 +1980,12 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                   if (g < e && e < ge)
                     {
                       for (; g < e; g++)
-                        *g = ' ';
-                      *g++ = (GLYPH_CTRL | GLYPH_BM_FOLD_SEP0) + (vlinenum & 1);
+                        *g = glyph_of_char (_T(' '));
+                      *g++ = glyph_of_value ((GLYPH_CTRL | GLYPH_BM_FOLD_SEP0) + (vlinenum & 1));
                     }
                 }
             }
-          *g = 0;
+          *g = glyph_zero ();
           gd->gd_len = g - gd->gd_cc;
           gd->gd_mod = 1;
           return 0;
@@ -2001,7 +2006,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
       int n = min (int (col - w_top_column), ge - g);
       if (n)
         {
-          int f = 0;
+          attr_t f = 0;
           if (point.p_point < w_bufp->b_contents.p1
               || point.p_point >= w_bufp->b_contents.p2)
             f |= GLYPH_HIDDEN;
@@ -2023,7 +2028,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
             }
 
           while (n-- > 0)
-            *g++ = f | ' ';
+            *g++ = glyph_of (f, _T(' '));
         }
     }
   else
@@ -2095,7 +2100,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                                         << GLYPH_TEXTPROP_BG_SHIFT_BITS);
                   int n = min (ge - g, 5);
                   for (int i = 0; i < n; i++)
-                    *g++ = f | "[EOF]"[i];
+                    *g++ = glyph_of (f, _T("[EOF]")[i]);
                 }
               break;
             }
@@ -2131,8 +2136,8 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
           osi = psi->si;
           (psi->si.*syntax_state::update) (p);
           psi->point = point.p_point + 1;
-          if (g > g0 && !(g[-1] & (GLYPH_TRAIL | GLYPH_TEXTPROP_FG_BIT)))
-            g[-1] |= syntax_state::ss_prev_colors[osi.ss_state][psi->si.ss_state];
+          if (g > g0 && !(glyph_attr (g[-1]) & (GLYPH_TRAIL | GLYPH_TEXTPROP_FG_BIT)))
+            glyph_attr_or (g[-1], syntax_state::ss_prev_colors[osi.ss_state][psi->si.ss_state]);
           scolor = syntax_state::ss_colors[osi.ss_state][psi->si.ss_state];
           int kwd_ok = scolor & (syntax_state::KWD_OK | syntax_state::KWD2_OK);
           scolor &= ~(syntax_state::KWD_OK | syntax_state::KWD2_OK);
@@ -2232,7 +2237,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                           * w_bufp->b_tab_columns);
               int n = min (goal - col, ge - g);
               while (n-- > 0)
-                *g++ = ' ';
+                *g++ = glyph_of_char (_T(' '));
             }
           else if (char_width (cc) == 2)
             {
@@ -2241,17 +2246,17 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                   exceed = 1;
                   break;
                 }
-              *g++ = ' ';
-              *g++ = ' ';
+              *g++ = glyph_of_char (_T(' '));
+              *g++ = glyph_of_char (_T(' '));
             }
           else
-            *g++ = ' ';
+            *g++ = glyph_of_char (_T(' '));
         }
       else
         {
           glyph_t *gr = g;
 
-          if (cc < ' ')
+          if (cc < _T(' '))
             {
               if (cc == CC_LFD)
                 {
@@ -2261,7 +2266,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                     g = glyph_bmchar (g, GLYPH_BM_NEWLINE, Vdisplay_newline_char,
                                       (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 1);
                   else
-                    *g++ = (f & ~GLYPH_TEXT_MASK) | ' ';
+                    *g++ = glyph_of (f & ~GLYPH_TEXT_MASK, _T(' '));
                   eol = 1;
                   break;
                 }
@@ -2276,12 +2281,12 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                       g = glyph_bmchar (g, GLYPH_BM_HTAB, Vdisplay_first_tab_char,
                                         (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 1);
                       if (--n > 0)
-                        g = glyph_bmchar (g, '.', Vdisplay_rest_tab_char,
+                        g = glyph_bmchar (g, _T('.'), Vdisplay_rest_tab_char,
                                           (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, n);
                     }
                   else
                     while (n-- > 0)
-                      *g++ = f | ' ';
+                      *g++ = glyph_of (f, _T(' '));
                 }
               else
                 {
@@ -2290,8 +2295,8 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                       exceed = 1;
                       break;
                     }
-                  *g++ = (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | '^';
-                  *g++ = (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | cc + '@';
+                  *g++ = glyph_of ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, _T('^'));
+                  *g++ = glyph_of ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, cc + _T('@'));
                 }
             }
           else if (cc == CC_DEL)
@@ -2301,8 +2306,8 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                   exceed = 1;
                   break;
                 }
-              *g++ = (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | '^';
-              *g++ = (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | '?';
+              *g++ = glyph_of ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, _T('^'));
+              *g++ = glyph_of ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, _T('?'));
             }
           else if (char_width (cc) == 2)
             {
@@ -2320,7 +2325,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
               && seltype == Buffer::SELECTION_RECTANGLE
               && w_top_column + (g - g0) > rcol2)
             while (gr < g)
-              *gr++ &= ~GLYPH_SELECTED;
+              glyph_attr_and (*gr++, ~GLYPH_SELECTED);
         }
     }
 
@@ -2328,7 +2333,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                       && point.p_point <= w_bufp->b_contents.p2);
 
   glyph_t *tailg = g;
-  int hiddenf = g > g0 ? g[-1] & GLYPH_HIDDEN : 0;
+  int hiddenf = g > g0 ? glyph_attr (g[-1]) & GLYPH_HIDDEN : 0;
   int f = (last_attrib & TEXTPROP_EXTEND_EOL_BIT
            ? last_attrib & ((GLYPH_TEXTPROP_NCOLORS - 1)
                             << GLYPH_TEXTPROP_BG_SHIFT_BITS)
@@ -2345,19 +2350,19 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
           && !exceed && point.p_point == limit)
         {
           if (g == gfold && wflags & WF_FOLD_LINE)
-            *g++ = ((hiddenf
-                     ? (GLYPH_CTRL | GLYPH_BM_FOLD_SEP0)
-                     : (GLYPH_CTRL | GLYPH_BM_FOLD_MARK_SEP0))
-                    + (vlinenum & 1));
+            *g++ = glyph_of_value ((hiddenf
+                                    ? (GLYPH_CTRL | GLYPH_BM_FOLD_SEP0)
+                                    : (GLYPH_CTRL | GLYPH_BM_FOLD_MARK_SEP0))
+                                   + (vlinenum & 1));
           else
-            *g++ = GLYPH_CTRL | '<' | f | hiddenf;
+            *g++ = glyph_of (GLYPH_CTRL | f | hiddenf, _T('<'));
         }
 
       if (f)
         {
-          f |= ' ';
+          glyph_t c = glyph_of (f, _T(' '));
           for (; g < grev; g++)
-            *g = f;
+            *g = c;
         }
     }
 
@@ -2372,16 +2377,16 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
               && (revkwd & (15 << GLYPH_COLOR_SHIFT_BITS)) <= GLYPH_KEYWORD3R))
         {
           for (glyph_t *p = g0; p < g; p++)
-            *p = (*p & ~REVMASK) | revkwd;
-          revkwd |= ' ' | hiddenf;
+            glyph_attr_set (*p, ~REVMASK, revkwd);
+          glyph_t c = glyph_of (revkwd | hiddenf, _T(' '));
           for (; g < grev; g++)
-            *g = revkwd;
+            *g = c;
         }
       else
         {
           for (glyph_t *p = g0; p < g; p++)
-            if (!(*p & GLYPH_CTRL))
-              *p = (*p & ~REVMASK) | revkwd;
+            if (!(glyph_attr (*p) & GLYPH_CTRL))
+              glyph_attr_set (*p, ~REVMASK, revkwd);
         }
     }
 
@@ -2389,14 +2394,14 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
       && wflags & WF_FOLD_LINE && g <= gfold && gfold < ge)
     {
       for (; g < gfold; g++)
-        *g = ' ';
-      *g++ = (GLYPH_CTRL | GLYPH_BM_FOLD_SEP0) + (vlinenum & 1);
+        *g = glyph_of_char (_T(' '));
+      *g++ = glyph_of_value ((GLYPH_CTRL | GLYPH_BM_FOLD_SEP0) + (vlinenum & 1));
     }
 
-  for (; g > gd->gd_cc && g[-1] == ' '; g--)
+  for (; g > gd->gd_cc && glyph_equal_p (g[-1], glyph_of_char (_T(' '))); g--)
     ;
 
-  *g = 0;
+  *g = glyph_zero ();
   gd->gd_len = g - gd->gd_cc;
   gd->gd_mod = 1;
 
@@ -2423,8 +2428,8 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
       syntax_state::define_chunk (point.p_chunk);
       (osi.*syntax_state::update) (&point.ch ());
       if (syntax_state::ss_colors[psi->si.ss_state][osi.ss_state] == GLYPH_COMMENT)
-        if (!(tailg[-1] & GLYPH_TEXTPROP_FG_BIT))
-          tailg[-1] |= GLYPH_COMMENT;
+        if (!(glyph_attr (tailg[-1]) & GLYPH_TEXTPROP_FG_BIT))
+          glyph_attr_or (tailg[-1], GLYPH_COMMENT);
     }
 
   point = fold_eol;
@@ -2452,7 +2457,7 @@ Window::scroll_down_region (int y1, int y2, int dy, int offset) const
         for (glyph_t *p = g[yd]->gd_cc + g[yd]->gd_len,
              *pe = g[yd]->gd_cc + offset;
              p < pe; p++)
-          *p = GLYPH_JUNK;
+          *p = glyph_of_value (GLYPH_JUNK);
         g[yd]->gd_len = g[ys]->gd_len;
       }
 
@@ -2488,7 +2493,7 @@ Window::scroll_up_region (int y1, int y2, int dy, int offset) const
         for (glyph_t *p = g[yd]->gd_cc + g[yd]->gd_len,
              *pe = g[yd]->gd_cc + offset;
              p < pe; p++)
-          *p++ = GLYPH_JUNK;
+          *p++ = glyph_of_value (GLYPH_JUNK);
         g[yd]->gd_len = g[ys]->gd_len;
       }
 
@@ -2701,7 +2706,7 @@ Window::redraw_window (Point &p, long vlinenum, int all, int hide) const
                 {
                   (*g)->gd_len = 0;
                   (*g)->gd_mod = 1;
-                  *(*g)->gd_cc = 0;
+                  *(*g)->gd_cc = glyph_zero ();
                 }
               break;
             }
@@ -3139,7 +3144,7 @@ Window::paint_minibuffer_message (lisp string)
 
   glyph_t *g = (*gr)->gd_cc;
   glyph_t *ge = g + w_ch_max.cx;
-  *g++ = ' ';
+  *g++ = glyph_of_char (_T(' '));
 
   const Char *p = xstring_contents (string);
   const Char *pe = p + xstring_length (string);
@@ -3147,19 +3152,19 @@ Window::paint_minibuffer_message (lisp string)
   while (g < ge && p < pe)
     {
       Char cc = *p++;
-      if (cc < ' ')
+      if (cc < _T(' '))
         {
           if (g + 1 == ge)
             break;
-          *g++ = GLYPH_CTRL | '^';
-          *g++ = GLYPH_CTRL | cc + '@';
+          *g++ = glyph_of (GLYPH_CTRL, _T('^'));
+          *g++ = glyph_of (GLYPH_CTRL, cc + _T('@'));
         }
       else if (cc == CC_DEL)
         {
           if (g + 1 == ge)
             break;
-          *g++ = GLYPH_CTRL | '^';
-          *g++ = GLYPH_CTRL | '?';
+          *g++ = glyph_of (GLYPH_CTRL, _T('^'));
+          *g++ = glyph_of (GLYPH_CTRL, _T('?'));
         }
       else if (char_width (cc) == 2)
         {
@@ -3173,9 +3178,9 @@ Window::paint_minibuffer_message (lisp string)
 
   app.minibuffer_prompt_column = g - (*gr)->gd_cc;
 
-  for (; g > (*gr)->gd_cc && g[-1] == ' '; g--)
+  for (; g > (*gr)->gd_cc && glyph_equal_p (g[-1], glyph_of_char (_T(' '))); g--)
     ;
-  *g = 0;
+  *g = glyph_zero ();
   (*gr)->gd_len = g - (*gr)->gd_cc;
   (*gr)->gd_mod = 1;
 
@@ -3183,7 +3188,7 @@ Window::paint_minibuffer_message (lisp string)
   for (int y = 1; y < w_ch_max.cy; y++, gr++)
     {
       (*gr)->gd_len = 0;
-      (*gr)->gd_cc[0] = 0;
+      (*gr)->gd_cc[0] = glyph_zero ();
       (*gr)->gd_mod = 1;
     }
 
@@ -3206,7 +3211,7 @@ Window::clear_window ()
   for (int y = 0; y < w_ch_max.cy; y++, g++)
     {
       (*g)->gd_len = 0;
-      (*g)->gd_cc[0] = 0;
+      (*g)->gd_cc[0] = glyph_zero ();
       (*g)->gd_mod = 1;
     }
 
@@ -3754,10 +3759,10 @@ Window::discard_invalid_region (const PAINTSTRUCT &ps, RECT &r)
         ng[y]->gd_mod = 1;
         glyph_t *p = &og[y]->gd_cc[r.left];
         for (int l = r.right - r.left; l > 0; l--)
-          *p++ = GLYPH_JUNK;
+          *p++ = glyph_of_value (GLYPH_JUNK);
         if (r.right > og[y]->gd_len)
           {
-            *p = 0;
+            *p = glyph_zero ();
             og[y]->gd_len = short (r.right);
           }
       }

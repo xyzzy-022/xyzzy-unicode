@@ -127,11 +127,11 @@ read_minibuffer (const Char *prompt, long prompt_length, lisp def,
       if (xsymbol_value (Vprefix_args) == Vuniversal_argument
           && safe_fixnum_value (xsymbol_value (Vprefix_value), &n)
           && n == 4)
-        strcpy (bp->b_prompt_arg, "C-u ");
+        _tcscpy (bp->b_prompt_arg, _T("C-u "));
       else if (safe_fixnum_value (xsymbol_value (Vprefix_value), &n))
-        sprintf (bp->b_prompt_arg, "%d ", n);
+        _stprintf (bp->b_prompt_arg, _T("%d "), n);
     }
-  bp->b_prompt_columns += strlen (bp->b_prompt_arg);
+  bp->b_prompt_columns += _tcslen (bp->b_prompt_arg);
 
   bp->b_minibufferp = 1;
   bp->b_fold_mode = bp->b_fold_columns = Buffer::FOLD_NONE;
