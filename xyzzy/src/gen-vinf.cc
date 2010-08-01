@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <tchar.h>
 #include "version.h"
 
 #define COPYRIGHT "Copyright (C) 1996-2005 T.Kamei"

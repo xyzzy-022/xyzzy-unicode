@@ -429,9 +429,9 @@ struct Window
   void calc_client_size (int, int);
   void reframe ();
   void paint_glyphs (HDC, HDC, const glyph_t *, const glyph_t *, const glyph_t *,
-                     char *, const INT *, int, int, int) const;
+                     TCHAR *, const INT *, int, int, int) const;
   void paint_line (HDC, HDC, glyph_data *, const glyph_data *,
-                   char *, int, const INT *) const;
+                   TCHAR *, int, const INT *) const;
   void paint_window (HDC) const;
   void paint_region (HDC, int, int) const;
   void find_motion () const;

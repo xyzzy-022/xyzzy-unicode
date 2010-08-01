@@ -384,7 +384,7 @@ paint_chars_ctx::paint_lucida (HDC hdc, ucs2_t wc, int flags)
 
 static inline void
 paint_ascii_chars (HDC hdc, int x, int y, int flags, const RECT &r,
-                   const char *string, int len, const INT *padding)
+                   const TCHAR *string, int len, const INT *padding)
 {
   const FontObject &f = app.text_font.font (FONT_ASCII);
   ExtTextOut (hdc, x + f.offset ().x, y + f.offset ().y, flags,
@@ -393,7 +393,7 @@ paint_ascii_chars (HDC hdc, int x, int y, int flags, const RECT &r,
 
 static inline void
 paint_jp_chars (HDC hdc, int x, int y, int flags, const RECT &r,
-                const char *string, int len, const INT *padding)
+                const TCHAR *string, int len, const INT *padding)
 {
   const FontObject &f = app.text_font.font (FONT_JP);
   HGDIOBJ of = SelectObject (hdc, f);
@@ -404,7 +404,7 @@ paint_jp_chars (HDC hdc, int x, int y, int flags, const RECT &r,
 
 static inline void
 paint_full_width_chars (HDC hdc, int x, int y, int flags, const RECT &r,
-                        const char *string, int len, const FontObject &f)
+                        const TCHAR *string, int len, const FontObject &f)
 {
   HGDIOBJ of = SelectObject (hdc, f);
   paint_chars_ctx ctx (x + f.offset ().x, y + f.offset ().y, r, 2);
@@ -415,7 +415,7 @@ paint_full_width_chars (HDC hdc, int x, int y, int flags, const RECT &r,
 
 static inline void
 paint_half_width_chars (HDC hdc, int x, int y, int flags, const RECT &r,
-                        const char *string, int len, const INT *padding,
+                        const TCHAR *string, int len, const INT *padding,
                         int c, const FontObject &f)
 {
   HGDIOBJ of = SelectObject (hdc, f);
@@ -427,7 +427,7 @@ paint_half_width_chars (HDC hdc, int x, int y, int flags, const RECT &r,
 
 static inline void
 paint_jisx0212_half_width_chars (HDC hdc, int x, int y, int flags, const RECT &r,
-                                 const char *string, int len, const INT *padding)
+                                 const TCHAR *string, int len, const INT *padding)
 {
   const FontObject &f = app.text_font.font (FONT_JP);
   HGDIOBJ of = SelectObject (hdc, f);
@@ -439,9 +439,9 @@ paint_jisx0212_half_width_chars (HDC hdc, int x, int y, int flags, const RECT &r
 
 static inline void
 paint_chars_lucida (HDC hdc, int x, int y, int flags, const RECT &r,
-                    const char *string, int len, const INT *padding, int c)
+                    const TCHAR *string, int len, const INT *padding, int c)
 {
-  static LOGFONT lf = {0,0,0,0,0,0,0,0,0,0,0,0,0,LUCIDA_FACE_NAME};
+  static LOGFONT lf = {0,0,0,0,0,0,0,0,0,0,0,0,0,_T(LUCIDA_FACE_NAME)};
   lf.lfHeight = app.text_font.font (FONT_ASCII).size ().cy;
   HGDIOBJ of = SelectObject (hdc, CreateFontIndirect (&lf));
   paint_chars_ctx ctx (x, y, r, 1);
@@ -452,7 +452,7 @@ paint_chars_lucida (HDC hdc, int x, int y, int flags, const RECT &r,
 
 static void
 paint_chars (HDC hdc, int x, int y, int flags, const RECT &r,
-             glyph_t charset, const char *string, int len, const INT *padding)
+             glyph_t charset, const TCHAR *string, int len, const INT *padding)
 {
 #define PAINT_FULL_WIDTH_CHARS(FONT) \
   paint_full_width_chars (hdc, x, y, flags, r, string, len, app.text_font.font (FONT))
@@ -563,7 +563,7 @@ paint_chars (HDC hdc, int x, int y, int flags, const RECT &r,
 
 void
 Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t *g,
-                      const glyph_t *ge, char *buf, const INT *padding,
+                      const glyph_t *ge, TCHAR *buf, const INT *padding,
                       int x, int y, int yoffset) const
 {
   RECT r;
@@ -576,15 +576,15 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
   while (g < ge)
     {
       const glyph_t *g0 = g;
-      char *be = buf;
+      TCHAR *be = buf;
       glyph_t c = *g++;
       gsum |= c;
-      *be++ = char (c);
+      *be++ = TCHAR (c);
       c &= GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK;
       while (g < ge && (*g & (GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK)) == c)
         {
           gsum |= *g;
-          *be++ = char (*g++);
+          *be++ = TCHAR (*g++);
         }
 
       r.left = r.right;
@@ -596,15 +596,15 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
             break;
         }
 
-      char *b = buf;
+      TCHAR *b = buf;
       if (!(c & GLYPH_CHARSET_MASK))
         {
-          for (; b < be && *b == ' '; b++)
+          for (; b < be && *b == _T(' '); b++)
             ;
           g0 += b - buf;
         }
       for (const glyph_t *g1 = g;
-           g1 > g0 && (g1[-1] & ~GLYPH_COLOR_MASK) == ' ';
+           g1 > g0 && (g1[-1] & ~GLYPH_COLOR_MASK) == _T(' ');
            g1--)
         ;
       be -= g - g1;
@@ -623,7 +623,7 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
               if (w > app.text_font.cell ().cx)
                 w = app.text_font.cell ().cx;
               BitBlt (hdc, x, r.top, w, app.text_font.cell ().cy,
-                      hdcmem, app.text_font.cell ().cx * (*b & 0xff), yoffset, SRCCOPY);
+                      hdcmem, app.text_font.cell ().cx * _TUCHAR (*b), yoffset, SRCCOPY);
             }
         }
       else
@@ -651,15 +651,15 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
             ;
           if (g == ge)
             break;
-          char *be = buf;
+          TCHAR *be = buf;
           const glyph_t *g0 = g;
           glyph_t c0 = *g++;
-          *be++ = char (c0);
+          *be++ = TCHAR (c0);
           glyph_t c = c0 & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
                             | GLYPH_CHARSET_MASK | GLYPH_BOLD);
           for (; g < ge && (*g & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
                                   | GLYPH_CHARSET_MASK | GLYPH_BOLD)) == c; g++)
-            *be++ = char (*g);
+            *be++ = TCHAR (*g);
 
           COLORREF ofg = SetTextColor (hdc, glyph_forecolor (c0));
 
@@ -675,9 +675,9 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
           if (c & GLYPH_BITMAP_BIT)
             {
               COLORREF obg = SetBkColor (hdc, glyph_backcolor (c0));
-              char *b = buf;
+              TCHAR *b = buf;
               for (int x = r.left; b < be; b++, x += app.text_font.cell ().cx)
-                if ((*b & 0xff) == FontSet::backsl)
+                if (_TUCHAR (*b) == FontSet::backsl)
                   {
                     int w = w_clsize.cx - x;
                     if (w <= 0)
@@ -726,13 +726,13 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
             {
               r.bottom = y + app.text_font.size ().cy;
               r.top = r.bottom - app.text_font.line_width ();
-              ExtTextOut (hdc, r.left, r.top, ETO_OPAQUE, &r, "", 0, 0);
+              ExtTextOut (hdc, r.left, r.top, ETO_OPAQUE, &r, _T(""), 0, 0);
             }
           if (!yoffset && c & GLYPH_STRIKEOUT)
             {
               r.top = y + app.text_font.size ().cy / 2;
               r.bottom = r.top + app.text_font.line_width ();
-              ExtTextOut (hdc, r.left, r.top, ETO_OPAQUE, &r, "", 0, 0);
+              ExtTextOut (hdc, r.left, r.top, ETO_OPAQUE, &r, _T(""), 0, 0);
             }
 
           SetBkColor (hdc, obg);
@@ -742,7 +742,7 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
 
 void
 Window::paint_line (HDC hdc, HDC hdcmem, glyph_data *ogd, const glyph_data *ngd,
-                    char *buf, int y, const INT *padding) const
+                    TCHAR *buf, int y, const INT *padding) const
 {
   const glyph_t *n = ngd->gd_cc, *ne = n + ngd->gd_len;
   glyph_t *o = ogd->gd_cc, *oe = o + ogd->gd_len;
@@ -920,7 +920,7 @@ Window::erase_cursor_line (HDC hdc) const
           for (int i = 0; i < w_ch_max.cx; i++)
             padding[i] = app.text_font.cell ().cx;
         }
-      char *buf = (char *)alloca (w_ch_max.cx + 3);
+      TCHAR *buf = (TCHAR *)alloca ((w_ch_max.cx + 3) * sizeof TCHAR);
       paint_glyphs (hdc, hdcmem, gd->gd_cc, g, ge, buf, padding, x,
                     (w_cursor_line.ypixel - app.text_font.cell ().cy + 1),
                     app.text_font.cell ().cy - 1);
@@ -2633,7 +2633,7 @@ Window::paint_region (HDC hdc, int from, int to) const
       for (int i = 0; i < w_ch_max.cx; i++)
         padding[i] = app.text_font.cell ().cx;
     }
-  char *buf = (char *)alloca (w_ch_max.cx + 3);
+  TCHAR *buf = (TCHAR *)alloca ((w_ch_max.cx + 3) * sizeof TCHAR);
   glyph_data **g = w_glyphs.g_rep->gr_nglyph + from;
   glyph_data **og = w_glyphs.g_rep->gr_oglyph + from;
   for (int y = from * app.text_font.cell ().cy, ye = to * app.text_font.cell ().cy;
@@ -3217,9 +3217,9 @@ Window::clear_window ()
 }
 
 static inline void
-format_point (char *b, int l, int c)
+format_point (TCHAR *b, int l, int c)
 {
-  sprintf (b, "%10u:%-10u", l, c + 1);
+  _stprintf (b, _T("%10u:%-10u"), l, c + 1);
 }
 
 /*
@@ -3228,11 +3228,11 @@ format_point (char *b, int l, int c)
       654321 123456
  */
 static void
-point_from_end (const char *buf, const char *&bb, const char *&be)
+point_from_end (const TCHAR *buf, const TCHAR *&bb, const TCHAR *&be)
 {
-  for (const char *b = buf + 4; b > buf && b[-1] != ' '; b--)
+  for (const TCHAR *b = buf + 4; b > buf && b[-1] != _T(' '); b--)
     ;
-  for (const char *e = buf + 17; *e && *e != ' '; e++)
+  for (const TCHAR *e = buf + 17; *e && *e != _T(' '); e++)
     ;
   bb = b;
   be = e;
@@ -3241,9 +3241,9 @@ point_from_end (const char *buf, const char *&bb, const char *&be)
 static int
 calc_point_width (int l, int c)
 {
-  char buf[32];
+  TCHAR buf[32];
   format_point (buf, l, c);
-  const char *b, *e;
+  const TCHAR *b, *e;
   point_from_end (buf, b, e);
   return e - b;
 }
@@ -3260,9 +3260,9 @@ Window::paint_mode_line_point (HDC hdc)
   r.top = 1;
   r.bottom = w_ml_size.cy - 1;
 
-  char nb[32];
+  TCHAR nb[32];
   format_point (nb, w_plinenum, w_column);
-  const char *b, *e;
+  const TCHAR *b, *e;
   point_from_end (nb, b, e);
   w_last_ml_point_width = e - b;
 
@@ -3278,7 +3278,7 @@ Window::paint_mode_line_point (HDC hdc)
     }
   else
     {
-      char ob[32];
+      TCHAR ob[32];
       format_point (ob, w_last_ml_linenum, w_last_ml_column);
       int ib = b - nb, ie = e - nb;
       for (; ib < ie && ob[ib] == nb[ib]; ib++)
@@ -3291,9 +3291,9 @@ Window::paint_mode_line_point (HDC hdc)
       e = nb + ie;
     }
 
-  for (; b < e && *b == ' '; b++)
+  for (; b < e && *b == _T(' '); b++)
     ;
-  for (; e > b && e[-1] == ' '; e--)
+  for (; e > b && e[-1] == _T(' '); e--)
     ;
 
   ExtTextOut (hdc,
@@ -3308,17 +3308,17 @@ Window::paint_mode_line_point (HDC hdc)
 void
 Window::paint_mode_line (HDC hdc)
 {
-  char *b0, *b;
-  char *posp = 0;
+  TCHAR *b0, *b;
+  TCHAR *posp = 0;
 
   w_ime_mode_line = 0;
   lisp fmt = symbol_value (Vmode_line_format, w_bufp);
   if (stringp (fmt))
     {
       int l = max (int (w_ch_max.cx), 512);
-      b0 = (char *)alloca (l + 10);
+      b0 = (TCHAR *)alloca ((l + 10) * sizeof TCHAR);
       b = b0;
-      *b++ = ' ';
+      *b++ = _T(' ');
 
       buffer_info binfo (this, w_bufp, &posp, &w_ime_mode_line);
       b = binfo.format (fmt, b, b0 + l);
