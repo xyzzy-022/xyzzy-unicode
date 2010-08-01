@@ -446,7 +446,8 @@ funcall_builtin (lisp f, lisp arglist)
   assert (functionp (f));
 #ifdef _M_IX86
   int nargs = xfunction_nargs (f) + xfunction_nopts (f) + (need_rest_p (f) ? 1 : 0);
-  lisp *stack = (lisp *)alloca (sizeof (lisp) * nargs);
+  lisp *s0 = (lisp *)alloca (sizeof (lisp) * nargs);
+  lisp *stack = s0;
   for (int i = xfunction_nargs (f); i > 0; i--)
     {
       if (!consp (arglist))
@@ -475,7 +476,25 @@ funcall_builtin (lisp f, lisp arglist)
 #ifdef DEBUG_GC
   MARK_FUNCALL (f);
 #endif
-  return lfunction_proc_0 (xfunction_fn (f))();
+  lfunction_proc lf = xfunction_fn (f);
+  lisp _ret;
+  __asm {
+    mov  ecx, nargs;
+    and  ecx, ecx;
+    je   skip;
+
+    mov  esi, s0;
+  lp:
+    dec  ecx;
+    mov  eax, dword ptr [esi + ecx * 4];
+    push eax;
+    jnz  lp;
+  skip:
+
+    call lf;
+    mov  _ret, eax;
+  }
+  return _ret;
 #else
 # error "Not tested"
 #endif

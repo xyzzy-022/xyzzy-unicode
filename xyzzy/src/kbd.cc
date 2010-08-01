@@ -12,7 +12,7 @@ kbd_queue::kbd_queue ()
        reconv (0), putc_pending (-1), ime_prop (0), unicode_kbd (0), gc_timer (0)
 {
   GetKeyboardLayout =
-    (GETKEYBOARDLAYOUT)GetProcAddress (GetModuleHandle ("USER32"),
+    (GETKEYBOARDLAYOUT)GetProcAddress (GetModuleHandle (_T("USER32")),
                                        "GetKeyboardLayout");
 
   for (int i = 0; i < QUEUE_MAX; i++)
@@ -842,12 +842,29 @@ kbd_queue::reconvert (RECONVERTSTRING *rsbuf, int unicode_p)
           safe_ptr <Char> data0 (new Char [size + 2]);
           Char *const data = data0 + 1;
           bp->substring (p1, size, data);
-          char *b0 = (char *)(Char *)data0;
-          char *b1 = w2s (b0, data, r1 - p1);
-          char *b2 = w2s (b1, data + (r1 - p1), r2 - r1);
-          char *b3 = w2s (b2, data + (r2 - p1), p2 - r2);
+          TCHAR *b0 = (TCHAR *)(Char *)data0;
+          TCHAR *b1 = w2s (b0, data, r1 - p1);
+          TCHAR *b2 = w2s (b1, data + (r1 - p1), r2 - r1);
+          TCHAR *b3 = w2s (b2, data + (r2 - p1), p2 - r2);
           if (!unicode_p)
             {
+#ifdef UNICODE
+              int l1 = WideCharToMultiByte (CP_ACP, 0, b0, b1 - b0, 0, 0, 0, 0);
+              int l2 = WideCharToMultiByte (CP_ACP, 0, b1, b2 - b1, 0, 0, 0, 0);
+              int l3 = WideCharToMultiByte (CP_ACP, 0, b2, b3 - b2, 0, 0, 0, 0);
+              int l = l1 + l2 + l3;
+              size = sizeof *reconv + l + 1;
+              reconv = (RECONVERTSTRING *)xmalloc (size);
+              reconv->dwSize = size;
+              reconv->dwVersion = 0;
+              reconv->dwStrLen = l;
+              reconv->dwStrOffset = sizeof *reconv;
+              reconv->dwCompStrLen = l2;
+              reconv->dwCompStrOffset = l1;
+              reconv->dwTargetStrLen = l2;
+              reconv->dwTargetStrOffset = l1;
+              WideCharToMultiByte (CP_ACP, 0, b0, -1, (char *)(reconv + 1), l + 1, 0, 0);
+#else
               reconv = (RECONVERTSTRING *)xmalloc (sizeof *reconv + (b3 - b0) + 1);
               reconv->dwSize = sizeof *reconv + (b3 - b0) + 1;
               reconv->dwVersion = 0;
@@ -858,9 +875,23 @@ kbd_queue::reconvert (RECONVERTSTRING *rsbuf, int unicode_p)
               reconv->dwTargetStrLen = b2 - b1;
               reconv->dwTargetStrOffset = b1 - b0;
               strcpy ((char *)(reconv + 1), b0);
+#endif
             }
           else
             {
+#ifdef UNICODE
+              size = sizeof *reconv + ((b3 - b0) + 1) * sizeof TCHAR;
+              reconv = (RECONVERTSTRING *)xmalloc (size);
+              reconv->dwSize = size;
+              reconv->dwVersion = 0;
+              reconv->dwStrLen = b3 - b0;
+              reconv->dwStrOffset = sizeof *reconv;
+              reconv->dwCompStrLen = b2 - b1;
+              reconv->dwCompStrOffset = (b1 - b0) * sizeof TCHAR;
+              reconv->dwTargetStrLen = b2 - b1;
+              reconv->dwTargetStrOffset = (b1 - b0) * sizeof TCHAR;
+              _tcscpy ((TCHAR *)(reconv + 1), b0);
+#else
               int l1 = MultiByteToWideChar (CP_ACP, 0, b0, b1 - b0, 0, 0);
               int l2 = MultiByteToWideChar (CP_ACP, 0, b1, b2 - b1, 0, 0);
               int l3 = MultiByteToWideChar (CP_ACP, 0, b2, b3 - b2, 0, 0);
@@ -876,6 +907,7 @@ kbd_queue::reconvert (RECONVERTSTRING *rsbuf, int unicode_p)
               reconv->dwTargetStrLen = l2;
               reconv->dwTargetStrOffset = l1 * sizeof (wchar_t);
               MultiByteToWideChar (CP_ACP, 0, b0, -1, (wchar_t *)(reconv + 1), l + 1);
+#endif
             }
           return reconv->dwSize;
         }
@@ -911,9 +943,9 @@ kbd_queue::get_kbd_layout () const
   if (GetKeyboardLayout)
     return GetKeyboardLayout (0);
 
-  char b[KL_NAMELENGTH];
+  TCHAR b[KL_NAMELENGTH];
   if (GetKeyboardLayoutName (b))
-    return HKL (strtol (b, 0, 16));
+    return HKL (_tcstol (b, 0, 16));
   return HKL (MAKELANGID (LANG_JAPANESE, SUBLANG_DEFAULT));
 }
 
@@ -1031,8 +1063,8 @@ key_sequence::store (Char c)
 void
 key_sequence::notice (int n, int cont)
 {
-  char buf[256];
-  char *b = buf, *be = b + sizeof buf - 32;
+  TCHAR buf[256];
+  TCHAR *b = buf, *be = b + sizeof buf - 32;
   n--;
   for (int i = 0; b < be; i++)
     {
@@ -1040,10 +1072,10 @@ key_sequence::notice (int n, int cont)
       if (i >= n)
         {
           if (cont)
-            *b++ = '-';
+            *b++ = _T('-');
           break;
         }
-      *b++ = ' ';
+      *b++ = _T(' ');
     }
   *b = 0;
   app.status_window.puts (buf, 1);
@@ -1287,26 +1319,26 @@ Fpop_ime_composition_string ()
 lisp
 Fset_ime_read_string (lisp string)
 {
-  char *read;
+  TCHAR *read;
   if (!string || string == Qnil)
     {
       const ime_comp_queue::pair *p = app.ime_compq.fetch ();
       if (!p)
         return Qnil;
-      read = (char *)alloca (w2sl (p->read, p->readl) + 1);
+      read = (TCHAR *)alloca ((w2sl (p->read, p->readl) + 1) * sizeof TCHAR);
       w2s (read, p->read, p->readl);
     }
   else
     {
       check_string (string);
-      read = (char *)alloca (w2sl (string) + 1);
+      read = (TCHAR *)alloca ((w2sl (string) + 1) * sizeof TCHAR);
       w2s (read, string);
     }
   HIMC hIMC = app.kbdq.gime.ImmGetContext (app.toplev);
   if (!hIMC)
     return Qnil;
   int f = app.kbdq.gime.ImmSetCompositionString (hIMC, SCS_SETSTR, 0, 0,
-                                                 read, strlen (read));
+                                                 read, _tcslen (read));
   app.kbdq.gime.ImmReleaseContext (app.toplev, hIMC);
   return boole (f);
 }
@@ -1319,17 +1351,17 @@ Fime_register_word_dialog (lisp lcomp, lisp lread)
   if (lcomp && lcomp != Qnil)
     {
       check_string (lcomp);
-      rw.lpWord = (char *)alloca (w2sl (lcomp) + 1);
+      rw.lpWord = (TCHAR *)alloca ((w2sl (lcomp) + 1) * sizeof TCHAR);
       w2s (rw.lpWord, lcomp);
     }
   if (lread && lread != Qnil)
     {
       check_string (lread);
-      rw.lpReading = (char *)alloca (w2sl (lread) + 2);
-      char *e = w2s (rw.lpReading, lread);
+      rw.lpReading = (TCHAR *)alloca ((w2sl (lread) + 2) * sizeof TCHAR);
+      TCHAR *e = w2s (rw.lpReading, lread);
       if (sysdep.Win95p ())
         {
-          *e++ = ' ';
+          *e++ = _T(' ');
           *e = 0;
         }
     }
@@ -1348,18 +1380,18 @@ Fenable_global_ime (lisp f)
 }
 
 static int
-get_kbd_layout_name (HKL hkl, char *buf, int size)
+get_kbd_layout_name (HKL hkl, TCHAR *buf, int size)
 {
-  char k[256];
-  sprintf (k, "SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\%08x", hkl);
+  TCHAR k[256];
+  _stprintf (k, _T("SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\%08x"), hkl);
   ReadRegistry r (HKEY_LOCAL_MACHINE, k);
-  return ((!r.fail () && r.get ("Layout Text", buf, size) > 0)
+  return ((!r.fail () && r.get (_T("Layout Text"), buf, size) > 0)
           || app.kbdq.gime.ImmGetDescription (hkl, buf, size) > 0);
 }
 
 typedef UINT (WINAPI *GETKEYBOARDLAYOUTLIST)(int, HKL *);
 static const GETKEYBOARDLAYOUTLIST pGetKeyboardLayoutList =
-  (GETKEYBOARDLAYOUTLIST)GetProcAddress (GetModuleHandle ("user32"),
+  (GETKEYBOARDLAYOUTLIST)GetProcAddress (GetModuleHandle (_T("user32")),
                                          "GetKeyboardLayoutList");
 
 lisp
@@ -1378,9 +1410,9 @@ Flist_kbd_layout ()
   lisp r = Qnil;
   for (int i = 0; i < n; i++)
     {
-      char buf[256];
-      if (get_kbd_layout_name (h[i], buf, sizeof buf)
-          || get_kbd_layout_name (HKL (HIWORD (h[i])), buf, sizeof buf))
+      TCHAR buf[256];
+      if (get_kbd_layout_name (h[i], buf, _countof (buf))
+          || get_kbd_layout_name (HKL (HIWORD (h[i])), buf, _countof (buf)))
         r = xcons (xcons (make_fixnum (int (h[i])),
                           make_string (buf)),
                    r);
@@ -1404,16 +1436,16 @@ Fselect_kbd_layout (lisp layout)
       if (!n)
         FEsimple_win32_error (GetLastError ());
 
-      char name[256];
-      w2s (name, name + sizeof name,
+      TCHAR name[256];
+      w2s (name, name + _countof (name),
            xstring_contents (layout), xstring_length (layout));
 
       for (int i = 0; i < n; i++)
         {
-          char buf[256];
-          if ((get_kbd_layout_name (h[i], buf, sizeof buf)
-               || get_kbd_layout_name (HKL (LOWORD (h[i])), buf, sizeof buf))
-              && !strcmp (buf, name))
+          TCHAR buf[256];
+          if ((get_kbd_layout_name (h[i], buf, _countof (buf))
+               || get_kbd_layout_name (HKL (LOWORD (h[i])), buf, _countof (buf)))
+              && !_tcscmp (buf, name))
             {
               hkl = h[i];
               break;
@@ -1441,9 +1473,9 @@ lisp
 Fcurrent_kbd_layout ()
 {
   HKL hkl = app.kbdq.get_kbd_layout ();
-  char buf[256];
-  if (get_kbd_layout_name (hkl, buf, sizeof buf)
-      || get_kbd_layout_name (HKL (HIWORD (hkl)), buf, sizeof buf))
+  TCHAR buf[256];
+  if (get_kbd_layout_name (hkl, buf, _countof (buf))
+      || get_kbd_layout_name (HKL (HIWORD (hkl)), buf, _countof (buf)))
     return xcons (make_fixnum (int (hkl)), make_string (buf));
   return xcons (make_fixnum (int (hkl)), Qnil);
 }

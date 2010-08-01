@@ -1,4 +1,5 @@
 #include "ed.h"
+#include "oleconv.h"
 
 ldll_module *
 make_dll_module ()
@@ -59,7 +60,11 @@ Fsi_load_dll_module (lisp lname)
   if (dll != Qnil)
     return dll;
 
+#ifdef UNICODE
+  TCHAR *name = (TCHAR *)alloca ((xstring_length (lname) + 1) * sizeof TCHAR);
+#else
   char *name = (char *)alloca (xstring_length (lname) * 2 + 1);
+#endif
   w2s (name, lname);
 
   dll = make_dll_module ();
@@ -139,12 +144,17 @@ calc_argument_size (u_char *at, lisp largs)
 lisp
 Fsi_make_c_function (lisp lmodule, lisp lname, lisp largs, lisp lrettype)
 {
+  USES_CONVERSION;
   check_dll_module (lmodule);
   check_string (lname);
 
+#ifdef UNICODE
+  TCHAR *name = (TCHAR *)alloca ((xstring_length (lname) + 1) * sizeof TCHAR);
+#else
   char *name = (char *)alloca (xstring_length (lname) * 2 + 1);
+#endif
   w2s (name, lname);
-  FARPROC proc = GetProcAddress (xdll_module_handle (lmodule), name);
+  FARPROC proc = GetProcAddress (xdll_module_handle (lmodule), T2A (name));
   if (!proc)
     FEsimple_win32_error (GetLastError (), lname);
 
