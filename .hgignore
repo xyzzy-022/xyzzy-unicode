@@ -2,5 +2,9 @@ syntax: glob
 xyzzy.ncb
 xyzzy.suo
 Debug
+DebugANSI
 Release
+ReleaseANSI
 *.vcproj.*.user
+unicode
+zlib

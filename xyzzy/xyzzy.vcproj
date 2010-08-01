@@ -41,13 +41,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)privctrl&quot;;&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC"
 				StringPooling="true"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
+				TreatWChar_tAsBuiltInType="false"
 				ForceConformanceInForLoopScope="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -66,7 +67,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib imm32.lib mpr.lib zlib.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)src\zlib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				StackReserveSize="33554432"
@@ -121,12 +124,13 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)privctrl&quot;;&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="false"
 				ForceConformanceInForLoopScope="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -145,7 +149,174 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib imm32.lib mpr.lib zlib.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)src\zlib&quot;"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				StackReserveSize="33554432"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="DebugANSI|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)\$(ProjectName)"
+			ConfigurationType="1"
+			CharacterSet="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)privctrl&quot;;&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC"
+				StringPooling="true"
+				MinimalRebuild="true"
+				ExceptionHandling="2"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				TreatWChar_tAsBuiltInType="false"
+				ForceConformanceInForLoopScope="false"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="4"
+				CallingConvention="2"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib imm32.lib mpr.lib zlib.lib"
+				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)src\zlib&quot;"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				StackReserveSize="33554432"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="ReleaseANSI|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)\$(ProjectName)"
+			ConfigurationType="1"
+			CharacterSet="0"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)privctrl&quot;;&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;__XYZZY__;PRIVCTRL_NODLL;HAVE_DIMM_H;DEBUG_GC"
+				StringPooling="true"
+				ExceptionHandling="2"
+				RuntimeLibrary="2"
+				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="false"
+				ForceConformanceInForLoopScope="false"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				DebugInformationFormat="3"
+				CallingConvention="2"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				AdditionalIncludeDirectories="&quot;$(SolutionDir)gen\$(ConfigurationName)&quot;"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="comctl32.lib imm32.lib mpr.lib zlib.lib"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;$(SolutionDir)src\zlib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				StackReserveSize="33554432"
@@ -640,19 +811,19 @@
 				Name="gen"
 				>
 				<File
-					RelativePath=".\src\gen\chtab.cc"
+					RelativePath=".\src\chtab.cc"
 					>
 				</File>
 				<File
-					RelativePath=".\src\gen\dumpver.cc"
+					RelativePath=".\src\dumpver.cc"
 					>
 				</File>
 				<File
-					RelativePath=".\src\gen\msgdef.cc"
+					RelativePath=".\src\msgdef.cc"
 					>
 				</File>
 				<File
-					RelativePath=".\src\gen\symtable.cc"
+					RelativePath=".\src\symtable.cc"
 					>
 				</File>
 			</Filter>

@@ -692,9 +692,10 @@ Flookup_symbol (lisp from, lisp to, lisp package)
     swap (p1, p2);
 
   int l = p2 - p1;
-  Char *b = (Char *)alloca (sizeof *b * l);
-  bp->substring (p1, l, b);
+  Char *b0 = (Char *)alloca (sizeof *b0 * l);
+  bp->substring (p1, l, b0);
 
+  const Char *b = b0;
   maybe_symbol_string mss (package);
   mss.parse (b, l);
   package = mss.current_package ();
