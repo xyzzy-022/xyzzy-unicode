@@ -7,13 +7,13 @@
 
 class EnvStrings
 {
-  char *e_env;
-  char *e_buf;
+  TCHAR *e_env;
+  TCHAR *e_buf;
 
-  void set (char **, char **&, char *) const;
-  char *set (char **, char **&, char *, lisp, lisp) const;
+  void set (TCHAR **, TCHAR **&, TCHAR *) const;
+  TCHAR *set (TCHAR **, TCHAR **&, TCHAR *, lisp, lisp) const;
   static int __cdecl compare (const void *p1, const void *p2)
-    {return stricmp (*(char **)p1, *(char **)p2);}
+    {return _tcsicmp (*(TCHAR **)p1, *(TCHAR **)p2);}
 public:
   EnvStrings () : e_env (0), e_buf (0) {}
   ~EnvStrings ()
@@ -22,35 +22,35 @@ public:
       xfree (e_env);
     }
   void setup (lisp);
-  const char *str () const {return e_env;}
+  const TCHAR *str () const {return e_env;}
 };
 
 void
-EnvStrings::set (char **nb, char **&ne, char *b) const
+EnvStrings::set (TCHAR **nb, TCHAR **&ne, TCHAR *b) const
 {
-  char *eq = b;
-  if (*eq == '=')
+  TCHAR *eq = b;
+  if (*eq == _T('='))
     eq++;
-  eq = strchr (eq, '=');
+  eq = _tcschr (eq, _T('='));
   if (!eq)
     return;
   int l = eq - b + 1;
   for (; nb < ne; nb++)
-    if (!memicmp (b, *nb, l))
+    if (!_tcsnicmp (b, *nb, l))
       {
-        *nb = b[l] ? b : "";
+        *nb = b[l] ? b : _T("");
         return;
       }
   if (b[l])
     *ne++ = b;
 }
 
-char *
-EnvStrings::set (char **nb, char **&ne, char *b, lisp var, lisp val) const
+TCHAR *
+EnvStrings::set (TCHAR **nb, TCHAR **&ne, TCHAR *b, lisp var, lisp val) const
 {
-  char *b0 = b;
+  TCHAR *b0 = b;
   b = w2s (b, var);
-  *b++ = '=';
+  *b++ = _T('=');
   if (val == Qnil)
     *b++ = 0;
   else
@@ -68,36 +68,52 @@ EnvStrings::setup (lisp lenv)
       lisp x = xcar (le);
       check_cons (x);
       check_string (xcar (x));
+#ifdef UNICODE
+      l += xstring_length (xcar (x)) + 2;
+#else
       l += xstring_length (xcar (x)) * 2 + 2;
+#endif
       if (xcdr (x) != Qnil)
         {
           check_string (xcdr (x));
+#ifdef UNICODE
+          l += xstring_length (xcdr (x));
+#else
           l += xstring_length (xcdr (x)) * 2;
+#endif
         }
     }
 
   for (int d = 0; d < 26; d++)
     {
-      const char *dir = get_device_dir (d);
-      int x = strlen (dir);
+      const TCHAR *dir = get_device_dir (d);
+      int x = _tcslen (dir);
       if (x > 3)
         {
-          l += x + sizeof "=X:=X:";
+          l += x + _countof ("=X:=X:");
           n++;
         }
     }
 
+#ifdef UNICODE
+  for (TCHAR **e = _wenviron; *e; e++, n++)
+#else
   for (char **e = environ; *e; e++, n++)
+#endif
     ;
 
-  l = (l + sizeof (char **) - 1) / sizeof (char **) * sizeof (char **);
-  e_buf = (char *)xmalloc (l + sizeof (char **) * n);
-  char **nb = (char **)(e_buf + l);
-  char **ne = nb;
+  l = (l * sizeof TCHAR + sizeof (TCHAR **) - 1) / sizeof (TCHAR **) * sizeof (TCHAR **);
+  e_buf = (TCHAR *)xmalloc (l + sizeof (TCHAR **) * n);
+  TCHAR **nb = (TCHAR **)(e_buf + l);
+  TCHAR **ne = nb;
+#ifdef UNICODE
+  for (e = _wenviron; *e; e++, ne++)
+#else
   for (e = environ; *e; e++, ne++)
+#endif
     *ne = *e;
 
-  char *b = e_buf;
+  TCHAR *b = e_buf;
   for (le = lenv; consp (le); le = xcdr (le))
     {
       lisp x = xcar (le);
@@ -106,12 +122,12 @@ EnvStrings::setup (lisp lenv)
 
   for (d = 0; d < 26; d++)
     {
-      const char *dir = get_device_dir (d);
-      int x = strlen (dir);
+      const TCHAR *dir = get_device_dir (d);
+      int x = _tcslen (dir);
       if (x > 3)
         {
-          char *b0 = b;
-          b += sprintf (b, "=%c:=%c:%s", 'A' + d, 'A' + d, dir) + 1;
+          TCHAR *b0 = b;
+          b += _stprintf (b, _T("=%c:=%c:%s"), _T('A') + d, _T('A') + d, dir) + 1;
           set (nb, ne, b0);
         }
     }
@@ -119,12 +135,12 @@ EnvStrings::setup (lisp lenv)
   qsort (nb, ne - nb, sizeof *nb, compare);
 
   l = 1;
-  for (char **np = nb; np < ne; np++)
+  for (TCHAR **np = nb; np < ne; np++)
     if (**np)
-      l += strlen (*np) + 1;
+      l += _tcslen (*np) + 1;
 
-  e_env = (char *)xmalloc (l);
-  char *p = e_env;
+  e_env = (TCHAR *)xmalloc (l * sizeof TCHAR);
+  TCHAR *p = e_env;
   for (np = nb; np < ne; np++)
     if (**np)
       p = stpcpy (p, *np) + 1;
@@ -132,20 +148,20 @@ EnvStrings::setup (lisp lenv)
 }
 
 static void
-path_arg (int no_std_handles, lisp lpath, char *path)
+path_arg (int no_std_handles, lisp lpath, TCHAR *path)
 {
   if (no_std_handles)
     *path = 0;
   else if (stringp (lpath))
     pathname2cstr (lpath, path);
   else if (lpath == Qnil)
-    strcpy (path, "nul");
+    _tcscpy (path, _T("nul"));
   else
     *path = 0;
 }
 
 static void
-open_for_read (dyn_handle &dh, const char *path, lisp lpath,
+open_for_read (dyn_handle &dh, const TCHAR *path, lisp lpath,
                SECURITY_ATTRIBUTES *sa)
 {
   if (!*path)
@@ -158,7 +174,7 @@ open_for_read (dyn_handle &dh, const char *path, lisp lpath,
 }
 
 static void
-open_for_write (dyn_handle &dh, const char *path, lisp lpath,
+open_for_write (dyn_handle &dh, const TCHAR *path, lisp lpath,
                 SECURITY_ATTRIBUTES *sa)
 {
   if (!*path)
@@ -183,7 +199,11 @@ Fcall_process (lisp cmd, lisp keys)
   EnvStrings env;
   env.setup (find_keyword (Kenviron, keys));
 
+#ifdef UNICODE
+  TCHAR *cmdline = (TCHAR *)alloca ((xstring_length (cmd) + 1) * sizeof TCHAR);
+#else
   char *cmdline = (char *)alloca (xstring_length (cmd) * 2 + 1);
+#endif
   w2s (cmdline, cmd);
 
   int no_std_handles = find_keyword_bool (Kno_std_handles, keys);
@@ -193,7 +213,7 @@ Fcall_process (lisp cmd, lisp keys)
   lisp lstderr = find_keyword (Kerror, keys, 0);
   if (!lstderr)
     lstderr = lstdout;
-  char infile[PATH_MAX + 1], outfile[PATH_MAX + 1], errfile[PATH_MAX + 1];
+  TCHAR infile[PATH_MAX + 1], outfile[PATH_MAX + 1], errfile[PATH_MAX + 1];
   path_arg (no_std_handles, lstdin, infile);
   path_arg (no_std_handles, lstdout, outfile);
   path_arg (no_std_handles, lstderr, errfile);
@@ -201,7 +221,7 @@ Fcall_process (lisp cmd, lisp keys)
   lisp exec_dir = find_keyword (Kexec_directory, keys);
   if (exec_dir == Qnil)
     exec_dir = selected_buffer ()->ldirectory;
-  char dir[PATH_MAX + 1];
+  TCHAR dir[PATH_MAX + 1];
   pathname2cstr (exec_dir, dir);
   map_sl_to_backsl (dir);
 
@@ -750,7 +770,7 @@ public:
       if (!WriteFile (p_out, s, l, &nwrite, 0))
         file_error (GetLastError ());
     }
-  void create (lisp, lisp, const char *);
+  void create (lisp, lisp, const TCHAR *);
   virtual int readin (u_char *, int);
 };
 
@@ -823,9 +843,9 @@ NormalProcess::find_tty (HWND hwnd, LPARAM arg)
   GetWindowThreadProcessId (hwnd, &pid);
   if (pid != ((dos_prompt *)arg)->pid)
     return 1;
-  char name[32];
-  if (!GetClassName (hwnd, name, sizeof name)
-      || lstrcmp (name, "tty"))
+  TCHAR name[32];
+  if (!GetClassName (hwnd, name, _countof (name))
+      || lstrcmp (name, _T("tty")))
     return 1;
   ((dos_prompt *)arg)->hwnd = hwnd;
   return 0;
@@ -858,9 +878,9 @@ NormalProcess::signal_win95 ()
 }
 
 void
-NormalProcess::create (lisp command, lisp execdir, const char *env)
+NormalProcess::create (lisp command, lisp execdir, const TCHAR *env)
 {
-  char dir[PATH_MAX + 1];
+  TCHAR dir[PATH_MAX + 1];
   pathname2cstr (execdir, dir);
   map_sl_to_backsl (dir);
 
@@ -887,9 +907,13 @@ NormalProcess::create (lisp command, lisp execdir, const char *env)
   if (!event.valid ())
     file_error (GetLastError ());
 
+#ifdef UNICODE
+  TCHAR *cmdline = (TCHAR *)alloca ((128 + xstring_length (command) + 1) * sizeof TCHAR);
+#else
   char *cmdline = (char *)alloca (128 + xstring_length (command) * 2 + 1);
-  sprintf (cmdline, "xyzzyenv %u ", HANDLE (event));
-  w2s (cmdline + strlen (cmdline), command);
+#endif
+  _stprintf (cmdline, _T("xyzzyenv %u "), HANDLE (event));
+  w2s (cmdline + _tcslen (cmdline), command);
 
   u_int thread_id;
   HANDLE hread_thread = HANDLE (_beginthreadex (0, 0, Process::read_process, this,
@@ -1435,21 +1459,25 @@ se_error (lisp lpath, int e)
 lisp
 Fshell_execute (lisp lpath, lisp ldir, lisp lparam)
 {
-  char *path, *dir, *param;
+  TCHAR *path, *dir, *param;
   if (ldir == Qt)
     {
       check_string (lpath);
+#ifdef UNICODE
+      path = (TCHAR *)alloca ((xstring_length (lpath) + 1) * sizeof TCHAR);
+#else
       path = (char *)alloca (xstring_length (lpath) * 2 + 1);
+#endif
       w2s (path, lpath);
       dir = 0;
     }
   else
     {
-      path = (char *)alloca (PATH_MAX + 1);
+      path = (TCHAR *)alloca ((PATH_MAX + 1) * sizeof TCHAR);
       pathname2cstr (lpath, path);
       map_sl_to_backsl (path);
 
-      dir = (char *)alloca (PATH_MAX + 1);
+      dir = (TCHAR *)alloca ((PATH_MAX + 1) * sizeof TCHAR);
       if (ldir && ldir != Qnil)
         pathname2cstr (ldir, dir);
       else
@@ -1460,7 +1488,11 @@ Fshell_execute (lisp lpath, lisp ldir, lisp lparam)
   if (lparam && lparam != Qnil)
     {
       check_string (lparam);
+#ifdef UNICODE
+      param = (TCHAR *)alloca ((xstring_length (lparam) + 1) * sizeof TCHAR);
+#else
       param = (char *)alloca (xstring_length (lparam) * 2 + 1);
+#endif
       w2s (param, lparam);
     }
   else
@@ -1481,8 +1513,12 @@ Fshell_execute (lisp lpath, lisp ldir, lisp lparam)
   DWORD e;
   typedef int (WINAPI *SHELLEXECUTEEX)(SHELLEXECUTEINFO *);
   SHELLEXECUTEEX ex = (xsymbol_value (Vuse_shell_execute_ex) != Qnil
-                       ? (SHELLEXECUTEEX)GetProcAddress (GetModuleHandle ("shell32.dll"),
+                       ? (SHELLEXECUTEEX)GetProcAddress (GetModuleHandle (_T("shell32.dll")),
+#ifdef UNICODE
+                                                         "ShellExecuteExW")
+#else
                                                          "ShellExecuteExA")
+#endif
                        : 0);
   if (ex)
     {
@@ -1496,7 +1532,7 @@ Fshell_execute (lisp lpath, lisp ldir, lisp lparam)
       e = (*ex)(&sei) ? 33 : DWORD (sei.hInstApp);
     }
   else
-    e = DWORD (ShellExecute (get_active_window (), "open",
+    e = DWORD (ShellExecute (get_active_window (), _T("open"),
                              path, param, dir, SW_SHOWNORMAL));
   if (dir)
     WINFS::SetCurrentDirectory (sysdep.curdir);

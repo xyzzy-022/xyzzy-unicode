@@ -6,7 +6,11 @@
 static void
 set_desc (IShellLink *sl, lisp ldesc)
 {
+#ifdef UNICODE
+  TCHAR *b = (TCHAR *)alloca ((xstring_length (ldesc) + 1) * sizeof TCHAR);
+#else
   char *b = (char *)alloca (xstring_length (ldesc) * 2 + 1);
+#endif
   w2s (b, ldesc);
   ole_error (sl->SetDescription (b));
 }
@@ -14,7 +18,11 @@ set_desc (IShellLink *sl, lisp ldesc)
 static void
 set_args (IShellLink *sl, lisp largs)
 {
+#ifdef UNICODE
+  TCHAR *b = (TCHAR *)alloca ((xstring_length (largs) + 1) * sizeof TCHAR);
+#else
   char *b = (char *)alloca (xstring_length (largs) * 2 + 1);
+#endif
   w2s (b, largs);
   ole_error (sl->SetArguments (b));
 }
@@ -47,7 +55,7 @@ Fcreate_shortcut (lisp lobject, lisp llink, lisp keys)
   safe_com <IShellLink> sl;
   ole_error (CoCreateInstance (CLSID_ShellLink, 0, CLSCTX_INPROC_SERVER,
                                IID_IShellLink, (void **)&sl));
-  char path[PATH_MAX + 1];
+  TCHAR path[PATH_MAX + 1];
   pathname2cstr (lobject, path);
 
   if (Ffile_directory_p (lobject))
@@ -59,9 +67,13 @@ Fcreate_shortcut (lisp lobject, lisp llink, lisp keys)
       ole_error (SHGetDesktopFolder (&sf));
 
       map_sl_to_backsl (path);
+#ifdef UNICODE
+      wchar_t *w = path;
+#else
       int l = (strlen (path) + 1);
       wchar_t *w = (wchar_t *)alloca (l * sizeof (wchar_t));
       MultiByteToWideChar (CP_ACP, 0, path, -1, w, l);
+#endif
 
       ULONG ul;
       safe_idl idl (ialloc);
@@ -87,9 +99,13 @@ Fcreate_shortcut (lisp lobject, lisp llink, lisp keys)
   ole_error (sl->QueryInterface (IID_IPersistFile, (void **)&pf));
 
   pathname2cstr (llink, path);
+#ifdef UNICODE
+  wchar_t *w = path;
+#else
   int l = (strlen (path) + 1);
   wchar_t *w = (wchar_t *)alloca (l * sizeof (wchar_t));
   MultiByteToWideChar (CP_ACP, 0, path, -1, w, l);
+#endif
   ole_error (pf->Save (w, 1));
 
   return Qt;
@@ -137,6 +153,33 @@ Fget_special_folder_location (lisp place)
     default:
       FEprogram_error (Eunknown_STRRET_type, make_fixnum (name.uType));
 
+#ifdef UNICODE
+    case STRRET_WSTR:
+      {
+        lisp r = make_string (name.pOleStr);
+        ialloc->Free (name.pOleStr);
+        return r;
+      }
+
+    case STRRET_OFFSET:
+      {
+        char *s = (char *)(ITEMIDLIST *)idl + name.uOffset;
+        int l = MultiByteToWideChar (CP_OEMCP, 0, s, -1, 0, 0);
+        wchar_t *b = (wchar_t *)alloca (l * sizeof TCHAR);
+        MultiByteToWideChar (CP_OEMCP, 0, s, -1, b, l);
+        return make_string (b);
+      }
+
+    case STRRET_CSTR:
+      {
+        char *s = name.cStr;
+        int l = MultiByteToWideChar (CP_OEMCP, 0, s, -1, 0, 0);
+        wchar_t *b = (wchar_t *)alloca (l * sizeof TCHAR);
+        MultiByteToWideChar (CP_OEMCP, 0, s, -1, b, l);
+        return make_string (b);
+      }
+
+#else
     case STRRET_WSTR:
       {
         int l = 2 + WideCharToMultiByte (CP_OEMCP, 0, name.pOleStr, -1, 0, 0, 0, 0);
@@ -151,18 +194,23 @@ Fget_special_folder_location (lisp place)
 
     case STRRET_CSTR:
       return make_string (name.cStr);
+#endif
     }
 }
 
 lisp
 Fresolve_shortcut (lisp lshortcut)
 {
-  char shortcut[PATH_MAX + 1];
+  TCHAR shortcut[PATH_MAX + 1];
   pathname2cstr (lshortcut, shortcut);
   map_sl_to_backsl (shortcut);
+#ifdef UNICODE
+  wchar_t *w = shortcut;
+#else
   int l = (strlen (shortcut) + 1);
   wchar_t *w = (wchar_t *)alloca (l * sizeof (wchar_t));
   MultiByteToWideChar (CP_ACP, 0, shortcut, -1, w, l);
+#endif
 
   safe_com <IShellLink> sl;
   ole_error (CoCreateInstance (CLSID_ShellLink, 0, CLSCTX_INPROC_SERVER,
@@ -176,11 +224,11 @@ Fresolve_shortcut (lisp lshortcut)
   ole_error (hr);
 
   WIN32_FIND_DATA fd;
-  char path[PATH_MAX], desc[PATH_MAX];
-  ole_error (sl->GetPath (path, sizeof path, &fd, 0));
+  TCHAR path[PATH_MAX], desc[PATH_MAX];
+  ole_error (sl->GetPath (path, _countof (path), &fd, 0));
   if (!*path)
     FEfile_error (Enot_a_shortcut, lshortcut);
-  ole_error (sl->GetDescription (desc, sizeof desc));
+  ole_error (sl->GetDescription (desc, _countof (desc)));
 
   map_backsl_to_sl (path);
   multiple_value::count () = 2;
@@ -193,10 +241,10 @@ Fole_drop_files (lisp lpath, lisp lclsid, lisp ldir, lisp lfiles)
 {
   USES_CONVERSION;
 
-  char path[MAX_PATH + 1];
+  TCHAR path[MAX_PATH + 1];
   pathname2cstr (lpath, path);
   map_sl_to_backsl (path);
-  wchar_t *wpath = A2W (path);
+  wchar_t *wpath = T2W (path);
 
   check_string (lclsid);
   wchar_t *wclsid = I2W (lclsid);
@@ -204,10 +252,10 @@ Fole_drop_files (lisp lpath, lisp lclsid, lisp ldir, lisp lfiles)
   if (FAILED (CLSIDFromString (wclsid, &clsid)))
     ole_error (CLSIDFromProgID (wclsid, &clsid));
 
-  char dir[PATH_MAX + 1];
+  TCHAR dir[PATH_MAX + 1];
   pathname2cstr (ldir, dir);
   map_sl_to_backsl (dir);
-  int maxl = strlen (dir);
+  int maxl = _tcslen (dir);
 
   lisp f = lfiles;
   for (int nfiles = 0; consp (f); f = xcdr (f), nfiles++)
@@ -231,7 +279,11 @@ Fole_drop_files (lisp lpath, lisp lclsid, lisp ldir, lisp lfiles)
 
   maxl++;
   wchar_t *wbuf = (wchar_t *)alloca (sizeof *wbuf * maxl);
+#ifdef UNICODE
+  _tcscpy (wbuf, dir);
+#else
   MultiByteToWideChar (CP_ACP, 0, dir, -1, wbuf, maxl);
+#endif
 
   ULONG eaten;
   safe_idl dir_idl (ialloc);

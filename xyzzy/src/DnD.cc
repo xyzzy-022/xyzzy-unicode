@@ -696,7 +696,7 @@ filer_drop_target::make_drop_file (const wchar_t *path, const TCHAR *base_path,
         _tcscat (name, _T("/"));
     }
 
-  if (!link && _memicmp (base_path, name, _tcslen (base_path) * sizeof TCHAR))
+  if (!link && _tcsnicmp (base_path, name, _tcslen (base_path)))
     return 0;
   return make_string (name);
 }
@@ -722,7 +722,7 @@ filer_drop_target::make_drop_file (const char *path, const char *base_path,
         strcat (name, "/");
     }
 
-  if (!link && _memicmp (base_path, name, strlen (base_path)))
+  if (!link && _strnicmp (base_path, name, strlen (base_path)))
     return 0;
   return make_string (name);
 }

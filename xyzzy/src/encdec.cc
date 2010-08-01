@@ -2,6 +2,7 @@
 #include "byte-stream.h"
 #include "md5.h"
 #include "sha1.h"
+#include "oleconv.h"
 
 static void
 copy_xstream (xfilter_stream <u_char, u_char> &is, byte_output_stream &os)
@@ -144,9 +145,10 @@ Fsi_binhex_decode (lisp input, lisp output)
   lisp r = o.result ();
   if (!s.corrupted_p ())
     {
+      USES_CONVERSION;
       multiple_value::value (1) = make_integer (long_to_large_int (s.type ()));
       multiple_value::value (2) = make_integer (long_to_large_int (s.creator ()));
-      multiple_value::value (3) = make_string (s.name ());
+      multiple_value::value (3) = make_string (A2T (s.name ()));
       multiple_value::count () = 4;
     }
   return r;
@@ -220,7 +222,7 @@ hash_method::update (lisp input)
 lisp
 hash_method::make_string (const u_char *digest) const
 {
-  char *buf = (char *)alloca (digest_size () * 2), *b = buf;
+  TCHAR *buf = (TCHAR *)alloca (digest_size () * 2 * sizeof TCHAR), *b = buf;
   for (const u_char *d = digest, *const de = d + digest_size (); d < de; d++)
     {
       *b++ = downcase_digit_char[*d >> 4];
@@ -247,8 +249,10 @@ hash_method::hmac (lisp lkey, lisp input)
   int key_len = w2sl (lkey);
   if (key_len <= block_size ())
     {
-      key = (char *)alloca (key_len + 1);
-      w2s (key, xstring_contents (lkey), xstring_length (lkey));
+      USES_CONVERSION;
+      TCHAR *k = (TCHAR *)alloca ((key_len + 1) * sizeof TCHAR);
+      w2s (k, xstring_contents (lkey), xstring_length (lkey));
+      key = T2A (k);
     }
   else
     {

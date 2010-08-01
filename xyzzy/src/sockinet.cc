@@ -3,6 +3,7 @@
 #endif
 #include "sockinet.h"
 #include "sockimpl.h"
+#include "oleconv.h"
 
 const char *
 sockinet::ntoa (in_addr in)
@@ -116,9 +117,14 @@ sockinet::saddr::set_addr (lisp lhost)
     set_addr (x);
   else if (stringp (lhost))
     {
+      USES_CONVERSION;
+#ifdef UNICODE
+      TCHAR *host = (TCHAR *)alloca ((xstring_length (lhost) + 1) * sizeof TCHAR);
+#else
       char *host = (char *)alloca (xstring_length (lhost) * 2 + 1);
+#endif
       w2s (host, lhost);
-      set_addr (host);
+      set_addr (T2A (host));
     }
   else
     FEtype_error (lhost, xsymbol_value (Qor_string_integer));
@@ -134,9 +140,14 @@ sockinet::saddr::set_port (lisp lport)
     set_port (u_short (x));
   else if (stringp (lport))
     {
+      USES_CONVERSION;
+#ifdef UNICODE
+      TCHAR *port = (TCHAR *)alloca ((xstring_length (lport) + 1) * sizeof TCHAR);
+#else
       char *port = (char *)alloca (xstring_length (lport) * 2 + 1);
+#endif
       w2s (port, lport);
-      set_port (port, "tcp");
+      set_port (T2A (port), "tcp");
     }
   else
     FEtype_error (lport, xsymbol_value (Qor_string_integer));

@@ -278,9 +278,14 @@ compare_buffer (LPARAM p1, LPARAM p2, LPARAM param)
       int d = (item == 2 || xsymbol_value (Vbuffer_list_sort_ignore_case) == Qnil
                ? bcmp (xstring_contents (n1), xstring_contents (n2),
                        min (xstring_length (n1), xstring_length (n2)))
+#ifdef UNICODE
+               : _tcsnicmp ((TCHAR *)xstring_contents (n1), (TCHAR *)xstring_contents (n2),
+                            min (xstring_length (n1), xstring_length (n2))));
+#else
                : memicmp (xstring_contents (n1), xstring_contents (n2),
                           sizeof (Char) * min (xstring_length (n1),
                                                xstring_length (n2))));
+#endif
       if (!d)
         {
           d = xstring_length (n1) - xstring_length (n2);
@@ -826,7 +831,7 @@ Ffile_name_dialog (lisp keys)
 
   ofn.lpstrInitialDir = dir;
   int l = _tcslen (dir);
-  if (!memicmp (dir, buf, l))
+  if (!_tcsnicmp (dir, buf, l))
     {
       if (buf[l] == _T('\\'))
         l++;

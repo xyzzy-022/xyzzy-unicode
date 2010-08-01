@@ -5,6 +5,7 @@
 #include <io.h>
 #include <fcntl.h>
 #include <math.h>
+#include "oleconv.h"
 
 static void
 close_file_stream (lisp stream, int abort)
@@ -16,7 +17,7 @@ close_file_stream (lisp stream, int abort)
     WINFS::DeleteFile (xfile_stream_alt_pathname (stream));
   else
     {
-      char path[PATH_MAX + 1];
+      TCHAR path[PATH_MAX + 1];
       w2s (path, xfile_stream_pathname (stream));
       WINFS::DeleteFile (path);
       if (!WINFS::MoveFile (xfile_stream_alt_pathname (stream), path))
@@ -270,7 +271,7 @@ create_file_stream (lisp filename, lisp direction, lisp if_exists,
                     lisp if_does_not_exist, lisp lencoding,
                     lisp lshare)
 {
-  char path[PATH_MAX + 1];
+  TCHAR path[PATH_MAX + 1];
   pathname2cstr (filename, path);
 
   if (if_does_not_exist != Kerror && if_does_not_exist != Kcreate
@@ -370,14 +371,14 @@ create_file_stream (lisp filename, lisp direction, lisp if_exists,
 
   if (need_alt)
     {
-      char *sl = find_last_slash (path);
+      TCHAR *sl = find_last_slash (path);
       if (sl)
         sl[1] = 0;
-      char buf[PATH_MAX + 1];
-      if (!WINFS::GetTempFileName (sl ? path : ".", "xyz", 0, buf))
+      TCHAR buf[PATH_MAX + 1];
+      if (!WINFS::GetTempFileName (sl ? path : _T("."), _T("xyz"), 0, buf))
         file_error (GetLastError ());
       if (sl)
-        sl[1] = '/';
+        sl[1] = _T('/');
       xfile_stream_alt_pathname (stream) = xstrdup (buf);
     }
 
@@ -885,9 +886,10 @@ Fsocket_stream_local_address (lisp stream)
   valid_socket_stream_p (stream);
   try
     {
+      USES_CONVERSION;
       sockinet::saddr addr;
       xsocket_stream_sock (stream)->localaddr (addr);
-      return make_string (addr.addrstr ());
+      return make_string (A2T (addr.addrstr ()));
     }
   catch (sock_error &e)
     {
@@ -901,10 +903,11 @@ Fsocket_stream_local_name (lisp stream)
   valid_socket_stream_p (stream);
   try
     {
+      USES_CONVERSION;
       sockinet::saddr addr;
       xsocket_stream_sock (stream)->localaddr (addr);
       const char *name = addr.hostname ();
-      return name ? make_string (name) : Qnil;
+      return name ? make_string (A2T (name)) : Qnil;
     }
   catch (sock_error &e)
     {
@@ -934,9 +937,10 @@ Fsocket_stream_peer_address (lisp stream)
   valid_socket_stream_p (stream);
   try
     {
+      USES_CONVERSION;
       sockinet::saddr addr;
       xsocket_stream_sock (stream)->peeraddr (addr);
-      return make_string (addr.addrstr ());
+      return make_string (A2T (addr.addrstr ()));
     }
   catch (sock_error &e)
     {
@@ -950,10 +954,11 @@ Fsocket_stream_peer_name (lisp stream)
   valid_socket_stream_p (stream);
   try
     {
+      USES_CONVERSION;
       sockinet::saddr addr;
       xsocket_stream_sock (stream)->peeraddr (addr);
       const char *name = addr.hostname ();
-      return name ? make_string (name) : Qnil;
+      return name ? make_string (A2T (name)) : Qnil;
     }
   catch (sock_error &e)
     {
@@ -1030,7 +1035,7 @@ Fsocket_stream_send_oob_data (lisp stream, lisp string)
   valid_socket_stream_p (stream);
   check_string (string);
   int l = w2sl (string);
-  char *s = (char *)alloca (l);
+  TCHAR *s = (TCHAR *)alloca (l * sizeof TCHAR);
   w2s (s, string);
   try
     {
