@@ -939,10 +939,12 @@ init_ulatin (ucs2_t *ulatin, ucs2_t (*iso8859)[128], int n)
 
   int nchars = 0;
   nchars = init_ulatin1 (ulatin, f, r, 0x0080, 0x024f, nchars);
+  /*
   nchars = init_ulatin1 (ulatin, f, r, 0x0370, 0x04ff, nchars);
   nchars = init_ulatin1 (ulatin, f, r, 0x1e00, 0x214f, nchars);
   nchars = init_ulatin1 (ulatin, f, r, 0x2190, 0x26ff, nchars);
   nchars = init_ulatin1 (ulatin, f, 0, 0xfb01, 0xfb02, nchars);
+   */
   if (nchars > CCS_ULATIN_MAX - CCS_ULATIN_MIN)
     {
       fprintf (stderr, "Too many ulatin chars: %04x\n", nchars);
@@ -976,8 +978,10 @@ init_ujp (ucs2_t *int2wc, const u_char *f, const u_char *r,
   int range = max - min;
   ucs2_t *const ujp = int2wc + min;
   int nchars = 0;
+  /*
   nchars = init_ujp1 (ujp, f, r, 0x0080, 0x024f, nchars, range);
   nchars = init_ujp1 (ujp, f, r, 0x0370, 0x04ff, nchars, range);
+   */
   nchars = init_ujp1 (ujp, f, r, 0x1e00, 0x27ff, nchars, range);
   nchars = init_ujp1 (ujp, f, r, 0x3000, 0x30ff, nchars, range);
   nchars = init_ujp1 (ujp, f, r, 0x3200, 0x33ff, nchars, range);
