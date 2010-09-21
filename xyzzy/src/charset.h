@@ -372,12 +372,16 @@ mule_b2g (int &ccs, int &c1, int &c2)
   c2 = tem % (0xff - 0xa1) + 0x21;
 }
 
+#ifdef UNICODE
+extern int char_width (Char cc);
+#else
 static inline int
 char_width (Char cc)
 {
   extern u_char char_width_table[];
   return char_width_table[cc >> 3] & (1 << (cc & 7)) ? 2 : 1;
 }
+#endif
 
 #ifdef UNICODE
 

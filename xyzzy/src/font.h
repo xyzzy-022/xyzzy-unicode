@@ -37,6 +37,43 @@ public:
 #define FONT_GEORGIAN       8
 #define FONT_MAX            9
 
+#ifdef UNICODE
+
+struct glyph_info
+{
+  int font_index;
+  WORD glyph_index;
+  int width;
+
+  glyph_info () : font_index (-1), glyph_index (0xffff), width (-1) { }
+  glyph_info (int fi, WORD gi, int w) : font_index (fi), glyph_index (gi), width (w) { }
+
+  bool operator == (const glyph_info &other) {
+    return (font_index == other.font_index && glyph_index == other.glyph_index && width == other.width);
+  }
+  bool operator != (const glyph_info &other) {
+    return !(*this == other);
+  }
+
+  static glyph_info defchar;
+  static glyph_info unbound;
+};
+
+class glyph_info_cache
+{
+protected:
+  glyph_info cache[0x10000];
+
+public:
+  glyph_info_cache () { }
+  virtual ~glyph_info_cache () { }
+
+  void clear ();
+  glyph_info &operator [] (int n) { return cache[n]; }
+};
+
+#endif /* UNICODE */
+
 struct FontSetParam
 {
   LOGFONT fs_logfont[FONT_MAX];
@@ -114,6 +151,16 @@ public:
   int line_spacing () const {return fs_line_spacing;}
   int recommend_size_p () const {return fs_recommend_size;}
   int size_pixel_p () const {return fs_size_pixel;}
+
+#ifdef UNICODE
+protected:
+  glyph_info_cache glyph_cache;
+
+public:
+  void clear_glyph_cache () { glyph_cache.clear (); }
+  const glyph_info &get_glyph_info (Char);
+  int char_width (Char cc) { return get_glyph_info (cc).width; }
+#endif /* UNICODE */
 
   static const TCHAR *regent (int n) {return fs_regent[n];}
   static const TCHAR *default_face (int n, int print)

@@ -5,7 +5,7 @@
 typedef u_long attr_t;
 struct glyph_t {
   attr_t attr;
-  TCHAR ch;
+  WORD idx;
 };
 #else
 typedef u_long attr_t;
@@ -151,16 +151,10 @@ typedef u_long glyph_t;
 #ifdef UNICODE
 
 static inline glyph_t
-glyph_of (attr_t attr, TCHAR ch)
+glyph_of (attr_t attr, WORD idx)
 {
-  glyph_t c = { attr & 0xffffff00, ch };
+  glyph_t c = { attr & 0xffffff00, idx };
   return c;
-}
-
-static inline glyph_t
-glyph_of_char (TCHAR ch)
-{
-  return glyph_of (0, ch);
 }
 
 static inline glyph_t
@@ -172,7 +166,7 @@ glyph_of_value (int val)
 static inline glyph_t
 glyph_zero ()
 {
-  return glyph_of (0, 0);
+  return glyph_of_value (0);
 }
 
 static inline attr_t
@@ -184,7 +178,7 @@ glyph_attr (const glyph_t &c)
 static inline TCHAR
 glyph_char (const glyph_t &c)
 {
-  return c.ch;
+  return c.idx;
 }
 
 static inline void
@@ -208,7 +202,7 @@ glyph_attr_set (glyph_t &c, attr_t mask, attr_t pat)
 static inline int
 glyph_equal_p (const glyph_t &x, const glyph_t &y)
 {
-  return x.attr == y.attr && x.ch == y.ch;
+  return x.attr == y.attr && x.idx == y.idx;
 }
 
 #else
@@ -565,10 +559,17 @@ struct Window
   void set_buffer (Buffer *);
   void calc_client_size (int, int);
   void reframe ();
+#ifdef UNICODE
+  void paint_glyphs (HDC, HDC, const glyph_t *, const glyph_t *, const glyph_t *,
+                     TCHAR *, INT *, int, int, int) const;
+  void paint_line (HDC, HDC, glyph_data *, const glyph_data *,
+                   TCHAR *, int, INT *) const;
+#else
   void paint_glyphs (HDC, HDC, const glyph_t *, const glyph_t *, const glyph_t *,
                      TCHAR *, const INT *, int, int, int) const;
   void paint_line (HDC, HDC, glyph_data *, const glyph_data *,
                    TCHAR *, int, const INT *) const;
+#endif
   void paint_window (HDC) const;
   void paint_region (HDC, int, int) const;
   void find_motion () const;

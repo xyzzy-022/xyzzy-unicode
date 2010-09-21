@@ -7,6 +7,31 @@
 #include "mainframe.h"
 #include "regex.h"
 
+#ifdef UNICODE
+
+static inline const glyph_info &
+glyph_info_of_unichar (Char cc)
+{
+  return app.text_font.get_glyph_info (cc);
+}
+
+static inline glyph_t
+glyph_of_attr_unichar (attr_t attr, Char cc)
+{
+  const glyph_info &info = glyph_info_of_unichar (cc);
+  return glyph_of ((attr & ~GLYPH_CHARSET_MASK) | (info.font_index << GLYPH_CHARSET_SHIFT_BIT), info.glyph_index);
+}
+
+static inline glyph_t
+glyph_of_unichar (Char cc)
+{
+  return glyph_of_attr_unichar (0, cc);
+}
+
+int char_width (Char cc) { return app.text_font.char_width (cc); }
+
+#endif
+
 class color_caret
 {
 public:
@@ -345,6 +370,7 @@ Window::update_caret () const
     }
 }
 
+#ifndef UNICODE
 class paint_chars_ctx
 {
   int p_x, p_y;
@@ -449,11 +475,20 @@ paint_chars_lucida (HDC hdc, int x, int y, int flags, const RECT &r,
     ctx.paint_lucida (hdc, i2w (c + *s), flags);
   DeleteObject (SelectObject (hdc, of));
 }
+#endif /* UNICODE */
 
 static void
 paint_chars (HDC hdc, int x, int y, int flags, const RECT &r,
              attr_t charset, const TCHAR *string, int len, const INT *padding)
 {
+#ifdef UNICODE
+  const FontObject &f = app.text_font.font (charset >> GLYPH_CHARSET_SHIFT_BIT);
+  HGDIOBJ of = SelectObject (hdc, f);
+  ExtTextOut (hdc, x + f.offset ().x, y + f.offset ().y, flags | ETO_GLYPH_INDEX,
+              &r, string, len, padding);
+  SelectObject (hdc, of);
+
+#else /* UNICODE */
 #define PAINT_FULL_WIDTH_CHARS(FONT) \
   paint_full_width_chars (hdc, x, y, flags, r, string, len, app.text_font.font (FONT))
 #define PAINT_HALF_WIDTH_CHARS(OFFSET, FONT) \
@@ -559,12 +594,20 @@ paint_chars (HDC hdc, int x, int y, int flags, const RECT &r,
       break;
 #endif
     }
+#endif /* UNICODE */
 }
 
+#ifdef UNICODE
+void
+Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t *g,
+                      const glyph_t *ge, TCHAR *buf, INT *padding,
+                      int x, int y, int yoffset) const
+#else
 void
 Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t *g,
                       const glyph_t *ge, TCHAR *buf, const INT *padding,
                       int x, int y, int yoffset) const
+#endif
 {
   RECT r;
   r.top = y + yoffset;
@@ -577,19 +620,40 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
     {
       const glyph_t *g0 = g;
       TCHAR *be = buf;
+#ifdef UNICODE
+      INT *pe = padding;
+#endif
       glyph_t c = *g++;
       attr_t a = glyph_attr (c);
       asum |= a;
       *be++ = glyph_char (c);
+#ifdef UNICODE
+      *pe++ = app.text_font.cell ().cx;
+#endif
       a &= GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK;
       while (g < ge && (glyph_attr (*g) & (GLYPH_COLOR_MASK | GLYPH_CHARSET_MASK)) == a)
         {
           asum |= glyph_attr (*g);
+#ifdef UNICODE
+          if (glyph_trail_p (*g))
+            pe[-1] += app.text_font.cell ().cx;
+          else
+            {
+              *be++ = glyph_char (*g);
+              *pe++ = app.text_font.cell ().cx;
+            }
+          ++g;
+#else
           *be++ = glyph_char (*g++);
+#endif
         }
 
       r.left = r.right;
+#ifdef UNICODE
+      r.right += (g - g0) * app.text_font.cell ().cx;
+#else
       r.right += (be - buf) * app.text_font.cell ().cx;
+#endif
       if (r.right > w_clsize.cx)
         {
           r.right = w_clsize.cx;
@@ -604,11 +668,19 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
             ;
           g0 += b - buf;
         }
+#ifdef UNICODE
+      glyph_t spc = glyph_of_unichar (_T(' '));
+      for (const glyph_t *g1 = g;
+           g1 > g0 && glyph_equal_p (glyph_of (glyph_attr (g1[-1]) & ~GLYPH_COLOR_MASK, glyph_char (g1[-1])), spc);
+           g1--)
+        ;
+#else
       for (const glyph_t *g1 = g;
            g1 > g0 && glyph_equal_p (glyph_of (glyph_attr (g1[-1]) & ~GLYPH_COLOR_MASK, glyph_char (g1[-1])),
                                      glyph_of_char (_T(' ')));
            g1--)
         ;
+#endif
       be -= g - g1;
 
       COLORREF ofg = SetTextColor (hdc, glyph_forecolor (c));
@@ -654,14 +726,32 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
           if (g == ge)
             break;
           TCHAR *be = buf;
+#ifdef UNICODE
+          INT *pe = padding;
+#endif
           const glyph_t *g0 = g;
           glyph_t c0 = *g++;
           *be++ = glyph_char (c0);
+#ifdef UNICODE
+          *pe++ = app.text_font.cell().cx;
+#endif
           attr_t a = glyph_attr (c0) & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
                                         | GLYPH_CHARSET_MASK | GLYPH_BOLD);
           for (; g < ge && (glyph_attr (*g) & (GLYPH_FORE_COLOR_MASK | GLYPH_BITMAP_BIT
                                                | GLYPH_CHARSET_MASK | GLYPH_BOLD)) == a; g++)
+#ifdef UNICODE
+            {
+              if (glyph_trail_p (*g))
+                pe[-1] += app.text_font.cell ().cx;
+              else
+                {
+                  *be++ = glyph_char (*g);
+                  *pe++ = app.text_font.cell ().cx;
+                }
+            }
+#else
             *be++ = glyph_char (*g);
+#endif
 
           COLORREF ofg = SetTextColor (hdc, glyph_forecolor (c0));
 
@@ -743,9 +833,15 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
     }
 }
 
+#ifdef UNICODE
+void
+Window::paint_line (HDC hdc, HDC hdcmem, glyph_data *ogd, const glyph_data *ngd,
+                    TCHAR *buf, int y, INT *padding) const
+#else
 void
 Window::paint_line (HDC hdc, HDC hdcmem, glyph_data *ogd, const glyph_data *ngd,
                     TCHAR *buf, int y, const INT *padding) const
+#endif
 {
   const glyph_t *n = ngd->gd_cc, *ne = n + ngd->gd_len;
   glyph_t *o = ogd->gd_cc, *oe = o + ogd->gd_len;
@@ -915,6 +1011,9 @@ Window::erase_cursor_line (HDC hdc) const
       HGDIOBJ obr = SelectObject (hdc, CreateSolidBrush (w_colors[WCOLOR_BACK]));
 
       INT *padding;
+#ifdef UNICODE
+      padding = (INT *)alloca (sizeof *padding * w_ch_max.cx);
+#else
       if (!app.text_font.need_pad_p ())
         padding = 0;
       else
@@ -923,6 +1022,7 @@ Window::erase_cursor_line (HDC hdc) const
           for (int i = 0; i < w_ch_max.cx; i++)
             padding[i] = app.text_font.cell ().cx;
         }
+#endif
       TCHAR *buf = (TCHAR *)alloca ((w_ch_max.cx + 3) * sizeof TCHAR);
       paint_glyphs (hdc, hdcmem, gd->gd_cc, g, ge, buf, padding, x,
                     (w_cursor_line.ypixel - app.text_font.cell ().cy + 1),
@@ -1309,6 +1409,44 @@ Window::kwdmatch (lisp kwdhash, const Point &point,
   return f;
 }
 
+#ifdef UNICODE
+
+static inline glyph_t *
+glyph_unichar (glyph_t *g, Char cc, int f, int flags, const glyph_info &info)
+{
+  if (cc == _T('\\') && app.text_font.use_backsl_p ())
+    *g++ = glyph_of_value (f | GLYPH_BM_BACKSL);
+  else if (flags & Window::WF_HALFSPC && cc == _T(' '))  // U+0020
+    *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_BM_HALFSPC);
+  else if (flags & Window::WF_FULLSPC && cc == _T('Å@')) // U+3000
+    {
+      *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_LEAD  | GLYPH_BM_FULLSPC1);
+      *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_TRAIL | GLYPH_BM_FULLSPC2);
+    }
+  else if (info.font_index < 0)
+    {
+      *g++ = glyph_of_value (f | GLYPH_BM_BLANK);
+    }
+  else
+    {
+      int nf = f | (info.font_index << GLYPH_CHARSET_SHIFT_BIT);
+      if (info.width == 1)
+        {
+          *g++ = glyph_of (nf, info.glyph_index);
+        }
+      else
+        {
+          *g++ = glyph_of (nf | GLYPH_LEAD, info.glyph_index);
+          for (int i = 1; i < info.width; ++i)
+            *g++ = glyph_of (nf | GLYPH_TRAIL, info.glyph_index);
+        }
+    }
+
+  return g;
+}
+
+#else /* UNICODE */
+
 static inline glyph_t *
 glyph_dbchar (glyph_t *g, Char cc, int f, int flags)
 {
@@ -1484,16 +1622,34 @@ glyph_sbchar (glyph_t *g, Char cc, int f, int flags)
   return g;
 }
 
+#endif /* UNICODE */
+
 static inline glyph_t *
 glyph_bmchar (glyph_t *g, Char bm, lisp ch, int f, int n)
 {
   ch = xsymbol_value (ch);
   if (ch == Qnil)
+#ifdef UNICODE
+    {
+      glyph_t spc = glyph_of_attr_unichar (f, _T(' '));
+      for (int i = 0; i < n; i++)
+        *g++ = spc;
+    }
+#else
     for (int i = 0; i < n; i++)
       *g++ = glyph_of (f, _T(' '));
+#endif
   else if (charp (ch) && char_width (xchar_code (ch)) == 1)
+#ifdef UNICODE
+    {
+      const glyph_info &info = glyph_info_of_unichar (xchar_code (ch));
+      for (int i = 0; i < n; i++)
+        g = glyph_unichar (g, xchar_code (ch), f, 0, info);
+    }
+#else
     for (int i = 0; i < n; i++)
       g = glyph_sbchar (g, xchar_code (ch), f, 0);
+#endif
   else
     for (int i = 0; i < n; i++)
       *g++ = glyph_of_value (f | bm);
@@ -1836,9 +1992,17 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
 {
   glyph_t *g = gd->gd_cc;
   glyph_t *const ge = g + w_ch_max.cx;
+#ifdef UNICODE
+  glyph_t spc = glyph_of_unichar (_T(' '));
+#endif
+
 
   if (g < ge)
+#ifdef UNICODE
+    *g++ = spc;
+#else
     *g++ = glyph_of_char (_T(' '));
+#endif
 
   for (; tprop; tprop = tprop->t_next)
     if (*tprop > point.p_point)
@@ -1852,7 +2016,11 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                   : GLYPH_LINENUM);
       if (plinenum != -1 && point.p_point && point.prevch () != '\n')
         {
+#ifdef UNICODE
+          glyph_t c = glyph_of_attr_unichar (f, _T(' '));
+#else
           glyph_t c = glyph_of (f, _T(' '));
+#endif
           for (glyph_t *e = min (ge, g + LINENUM_COLUMNS); g < e; g++)
             *g = c;
           if (g < ge)
@@ -1867,12 +2035,22 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
               glyph_t *p = g + LINENUM_COLUMNS;
               do
                 {
+#ifdef UNICODE
+                  *--p = glyph_of_attr_unichar (f, plinenum % 10 + _T('0'));
+#else
                   *--p = glyph_of (f, plinenum % 10 + _T('0'));
+#endif
                   plinenum /= 10;
                 }
               while (p > g && plinenum);
+#ifdef UNICODE
+              glyph_t c = glyph_of_attr_unichar (f, _T(' ')); 
+              while (p > g)
+                *--p = c;
+#else
               while (p > g)
                 *--p = glyph_of (f, _T(' '));
+#endif
               g += LINENUM_COLUMNS;
               *g++ = glyph_of_value (GLYPH_LINENUM | GLYPH_BM_SEP);
             }
@@ -1885,7 +2063,11 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                 _stprintf (buf, _T("%6d"), plinenum);
               int n = min (6, int (w_ch_max.cx));
               for (int i = 0; i < n; i++)
+#ifdef UNICODE
+                *g++ = glyph_of_attr_unichar (f, buf[i]);
+#else
                 *g++ = glyph_of (f, buf[i]);
+#endif
               if (g < ge)
                 *g++ = glyph_of_value (GLYPH_LINENUM | GLYPH_BM_SEP);
             }
@@ -1895,7 +2077,11 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
           && *tprop > point.p_point
           && tprop->t_attrib & 0xff
           && g == gd->gd_cc + LINENUM_COLUMNS + 2)
+#ifdef UNICODE
+        g[-2] = glyph_of_attr_unichar (tprop->t_attrib & ~TEXTPROP_EXTEND_EOL_BIT, tprop->t_attrib & 0xff);
+#else
         g[-2] = glyph_of (tprop->t_attrib & ~TEXTPROP_EXTEND_EOL_BIT, tprop->t_attrib & 0xff);
+#endif
     }
 
   if (w_bufp->b_prompt_columns)
@@ -1906,12 +2092,33 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
       if (vlinenum == 1)
         {
           for (const TCHAR *u = w_bufp->b_prompt_arg; *u && g < ge;)
+#ifdef UNICODE
+            *g++ = glyph_of_unichar (*u++);
+#else
             *g++ = glyph_of_char (*u++);
+#endif
           const Char *s = w_bufp->b_prompt;
           const Char *se = s + w_bufp->b_prompt_length;
           while (s < se && g < ge)
             {
               Char cc = *s++;
+#ifdef UNICODE
+              const glyph_info &info = glyph_info_of_unichar (cc);
+              if (ge < g + info.width)
+                break;
+              if (cc < _T(' ') || cc == CC_DEL)
+                {
+                  Char c1 = _T('^'), c2 = (_T('@') + cc) & 0x7f;
+                  const glyph_info &i1 = glyph_info_of_unichar (c1);
+                  const glyph_info &i2 = glyph_info_of_unichar (c2);
+                  g = glyph_unichar (g, c1, GLYPH_CTRL, 0, i1);
+                  g = glyph_unichar (g, c2, GLYPH_CTRL, 0, i2);
+                }
+              else
+                {
+                  g = glyph_unichar(g, cc, 0, 0, info);
+                }
+#else /* UNICODE */
               if (cc < _T(' '))
                 {
                   if (g + 1 == ge)
@@ -1934,10 +2141,16 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                 }
               else
                 g = glyph_sbchar (g, cc, 0, 0);
+#endif /* UNICODE */
             }
         }
+#ifdef UNICODE
+      while (g < ge2)
+        *g++ = spc;
+#else
       while (g < ge2)
         *g++ = glyph_of_char (_T(' '));
+#endif
     }
 
   int seltype = w_selection_type & Buffer::SELECTION_TYPE_MASK;
@@ -1979,8 +2192,13 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                   glyph_t *const e = g0 + fold_column;
                   if (g < e && e < ge)
                     {
+#ifdef UNICODE
+                      for (; g < e; g++)
+                        *g = spc;
+#else
                       for (; g < e; g++)
                         *g = glyph_of_char (_T(' '));
+#endif
                       *g++ = glyph_of_value ((GLYPH_CTRL | GLYPH_BM_FOLD_SEP0) + (vlinenum & 1));
                     }
                 }
@@ -2027,8 +2245,14 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                 f |= GLYPH_REVERSED;
             }
 
+#ifdef UNICODE
+          glyph_t c = glyph_of_attr_unichar (f, _T(' '));
+          while (n-- > 0)
+            *g++ = c;
+#else
           while (n-- > 0)
             *g++ = glyph_of (f, _T(' '));
+#endif
         }
     }
   else
@@ -2100,7 +2324,11 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                                         << GLYPH_TEXTPROP_BG_SHIFT_BITS);
                   int n = min (ge - g, 5);
                   for (int i = 0; i < n; i++)
+#ifdef UNICODE
+                    *g++ = glyph_of_attr_unichar (f, _T("[EOF]")[i]);
+#else
                     *g++ = glyph_of (f, _T("[EOF]")[i]);
+#endif
                 }
               break;
             }
@@ -2237,8 +2465,25 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                           * w_bufp->b_tab_columns);
               int n = min (goal - col, ge - g);
               while (n-- > 0)
+#ifdef UNICODE
+                *g++ = spc;
+#else
                 *g++ = glyph_of_char (_T(' '));
+#endif
             }
+#ifdef UNICODE
+          else
+            {
+              const glyph_info &info = glyph_info_of_unichar (cc);
+              if (ge < g + info.width)
+                {
+                  exceed = 1;
+                  break;
+                }
+              for (int i = 0; i < info.width; ++i)
+                *g++ = spc;
+            }
+#else
           else if (char_width (cc) == 2)
             {
               if (g + 1 == ge)
@@ -2251,11 +2496,68 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
             }
           else
             *g++ = glyph_of_char (_T(' '));
+#endif
         }
       else
         {
           glyph_t *gr = g;
 
+#ifdef UNICODE
+          if (cc == CC_LFD)
+            {
+              if (seltype == Buffer::SELECTION_RECTANGLE)
+                f &= ~GLYPH_SELECTED;
+              if (wflags & WF_NEWLINE)
+                g = glyph_bmchar (g, GLYPH_BM_NEWLINE, Vdisplay_newline_char,
+                                  (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 1);
+              else
+                *g++ = glyph_of_attr_unichar (f & ~GLYPH_TEXT_MASK, _T(' '));
+              eol = 1;
+              break;
+            }
+          else if (cc == CC_TAB)
+            {
+              int col = w_top_column + (g - g0);
+              int goal = ((col + w_bufp->b_tab_columns) / w_bufp->b_tab_columns
+                          * w_bufp->b_tab_columns);
+              int n = min (goal - col, ge - g);
+              if (wflags & WF_HTAB)
+                {
+                  g = glyph_bmchar (g, GLYPH_BM_HTAB, Vdisplay_first_tab_char,
+                                    (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 1);
+                  if (--n > 0)
+                    g = glyph_bmchar (g, _T('.'), Vdisplay_rest_tab_char,
+                                      (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, n);
+                }
+              else
+                {
+                  glyph_t c = glyph_of_attr_unichar (f, _T(' '));
+                  while (n-- > 0)
+                    *g++ = c;
+                }
+            }
+          else
+            {
+              const glyph_info &info = glyph_info_of_unichar (cc);
+              if (ge < g + info.width)
+                {
+                  exceed = 1;
+                  break;
+                }
+              if (cc < _T(' ') || cc == CC_DEL)
+                {
+                  Char c1 = _T('^'), c2 = (_T('@') + cc) & 0x7f;
+                  const glyph_info &i1 = glyph_info_of_unichar (c1);
+                  const glyph_info &i2 = glyph_info_of_unichar (c2);
+                  g = glyph_unichar (g, c1, GLYPH_CTRL, 0, i1);
+                  g = glyph_unichar (g, c2, GLYPH_CTRL, 0, i2);
+                }
+              else
+                {
+                  g = glyph_unichar(g, cc, f, wflags, info);
+                }
+            }
+#else /* UNICODE */
           if (cc < _T(' '))
             {
               if (cc == CC_LFD)
@@ -2320,6 +2622,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
             }
           else
             g = glyph_sbchar (g, cc, f, wflags);
+#endif /* UNICODE */
 
           if (f & GLYPH_SELECTED
               && seltype == Buffer::SELECTION_RECTANGLE
@@ -2355,12 +2658,20 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                                     : (GLYPH_CTRL | GLYPH_BM_FOLD_MARK_SEP0))
                                    + (vlinenum & 1));
           else
+#ifdef UNICODE
+            *g++ = glyph_of_attr_unichar (GLYPH_CTRL | f | hiddenf, _T('<'));
+#else
             *g++ = glyph_of (GLYPH_CTRL | f | hiddenf, _T('<'));
+#endif
         }
 
       if (f)
         {
+#ifdef UNICODE
+          glyph_t c = glyph_of_attr_unichar (f, _T(' '));
+#else
           glyph_t c = glyph_of (f, _T(' '));
+#endif
           for (; g < grev; g++)
             *g = c;
         }
@@ -2378,7 +2689,11 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
         {
           for (glyph_t *p = g0; p < g; p++)
             glyph_attr_set (*p, ~REVMASK, revkwd);
+#ifdef UNICODE
+          glyph_t c = glyph_of_attr_unichar (revkwd | hiddenf, _T(' '));
+#else
           glyph_t c = glyph_of (revkwd | hiddenf, _T(' '));
+#endif
           for (; g < grev; g++)
             *g = c;
         }
@@ -2394,12 +2709,21 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
       && wflags & WF_FOLD_LINE && g <= gfold && gfold < ge)
     {
       for (; g < gfold; g++)
+#ifdef UNICODE
+        *g = spc;
+#else
         *g = glyph_of_char (_T(' '));
+#endif
       *g++ = glyph_of_value ((GLYPH_CTRL | GLYPH_BM_FOLD_SEP0) + (vlinenum & 1));
     }
 
+#ifdef UNICODE
+  for (; g > gd->gd_cc && glyph_equal_p (g[-1], spc); g--)
+    ;
+#else
   for (; g > gd->gd_cc && glyph_equal_p (g[-1], glyph_of_char (_T(' '))); g--)
     ;
+#endif
 
   *g = glyph_zero ();
   gd->gd_len = g - gd->gd_cc;
@@ -2630,6 +2954,9 @@ Window::paint_region (HDC hdc, int from, int to) const
   HGDIOBJ obr = SelectObject (hdc, CreateSolidBrush (w_colors[WCOLOR_BACK]));
 
   INT *padding;
+#ifdef UNICODE
+  padding = (INT *)alloca (sizeof *padding * w_ch_max.cx);
+#else
   if (!app.text_font.need_pad_p ())
     padding = 0;
   else
@@ -2638,6 +2965,7 @@ Window::paint_region (HDC hdc, int from, int to) const
       for (int i = 0; i < w_ch_max.cx; i++)
         padding[i] = app.text_font.cell ().cx;
     }
+#endif
   TCHAR *buf = (TCHAR *)alloca ((w_ch_max.cx + 3) * sizeof TCHAR);
   glyph_data **g = w_glyphs.g_rep->gr_nglyph + from;
   glyph_data **og = w_glyphs.g_rep->gr_oglyph + from;
@@ -3144,7 +3472,12 @@ Window::paint_minibuffer_message (lisp string)
 
   glyph_t *g = (*gr)->gd_cc;
   glyph_t *ge = g + w_ch_max.cx;
+#ifdef UNICODE
+  glyph_t spc = glyph_of_unichar (_T(' '));
+  *g++ = spc;
+#else
   *g++ = glyph_of_char (_T(' '));
+#endif
 
   const Char *p = xstring_contents (string);
   const Char *pe = p + xstring_length (string);
@@ -3152,6 +3485,23 @@ Window::paint_minibuffer_message (lisp string)
   while (g < ge && p < pe)
     {
       Char cc = *p++;
+#ifdef UNICODE
+      const glyph_info &info = glyph_info_of_unichar (cc);
+      if (ge < g + info.width)
+        break;
+      if (cc < _T(' ') || cc == CC_DEL)
+        {
+          Char c1 = _T('^'), c2 = (_T('@') + cc) & 0x7f;
+          const glyph_info &i1 = glyph_info_of_unichar (c1);
+          const glyph_info &i2 = glyph_info_of_unichar (c2);
+          g = glyph_unichar (g, c1, GLYPH_CTRL, 0, i1);
+          g = glyph_unichar (g, c2, GLYPH_CTRL, 0, i2);
+        }
+      else
+        {
+          g = glyph_unichar (g, cc, 0, 0, info);
+        }
+#else /* UNICODE */
       if (cc < _T(' '))
         {
           if (g + 1 == ge)
@@ -3174,12 +3524,18 @@ Window::paint_minibuffer_message (lisp string)
         }
       else
         g = glyph_sbchar (g, cc, 0, 0);
+#endif /* UNICODE */
     }
 
   app.minibuffer_prompt_column = g - (*gr)->gd_cc;
 
+#ifdef UNICODE
+  for (; g > (*gr)->gd_cc && glyph_equal_p (g[-1], spc); g--)
+    ;
+#else
   for (; g > (*gr)->gd_cc && glyph_equal_p (g[-1], glyph_of_char (_T(' '))); g--)
     ;
+#endif
   *g = glyph_zero ();
   (*gr)->gd_len = g - (*gr)->gd_cc;
   (*gr)->gd_mod = 1;
