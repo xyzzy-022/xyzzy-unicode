@@ -277,7 +277,7 @@ StatusWindow::clear (int no_update)
       sw_last.textf = 0;
       if (!no_update)
         {
-          SendMessage (sw_hwnd, SB_SETTEXT, 0, LPARAM (""));
+          SendMessage (sw_hwnd, SB_SETTEXT, 0, LPARAM (_T("")));
           UpdateWindow (sw_hwnd);
         }
     }
