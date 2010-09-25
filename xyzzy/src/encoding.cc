@@ -64,7 +64,13 @@ sjis_to_internal_stream::refill_internal ()
           if (c2 != eof)
             c1 = (c1 << 8) + c2;
         }
+#ifdef UNICODE
+      Char c = w2i (cp932_to_ucs2 (c1));
+      if (c == Char (-1)) c = DEFCHAR;
+      put (c);
+#else
       put (c1);
+#endif
     }
 }
 
@@ -83,7 +89,13 @@ fast_sjis_to_internal_stream::refill_internal ()
       int c1 = *s++;
       if (SJISP (c1) && s < se)
         c1 = (c1 << 8) + *s++;
+#ifdef UNICODE
+      Char c = w2i (cp932_to_ucs2 (c1));
+      if (c == Char (-1)) c = DEFCHAR;
+      *d = c;
+#else
       *d = c1;
+#endif
     }
   s_in.end_direct_input (s);
   end_direct_output (d);
@@ -1113,6 +1125,11 @@ internal_to_sjis_stream::refill ()
       Char cc = c;
       if (cc >= 0x80)
         {
+#ifdef UNICODE
+          cc = wc2cp932 (i2w (cc));
+          if (cc == Char (-1))
+            cc = DEFCHAR;
+#else
           if (code_charset_bit (cc) & ccsf_possible_cp932)
             {
               cc = wc2cp932 (i2w (cc));
@@ -1121,6 +1138,7 @@ internal_to_sjis_stream::refill ()
             }
           else if (code_charset_bit (cc) & ccsf_not_cp932)
             cc = DEFCHAR;
+#endif
 
           if (DBCP (cc))
             {

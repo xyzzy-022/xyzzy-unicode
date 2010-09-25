@@ -276,6 +276,13 @@ copy_diff_table (Char *const tab,
 static void
 make_wc2cp932_table ()
 {
+#ifdef UNICODE
+  for (int i = 0; i < 0x10000; i++)
+    wc2cp932_table[i] = Char (-1);
+  for (int i = 0; i < 0x10000; i++)
+    wc2cp932_table[cp932_to_ucs2_table[i]] = i;
+  wc2cp932_table[0xffff] = Char (-1);
+#else
   for (int i = 0; i < 0x10000; i++)
     wc2cp932_table[i] = Char (-1);
   for (i = 0; i < 0x100; i++)
@@ -288,6 +295,7 @@ make_wc2cp932_table ()
   wc2cp932_table[0xffff] = Char (-1);
   for (i = CCS_UTF16_SURROGATE_HIGH_MIN; i <= CCS_UTF16_SURROGATE_LOW_MAX; i++)
     wc2cp932_table[i] = i;
+#endif
 
   COPY_DIFF_TABLE (wc2cp932_table,
                    "wc2cp932", wc2cp932_diff, _countof (wc2cp932_diff),

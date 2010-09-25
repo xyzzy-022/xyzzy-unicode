@@ -415,6 +415,15 @@ w2i (ucs2_t wc)
 
 #endif
 
+#ifdef UNICODE
+static inline const ucs2_t &
+cp932_to_ucs2 (Char cc)
+{
+  extern ucs2_t cp932_to_ucs2_table[];
+  return cp932_to_ucs2_table[cc];
+}
+#endif
+
 static inline const Char &
 wc2cp932 (ucs2_t wc)
 {

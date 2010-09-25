@@ -1140,6 +1140,9 @@ main ()
   make_cns11643 (big5, gb2312);
 
   make_cp932 (int2wc);
+#ifdef UNICODE
+  output_simple (int2wc, "ucs2_t", "cp932_to_ucs2_table");
+#endif
 
   merge_int2wc (int2wc, jisx0212, _countof (jisx0212), CCS_JISX0212_MIN);
   merge_int2wc (int2wc, ksc5601, _countof (ksc5601), CCS_KSC5601_MIN);
