@@ -1154,12 +1154,16 @@ store_wcs (Char *b0, const ucs2_t *w, int l, const Char *tab)
   for (const ucs2_t *we = w + l; w < we; w++)
     {
       Char cc;
+#ifdef UNICODE
+      cc = *w;
+#else
       if ((!tab || (cc = tab[*w]) == Char (-1))
           && (cc = w2i (*w)) == Char (-1))
         {
           *b++ = utf16_ucs2_to_undef_pair_high (*w);
           cc = utf16_ucs2_to_undef_pair_low (*w);
         }
+#endif
       *b++ = cc;
     }
   return b - b0;

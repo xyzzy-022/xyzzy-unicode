@@ -437,6 +437,7 @@ ime_composition (HWND hwnd, LPARAM lparam)
               if (app.kbdq.gime.ImmGetCompositionStringW (hIMC, GCS_RESULTSTR, s, l) == l)
                 {
                   const Char *tab = 0;
+#ifndef UNICODE
                   switch (PRIMARYLANGID (app.kbdq.kbd_langid ()))
                     {
                     case LANG_JAPANESE:
@@ -465,17 +466,21 @@ ime_composition (HWND hwnd, LPARAM lparam)
                         }
                       break;
                     }
-
+#endif
                   l /= sizeof (ucs2_t);
                   for (ucs2_t *sp = s, *se = s + l; sp < se; sp++)
                     {
                       Char cc;
+#ifdef UNICODE
+                      cc = *sp;
+#else
                       if ((!tab || (cc = tab[*sp]) == Char (-1))
                           && (cc = w2i (*sp)) == Char (-1))
                         {
                           app.kbdq.putc (utf16_ucs2_to_undef_pair_high (*sp));
                           cc = utf16_ucs2_to_undef_pair_low (*sp);
                         }
+#endif
                       app.kbdq.putc (cc);
                     }
                   lparam &= ~GCS_RESULTSTR;
