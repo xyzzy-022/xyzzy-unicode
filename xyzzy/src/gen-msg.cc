@@ -79,7 +79,8 @@ main (int argc, char **argv)
   else if (!strcmp (argv[1], "-enum"))
     {
       printf ("enum message_code\n{\n");
-      for (int i = 0; i < _countof (msg) - 1; i++)
+      int i;
+      for (i = 0; i < _countof (msg) - 1; i++)
         printf ("  %s,\n", msg[i].ident);
       printf ("  %s\n", msg[i].ident);
       printf ("};\n");
@@ -100,7 +101,7 @@ main (int argc, char **argv)
       printf ("static const TCHAR *const message_string[] =\n");
       printf ("{\n");
       int l = 0;
-      for (i = 0; i < _countof (msg); i++)
+      for (int i = 0; i < _countof (msg); i++)
         {
           printf ("  SSM + %d,\n", l);
           l += _tcslen (msg[i].text) + 1;

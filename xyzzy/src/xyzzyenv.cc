@@ -93,7 +93,8 @@ bcasecmp (const void *b1, const void *b2, int size)
 {
   const _TUCHAR *p = (const _TUCHAR *)b1, *const pe = p + size;
   const _TUCHAR *q = (const _TUCHAR *)b2;
-  for (int f = 0; p < pe && !(f = char_upcase (*p) - char_upcase (*q)); p++, q++)
+  int f;
+  for (f = 0; p < pe && !(f = char_upcase (*p) - char_upcase (*q)); p++, q++)
     ;
   return f;
 }

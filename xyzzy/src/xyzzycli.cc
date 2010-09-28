@@ -127,7 +127,7 @@ create_sexp (xyzzysrv &sv, int ac, TCHAR **av)
   *d++ = _T(' ');
   *d++ = _T('\'');
   *d++ = _T('(');
-  for (i = 0; i < ac; i++)
+  for (int i = 0; i < ac; i++)
     d = store (d, av[i]);
   *d++ = _T(')');
   *d++ = _T(')');
@@ -187,12 +187,12 @@ find_server (lookup_server &ls)
 static int
 run_xyzzy (int argc, TCHAR **argv, const TCHAR *xyzzy)
 {
-  for (int l = lstrlen (xyzzy) + 1, i = 1;
-       i < argc; l += lstrlen (argv[i]) + 1, i++)
+  int l = lstrlen (xyzzy) + 1;
+  for (int i = 1; i < argc; l += lstrlen (argv[i]) + 1, i++)
     ;
   TCHAR *const cl = (TCHAR *)_alloca (l * sizeof TCHAR);
   TCHAR *p = stpcpy (cl, xyzzy);
-  for (i = 1; i < argc; i++)
+  for (int i = 1; i < argc; i++)
     {
       *p++ = _T(' ');
       p = stpcpy (p, argv[i]);
@@ -227,7 +227,8 @@ wait_term (xyzzysrv &sv)
 static int
 skip_args (int argc, TCHAR **argv)
 {
-  for (int ac = 1; ac < argc - 1; ac += 2)
+  int ac;
+  for (ac = 1; ac < argc - 1; ac += 2)
     if (lstrcmp (argv[ac], _T("-image"))
         && lstrcmp (argv[ac], _T("-config"))
         && lstrcmp (argv[ac], _T("-ini")))
@@ -282,7 +283,8 @@ xmain (int argc, TCHAR **argv, const TCHAR *xyzzy, int multi_instance)
           return error (IDS_CALL_PROCESS);
 
 #define RETRY_MAX 30
-        for (int i = 0; i < RETRY_MAX; i++)
+        int i;
+        for (i = 0; i < RETRY_MAX; i++)
           {
             if (find_server (ls))
               break;
@@ -336,7 +338,8 @@ parse_cmdline1 (const TCHAR *p, TCHAR *&b0, int &ac, TCHAR **&av0, int nchars)
       int dq = 0;
       while (1)
         {
-          for (int nbacksl = 0; *p == _T('\\'); nbacksl++, p++)
+          int nbacksl;
+          for (nbacksl = 0; *p == _T('\\'); nbacksl++, p++)
             ;
 
           int ignore = 0;
