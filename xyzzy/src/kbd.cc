@@ -1114,7 +1114,8 @@ count_mblen (const char *string, int l)
 {
   xinput_strstream in (string, l);
   encoding_input_stream_helper is (xsymbol_value (Vkbd_encoding), in);
-  for (int len = 0; is->get () != xstream::eof; len++)
+  int len;
+  for (len = 0; is->get () != xstream::eof; len++)
     ;
   return len;
 }
@@ -1444,7 +1445,8 @@ Fselect_kbd_layout (lisp layout)
       w2s (name, name + _countof (name),
            xstring_contents (layout), xstring_length (layout));
 
-      for (int i = 0; i < n; i++)
+      int i;
+      for (i = 0; i < n; i++)
         {
           TCHAR buf[256];
           if ((get_kbd_layout_name (h[i], buf, _countof (buf))

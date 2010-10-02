@@ -670,12 +670,14 @@ Window::paint_glyphs (HDC hdc, HDC hdcmem, const glyph_t *gstart, const glyph_t 
         }
 #ifdef UNICODE
       glyph_t spc = glyph_of_unichar (_T(' '));
-      for (const glyph_t *g1 = g;
+      const glyph_t *g1;
+      for (g1 = g;
            g1 > g0 && glyph_equal_p (glyph_of (glyph_attr (g1[-1]) & ~GLYPH_COLOR_MASK, glyph_char (g1[-1])), spc);
            g1--)
         ;
 #else
-      for (const glyph_t *g1 = g;
+      const glyph_t *g1;
+      for (g1 = g;
            g1 > g0 && glyph_equal_p (glyph_of (glyph_attr (g1[-1]) & ~GLYPH_COLOR_MASK, glyph_char (g1[-1])),
                                      glyph_of_char (_T(' ')));
            g1--)
@@ -1884,10 +1886,10 @@ regexp_kwd::kwdmatch (const Point &point, int scolor, int &revkwd)
                                     }
                                   while (consp (val));
 
-                                  for (i = end - beg - 1; i >= 0; i--)
+                                  for (int i = end - beg - 1; i >= 0; i--)
                                     rk_vals[i] = 0;
 
-                                  for (i = 0; i <= re.re_regs.nregs; i++)
+                                  for (int i = 0; i <= re.re_regs.nregs; i++)
                                     if (vals[i] >= 0)
                                       {
                                         point_t b = re.re_regs.start[i];
@@ -1938,7 +1940,8 @@ regexp_kwd::kwdmatch_begin (const Point &opoint, int scolor)
 
   Chunk *cp = opoint.p_chunk;
   const Char *p = cp->c_text + opoint.p_offset;
-  for (int l = 0; l < MAX_KWDLEN; l++)
+  int l;
+  for (l = 0; l < MAX_KWDLEN; l++)
     {
       if (point.p_point <= rk_last_try)
         break;
@@ -2859,7 +2862,8 @@ Window::find_motion () const
   int offset = (flags () & WF_LINE_NUMBER) ? LINENUM_COLUMNS + 1 : 0;
   glyph_data **og = w_glyphs.g_rep->gr_oglyph;
   glyph_data **ng = w_glyphs.g_rep->gr_nglyph;
-  for (int y1 = 0; y1 < w_ech.cy; y1++)
+  int y1, y2;
+  for (y1 = 0; y1 < w_ech.cy; y1++)
     {
       int f = compare_glyph (og[y1], ng[y1], offset);
       if (f == NO_MATCH)
@@ -2867,7 +2871,7 @@ Window::find_motion () const
       ng[y1]->gd_mod = f != FULL_MATCH;
     }
 
-  for (int y2 = w_ech.cy - 1; y2 > y1; y2--)
+  for (y2 = w_ech.cy - 1; y2 > y1; y2--)
     {
       int f = compare_glyph (og[y2], ng[y2], offset);
       if (f == NO_MATCH)
@@ -2887,7 +2891,8 @@ Window::find_motion () const
       int f = compare_glyph (og[y], ng[y2], offset);
       if (!f)
         continue;
-      for (int oy = y - 1, ny = y2 - 1; oy >= y1; oy--, ny--)
+      int oy, ny;
+      for (oy = y - 1, ny = y2 - 1; oy >= y1; oy--, ny--)
         {
           int f2 = compare_glyph (og[oy], ng[ny], offset);
           if (!f2)
@@ -2904,12 +2909,13 @@ Window::find_motion () const
 
   for (int i = 0; i < 3; i++, y2--)
     {
-      for (y = y2 - 1; y >= y1; y--)
+      for (int y = y2 - 1; y >= y1; y--)
         {
           int f = compare_glyph (og[y2], ng[y], offset);
           if (!f)
             continue;
-          for (int oy = y2 - 1, ny = y - 1; ny >= y1; oy--, ny--)
+          int oy, ny;
+          for (oy = y2 - 1, ny = y - 1; ny >= y1; oy--, ny--)
             {
               int f2 = compare_glyph (og[oy], ng[ny], offset);
               if (!f2)
@@ -3086,6 +3092,7 @@ Window::scroll_lines (int dy)
       glyph_data **ngx = ng;
       glyph_data **osave = (glyph_data **)alloca (sizeof (glyph_data *) * dy * 2);
       glyph_data **nsave = osave + dy;
+      int i;
       for (i = 0; i < dy; i++)
         {
           osave[i] = *og++;
@@ -3118,6 +3125,7 @@ Window::scroll_lines (int dy)
       glyph_data **ngx = ng;
       glyph_data **osave = (glyph_data **)alloca (sizeof (glyph_data *) * dy * 2);
       glyph_data **nsave = osave + dy;
+      int i;
       for (i = 0; i < dy; i++)
         {
           osave[i] = *--og;
@@ -3591,9 +3599,10 @@ format_point (TCHAR *b, int l, int c)
 static void
 point_from_end (const TCHAR *buf, const TCHAR *&bb, const TCHAR *&be)
 {
-  for (const TCHAR *b = buf + 4; b > buf && b[-1] != _T(' '); b--)
+  const TCHAR *b, *e;
+  for (b = buf + 4; b > buf && b[-1] != _T(' '); b--)
     ;
-  for (const TCHAR *e = buf + 17; *e && *e != _T(' '); e++)
+  for (e = buf + 17; *e && *e != _T(' '); e++)
     ;
   bb = b;
   be = e;
@@ -4023,7 +4032,7 @@ refresh_screen (int f)
     UpdateWindow (wp->w_hwnd);
 
   int update_title_bar = 0;
-  for (wp = app.active_frame.windows; wp; wp = wp->w_next)
+  for (Window *wp = app.active_frame.windows; wp; wp = wp->w_next)
     if (wp->refresh (f) && wp == selected_window ())
       update_title_bar = 1;
 
@@ -4037,7 +4046,7 @@ refresh_screen (int f)
 
   if (f)
     {
-      bp = selected_buffer ();
+      Buffer *bp = selected_buffer ();
       g_frame.update_ui ();
       bp->change_ime_mode ();
       bp->set_frame_title (update_title_bar);

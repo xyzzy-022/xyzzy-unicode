@@ -72,7 +72,8 @@ save_list_column_width (HWND list, int ncolumns, const TCHAR *entry, const TCHAR
     return;
 
   int *v = (int *)alloca (sizeof *v * ncolumns);
-  for (int i = 0, good = 0; i < ncolumns; i++)
+  int good = 0;
+  for (int i = 0; i < ncolumns; i++)
     {
       v[i] = ListView_GetColumnWidth (list, i);
       if (v[i] > 0)
@@ -168,7 +169,7 @@ buffer_list_init_item (HWND list)
   ListView_SetItemCount (list, nbuffers);
 
   int i = 0, cur = 0;
-  for (bp = Buffer::b_blist; bp; bp = bp->b_next)
+  for (const Buffer *bp = Buffer::b_blist; bp; bp = bp->b_next)
     if (!bp->internal_buffer_p ())
       {
         if (bp == selected_buffer ())

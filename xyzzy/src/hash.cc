@@ -522,7 +522,7 @@ equalp (lhash_table *x, lhash_table *y)
         return 0;
 
   entry = xhash_table_entry (x);
-  for (i = 0; i < size; i++, entry++)
+  for (int i = 0; i < size; i++, entry++)
     if (entry->key != Qunbound && entry->key != Qdeleted)
       {
         lisp t = Fgethash (entry->key, y, Qnil);

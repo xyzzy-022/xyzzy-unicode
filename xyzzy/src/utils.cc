@@ -87,7 +87,8 @@ jindex (const TCHAR *p, int c)
 TCHAR *
 jrindex (const TCHAR *p, int c)
 {
-  for (const TBYTE *save = 0, *s = (const TBYTE *)p; *s;)
+  const TBYTE *save, *s;
+  for (save = 0, s = (const TBYTE *)p; *s;)
     {
 #ifndef UNICODE
       if (SJISP (*s) && s[1])
@@ -125,7 +126,8 @@ find_slash (const TCHAR *p)
 TCHAR *
 find_last_slash (const TCHAR *p)
 {
-  for (TBYTE *save = 0, *s = (TBYTE *)p; *s;)
+  TBYTE *save, *s;
+  for (save = 0, s = (TBYTE *)p; *s;)
     {
 #ifndef UNICODE
       if (SJISP (*s) && s[1])
@@ -144,7 +146,8 @@ find_last_slash (const TCHAR *p)
 long
 log2 (u_long x)
 {
-  for (long l = 0; x; x >>= 1, l++)
+  long l;
+  for (l = 0; x; x >>= 1, l++)
     ;
   return l;
 }

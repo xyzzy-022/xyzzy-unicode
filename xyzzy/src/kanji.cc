@@ -10,7 +10,8 @@ check_kanji2 (const TCHAR *string, u_int off)
 #ifdef UNICODE
   return 0;
 #else
-  for (const u_char *s0 = (u_char *)string, *se = s0 + off, *s = se;
+  const u_char *s0, *se, *s;
+  for (s0 = (u_char *)string, se = s0 + off, s = se;
        s-- > s0 && SJISP (*s);)
     ;
   return !((se - s) & 1);
@@ -893,7 +894,8 @@ Fmap_to_half_width_string (lisp string, lisp keys)
 
   safe_ptr <Char> s0 (new Char [xstring_length (string) * 2]);
   bcopy (xstring_contents (string), s0, xstring_length (string));
-  for (Char *s = s0, *se = s + xstring_length (string); s < se; s++)
+  Char *s, *se;
+  for (s = s0, se = s + xstring_length (string); s < se; s++)
     {
       Char c = *s;
       if (c < thp.fmin || c > thp.fmax)
@@ -955,7 +957,8 @@ Fmap_to_full_width_string (lisp string, lisp keys)
   safe_ptr <Char> s0 (new Char [xstring_length (string)]);
   bcopy (xstring_contents (string), s0, xstring_length (string));
 
-  for (Char *s = s0, *se = s + xstring_length (string); s < se; s++)
+  Char *s, *se;
+  for (s = s0, se = s + xstring_length (string); s < se; s++)
     {
       Char c = *s;
       if (flags & (HIRA | KATA) && c >= 0xa1 && c <= 0xdf)
@@ -1043,7 +1046,8 @@ done:
   if (!npad)
     return make_string (s0, xstring_length (string));
 
-  for (Char *p = s0, *q = p, *pe = p + xstring_length (string); p < pe;)
+  Char *p, *q, *pe;
+  for (p = s0, q = p, pe = p + xstring_length (string); p < pe;)
     {
       Char c = *p++;
       if (c != PAD)

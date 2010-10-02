@@ -270,7 +270,7 @@ topic_list_callback (DdeCallbackInfo *dci)
       DdeFreeDataHandle (hdata);
       return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
     }
-  for (t = DdeServerTopicList; t->topic; t++)
+  for (DdeTopicList *t = DdeServerTopicList; t->topic; t++)
     {
       data = stpcpy (data, t->topic);
       *data++ = _T('\t');
@@ -288,7 +288,8 @@ item_list_callback (DdeCallbackInfo *dci)
   if (dci->type != XTYP_REQUEST && dci->type != XTYP_ADVREQ)
     return 0;
 
-  for (DdeTopicList *t = DdeServerTopicList; t->topic; t++)
+  DdeTopicList *t;
+  for (t = DdeServerTopicList; t->topic; t++)
     if (!DdeCmpStringHandles (dci->topic, t->hsz_topic))
       break;
   if (!t->topic)
@@ -309,7 +310,7 @@ item_list_callback (DdeCallbackInfo *dci)
       DdeFreeDataHandle (hdata);
       return HDDEDATA (dci->type == XTYP_REQUEST ? DDE_FNOTPROCESSED : 0);
     }
-  for (il = t->items; il->item; il++)
+  for (DdeItemList *il = t->items; il->item; il++)
     if (il->item != DDE_EXECUTE_ITEM)
       {
         data = stpcpy (data, il->item);

@@ -71,7 +71,8 @@ set_text (const TCHAR *text, const RECT &pos)
   ReleaseDC (hwnd_popup, hdc);
   InvalidateRect (hwnd_popup, 0, 1);
 
-  for (int i = 0; i < _countof (r); i++)
+  int i;
+  for (i = 0; i < _countof (r); i++)
     OffsetRect (&r[i], XPAD, YPAD);
 
   POINT p;

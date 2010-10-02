@@ -303,7 +303,7 @@ FilerView::add_list_view (const TCHAR *last)
   ListView_SetItemCount (fv_hwnd, nfiles);
 
   int i = 0, cur = -1, dot = -1;
-  for (fc = fv_chunk; fc; fc = fc->fc_cdr)
+  for (find_chunk *fc = fv_chunk; fc; fc = fc->fc_cdr)
     for (filer_data *f = fc->fc_data, *fe = f + fc->fc_used; f < fe; f++)
       {
         if (last && cur == -1 && strcaseeq (last, f->name))
@@ -567,9 +567,10 @@ compare_filename (const TCHAR *s1, const TCHAR *s2, int param)
       _TUCHAR c1 = *p1++, c2 = *p2++;
       if (digit_char_p (c1) && digit_char_p (c2))
         {
-          for (const _TUCHAR *const b1 = p1 - 1; digit_char_p (*p1); p1++)
+          const _TUCHAR *const b1 = p1 - 1, *const b2 = p2 - 1;
+          for (; digit_char_p (*p1); p1++)
             ;
-          for (const _TUCHAR *const b2 = p2 - 1; digit_char_p (*p2); p2++)
+          for (; digit_char_p (*p2); p2++)
             ;
           int l1 = p1 - b1, l2 = p2 - b2;
           if (l1 != l2)
@@ -886,11 +887,13 @@ void
 FilerView::disk_space (double nbytes, TCHAR *buf, int c)
 {
   const TCHAR *const u[] = {_T("B"), _T("KB"), _T("MB"), _T("GB"), _T("TB")};
-  for (int i = 0; i < _countof (u) - 1 && c != *u[i] && nbytes >= 1024.0;
+  int i;
+  for (i = 0; i < _countof (u) - 1 && c != *u[i] && nbytes >= 1024.0;
        i++, nbytes /= 1024.0)
     ;
   _stprintf (buf, _T("%.2f"), nbytes);
-  for (TCHAR *b = buf + _tcslen (buf); b > buf && b[-1] == _T('0'); b--)
+  TCHAR *b;
+  for (b = buf + _tcslen (buf); b > buf && b[-1] == _T('0'); b--)
     ;
   if (b > buf && b[-1] == _T('.'))
     b--;

@@ -107,20 +107,20 @@ EnvStrings::setup (lisp lenv)
   TCHAR **nb = (TCHAR **)(e_buf + l);
   TCHAR **ne = nb;
 #ifdef UNICODE
-  for (e = _wenviron; *e; e++, ne++)
+  for (TCHAR **e = _wenviron; *e; e++, ne++)
 #else
-  for (e = environ; *e; e++, ne++)
+  for (char **e = environ; *e; e++, ne++)
 #endif
     *ne = *e;
 
   TCHAR *b = e_buf;
-  for (le = lenv; consp (le); le = xcdr (le))
+  for (lisp le = lenv; consp (le); le = xcdr (le))
     {
       lisp x = xcar (le);
       b = set (nb, ne, b, xcar (x), xcdr (x));
     }
 
-  for (d = 0; d < 26; d++)
+  for (int d = 0; d < 26; d++)
     {
       const TCHAR *dir = get_device_dir (d);
       int x = _tcslen (dir);
@@ -141,7 +141,7 @@ EnvStrings::setup (lisp lenv)
 
   e_env = (TCHAR *)xmalloc (l * sizeof TCHAR);
   TCHAR *p = e_env;
-  for (np = nb; np < ne; np++)
+  for (TCHAR **np = nb; np < ne; np++)
     if (**np)
       p = stpcpy (p, *np) + 1;
   *p = 0;
@@ -633,8 +633,8 @@ class process_input_stream: public byte_input_stream
             {
             case eol_crlf:
               {
-                for (u_char *d = p_buf, *s = p_buf, *const se = s + l;
-                     s < se; s++)
+                u_char *d = p_buf, *s = p_buf, *const se = s + l;
+                for (; s < se; s++)
                   if (*s != '\r')
                     *d++ = *s;
                 l = d - p_buf;

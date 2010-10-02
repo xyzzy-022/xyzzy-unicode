@@ -872,7 +872,8 @@ preview_dialog::scale_command (int code)
                                     WPARAM (-1), LPARAM (buf));
         if (i != CB_ERR)
           return 1;
-        for (TCHAR *b = buf; *b == _T(' '); b++)
+        TCHAR *b;
+        for (b = buf; *b == _T(' '); b++)
           ;
         TCHAR *be;
         long v = _tcstol (b, &be, 10);

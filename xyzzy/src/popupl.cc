@@ -169,7 +169,7 @@ Fpopup_list (lisp list, lisp callback, lisp lpoint)
 
   HDC hdc = GetDC (hwnd_popup);
   HGDIOBJ of = SelectObject (hdc, hf);
-  for (p = list; consp (p); p = xcdr (p))
+  for (lisp p = list; consp (p); p = xcdr (p))
     {
       lisp s = xcar (p);
       TCHAR b[1024];
