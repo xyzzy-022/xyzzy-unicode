@@ -1,5 +1,7 @@
 #include "ed.h"
-#include <float.h>
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <limits>
 #include <new.h>
 #include <io.h>
 #include <eh.h>
@@ -18,10 +20,6 @@
 #ifdef DEBUG
 # include "mainframe.h"
 # include <crtdbg.h>
-#endif
-
-#ifndef M_PI
-# define M_PI 3.141592653589793
 #endif
 
 const TCHAR Application::ToplevelClassName[] = _T("@");
@@ -279,29 +277,20 @@ init_env_symbols (const TCHAR *config_path, const TCHAR *ini_file)
   init_windows_dir ();
 }
 
-#pragma optimize ("g", off)
 static void
 init_math_symbols ()
 {
 #define CP(T, F) (xsymbol_value (T) = xsymbol_value (F))
+  using std::numeric_limits;
 
-  xsymbol_value (Qmost_positive_single_float) = make_single_float (FLT_MAX);
-  xsymbol_value (Qmost_negative_single_float) = make_single_float (-FLT_MAX);
-  float fl, fe;
-  for (fl = 1.0F, fe = 1.1F; fl && fe > fl; fe = fl, fl /= 2.0F)
-    ;
-  xsymbol_value (Qleast_positive_single_float) = make_single_float (fe);
-  xsymbol_value (Qleast_negative_single_float) = make_single_float (-fe);
-  xsymbol_value (Qleast_positive_normalized_single_float) =
-    make_single_float (FLT_MIN);
-  xsymbol_value (Qleast_negative_normalized_single_float) =
-    make_single_float (-FLT_MIN);
-  for (fl = 1.0F, fe = 1.1F; 1.0F + fl != 1.0F && fe > fl; fe = fl, fl /= 2.0F)
-    ;
-  xsymbol_value (Qsingle_float_epsilon) = make_single_float (fe);
-  for (fl = 1.0F, fe = 1.1F; 1.0F - fl != 1.0F && fe > fl; fe = fl, fl /= 2.0F)
-    ;
-  xsymbol_value (Qsingle_float_negative_epsilon) = make_single_float (fe);
+  xsymbol_value (Qmost_positive_single_float) = make_single_float (numeric_limits<float>::max());
+  xsymbol_value (Qmost_negative_single_float) = make_single_float (-numeric_limits<float>::max());
+  xsymbol_value (Qleast_positive_single_float) = make_single_float (numeric_limits<float>::denorm_min());
+  xsymbol_value (Qleast_negative_single_float) = make_single_float (-numeric_limits<float>::denorm_min());
+  xsymbol_value (Qleast_positive_normalized_single_float) = make_single_float (numeric_limits<float>::min());
+  xsymbol_value (Qleast_negative_normalized_single_float) = make_single_float (-numeric_limits<float>::min());
+  xsymbol_value (Qsingle_float_epsilon) = make_single_float (numeric_limits<float>::epsilon());
+  xsymbol_value (Qsingle_float_negative_epsilon) = make_single_float (numeric_limits<float>::epsilon() / 2.0F);
 
   CP (Qmost_positive_short_float, Qmost_positive_single_float);
   CP (Qmost_negative_short_float, Qmost_negative_single_float);
@@ -314,23 +303,14 @@ init_math_symbols ()
   CP (Qshort_float_epsilon, Qsingle_float_epsilon);
   CP (Qshort_float_negative_epsilon, Qsingle_float_negative_epsilon);
 
-  xsymbol_value (Qmost_positive_double_float) = make_double_float (DBL_MAX);
-  xsymbol_value (Qmost_negative_double_float) = make_double_float (-DBL_MAX);
-  double dl, de;
-  for (dl = 1.0, de = 1.1; dl && de > dl; de = dl, dl /= 2.0)
-    ;
-  xsymbol_value (Qleast_positive_double_float) = make_double_float (de);
-  xsymbol_value (Qleast_negative_double_float) = make_double_float (-de);
-  xsymbol_value (Qleast_positive_normalized_double_float) =
-    make_double_float (DBL_MIN);
-  xsymbol_value (Qleast_negative_normalized_double_float) =
-    make_double_float (-DBL_MIN);
-  for (dl = 1.0, de = 1.1; 1.0 + dl != 1.0 && de > dl; de = dl, dl /= 2.0)
-    ;
-  xsymbol_value (Qdouble_float_epsilon) = make_double_float (de);
-  for (dl = 1.0, de = 1.1; 1.0 - dl != 1.0 && de > dl; de = dl, dl /= 2.0)
-    ;
-  xsymbol_value (Qdouble_float_negative_epsilon) = make_double_float (de);
+  xsymbol_value (Qmost_positive_double_float) = make_double_float (numeric_limits<double>::max());
+  xsymbol_value (Qmost_negative_double_float) = make_double_float (-numeric_limits<double>::max());
+  xsymbol_value (Qleast_positive_double_float) = make_double_float (numeric_limits<double>::denorm_min());
+  xsymbol_value (Qleast_negative_double_float) = make_double_float (-numeric_limits<double>::denorm_min());
+  xsymbol_value (Qleast_positive_normalized_double_float) = make_double_float (numeric_limits<double>::min());
+  xsymbol_value (Qleast_negative_normalized_double_float) = make_double_float (-numeric_limits<double>::min());
+  xsymbol_value (Qdouble_float_epsilon) = make_double_float (numeric_limits<double>::epsilon());
+  xsymbol_value (Qdouble_float_negative_epsilon) = make_double_float (numeric_limits<double>::epsilon() / 2.0);
 
   CP (Qmost_positive_long_float, Qmost_positive_double_float);
   CP (Qleast_positive_long_float, Qleast_positive_double_float);
@@ -343,15 +323,14 @@ init_math_symbols ()
   CP (Qlong_float_epsilon, Qdouble_float_epsilon);
   CP (Qlong_float_negative_epsilon, Qdouble_float_negative_epsilon);
 
-  xsymbol_value (Qmost_positive_fixnum) = make_fixnum (LONG_MAX);
-  xsymbol_value (Qmost_negative_fixnum) = make_fixnum (LONG_MIN);
+  xsymbol_value (Qmost_positive_fixnum) = make_fixnum (numeric_limits<long>::max());
+  xsymbol_value (Qmost_negative_fixnum) = make_fixnum (numeric_limits<long>::min());
 
   xsymbol_value (Qpi) = make_double_float (M_PI);
   xsymbol_value (Qimag_two) = make_complex (make_fixnum (0), make_fixnum (2));
 
 #undef CP
 }
-#pragma optimize ("", on)
 
 static void
 init_symbol_value_once ()
