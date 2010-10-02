@@ -330,9 +330,6 @@
     <ClCompile Include="src\chname.cc">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\ctl3d.cc">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="src\gime.cc">
       <Filter>ソース ファイル</Filter>
     </ClCompile>

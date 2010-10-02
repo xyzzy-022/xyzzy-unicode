@@ -1,7 +1,6 @@
 #include "ed.h"
 #include <imm.h>
 #include <process.h>
-#include "ctl3d.h"
 #include "environ.h"
 #include "fnkey.h"
 #include "mainframe.h"
@@ -700,7 +699,6 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
     case WM_SYSCOLORCHANGE:
       sysdep.load_colors ();
-      Ctl3d::color_change ();
       Window::init_colors ();
       reload_caret_colors ();
       Window::update_last_caret ();
@@ -714,7 +712,6 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
     case WM_WININICHANGE:
     /*case WM_SETTINGCHANGE:*/
-      Ctl3d::ini_change ();
       sysdep.load_settings ();
       g_frame.reload_settings ();
       {

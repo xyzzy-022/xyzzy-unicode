@@ -5,7 +5,6 @@
 #include <eh.h>
 #include <fcntl.h>
 #include <objbase.h>
-#include "ctl3d.h"
 #include "environ.h"
 #include "except.h"
 #include "privctrl.h"
@@ -791,8 +790,6 @@ init_app (HINSTANCE hinst, int passed_cmdshow, int &ole_initialized)
   copy_handle (STD_INPUT_HANDLE, 0);
   copy_handle (STD_OUTPUT_HANDLE, 1);
   copy_handle (STD_ERROR_HANDLE, 2);
-
-  Ctl3d::enable (hinst);
 
   _set_new_handler (handle_new_failure);
   _set_se_translator (se_handler);
