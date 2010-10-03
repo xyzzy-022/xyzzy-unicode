@@ -195,7 +195,7 @@ askpass1 (const TCHAR *path, int noshare_ok)
       *WINFS::wfs_share_cache = 0;
       return 1;
     }
-  _tcscpy (WINFS::wfs_share_cache, remote);
+  _tcscpy_s (WINFS::wfs_share_cache, remote);
   SetLastError (e);
   return 0;
 }

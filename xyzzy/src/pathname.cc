@@ -126,7 +126,7 @@ set_device_dir (const TCHAR *path, int f)
       TCHAR curdir[PATH_MAX];
       if (GetCurrentDirectory (_countof (curdir), curdir)
           && alpha_char_p (_TUCHAR (*curdir)) && curdir[1] == _T(':'))
-        _tcscpy (devdirs[_char_downcase (*curdir) - _T('a')], curdir + 2);
+        _tcscpy_s (devdirs[_char_downcase (*curdir) - _T('a')], curdir + 2);
     }
   return 1;
 }
@@ -253,7 +253,7 @@ parse_namestring (pathbuf_t buf, const Char *name, int nl, const Char *defalt, i
       if (!abs)
         {
           int l = path.deve - path.dev;
-          if (tem.deve - tem.dev == l && !memicmp (path.dev, tem.dev, sizeof *path.dev * l))
+          if (tem.deve - tem.dev == l && !_memicmp (path.dev, tem.dev, sizeof *path.dev * l))
             b = copy_Chars (b, tem.trail, tem.traile);
           else
             b = get_device_dir (b, path.dev, l);
@@ -704,7 +704,7 @@ Ftruename (lisp pathname)
   if (!sl)
     sl = jindex (path, _T('\\'));
   if (!sl)
-    _tcscpy (truename, path);
+    _tcscpy_s (truename, path);
   else
     {
       sl++;
@@ -1208,7 +1208,7 @@ rename_short_name (const TCHAR *fpath, const TCHAR *tname, const TCHAR *longname
 
   TCHAR buf[PATH_MAX * 3];
   map_backsl_to_sl (tempname);
-  _stprintf (buf, get_message_string (Erename_failed), tempname, realpath);
+  _stprintf_s (buf, get_message_string (Erename_failed), tempname, realpath);
   MsgBox (get_active_window (), buf, TitleBarString,
           MB_OK | MB_ICONEXCLAMATION,
           xsymbol_value (Vbeep_on_error) != Qnil);

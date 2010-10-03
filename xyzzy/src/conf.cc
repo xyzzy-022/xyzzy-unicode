@@ -15,7 +15,7 @@ void
 write_conf (const TCHAR *section, const TCHAR *name, long value, int hex)
 {
   TCHAR buf[32];
-  _stprintf (buf, hex ? _T("#%lx") : _T("%ld"), value);
+  _stprintf_s (buf, hex ? _T("#%lx") : _T("%ld"), value);
   WritePrivateProfileString (section, name, buf, app.ini_file_path);
 }
 
@@ -32,7 +32,7 @@ void
 write_conf (const TCHAR *section, const TCHAR *name, const RECT &r)
 {
   TCHAR buf[128];
-  _stprintf (buf, _T("(%d,%d)-(%d,%d)"), r.left, r.top, r.right, r.bottom);
+  _stprintf_s (buf, _T("(%d,%d)-(%d,%d)"), r.left, r.top, r.right, r.bottom);
   WritePrivateProfileString (section, name, buf, app.ini_file_path);
 }
 
@@ -40,7 +40,7 @@ void
 write_conf (const TCHAR *section, const TCHAR *name, const LOGFONT &lf)
 {
   TCHAR buf[128];
-  _stprintf (buf, _T("%d,\"%s\",%d"), lf.lfHeight, lf.lfFaceName, lf.lfCharSet);
+  _stprintf_s (buf, _T("%d,\"%s\",%d"), lf.lfHeight, lf.lfFaceName, lf.lfCharSet);
   WritePrivateProfileString (section, name, buf, app.ini_file_path);
 }
 
@@ -48,7 +48,7 @@ void
 write_conf (const TCHAR *section, const TCHAR *name, const PRLOGFONT &lf)
 {
   TCHAR buf[128];
-  _stprintf (buf, _T("%d,\"%s\",%d,%d,%d"), lf.point, lf.face, lf.charset, lf.bold, lf.italic);
+  _stprintf_s (buf, _T("%d,\"%s\",%d,%d,%d"), lf.point, lf.face, lf.charset, lf.bold, lf.italic);
   WritePrivateProfileString (section, name, buf, app.ini_file_path);
 }
 
@@ -56,12 +56,12 @@ void
 write_conf (const TCHAR *section, const TCHAR *name, const WINDOWPLACEMENT &w)
 {
   TCHAR buf[128];
-  _stprintf (buf, _T("(%d,%d)-(%d,%d),%d"),
-             w.rcNormalPosition.left,
-             w.rcNormalPosition.top,
-             w.rcNormalPosition.right,
-             w.rcNormalPosition.bottom,
-             w.showCmd);
+  _stprintf_s (buf, _T("(%d,%d)-(%d,%d),%d"),
+               w.rcNormalPosition.left,
+               w.rcNormalPosition.top,
+               w.rcNormalPosition.right,
+               w.rcNormalPosition.bottom,
+               w.showCmd);
   WritePrivateProfileString (section, name, buf, app.ini_file_path);
 }
 
@@ -86,7 +86,7 @@ delete_conf (const TCHAR *section)
 static int
 parse_int (const TCHAR *s, int &v)
 {
-  return _stscanf (s, *s == _T('#') ? _T("#%x") : _T("%d"), &v) == 1;
+  return _stscanf_s (s, *s == _T('#') ? _T("#%x") : _T("%d"), &v) == 1;
 }
 
 int
@@ -103,7 +103,7 @@ read_conf (const TCHAR *section, const TCHAR *name, int &value)
 static int
 parse_long (const TCHAR *s, u_long &v)
 {
-  return _stscanf (s, *s == _T('#') ? _T("#%lx") : _T("%ld"), &v) == 1;
+  return _stscanf_s (s, *s == _T('#') ? _T("#%lx") : _T("%ld"), &v) == 1;
 }
 
 int
@@ -144,7 +144,7 @@ read_conf (const TCHAR *section, const TCHAR *name, RECT &rr)
   if (!l || l >= _countof (buf) - 1)
     return 0;
   int t, r, b;
-  if (_stscanf (buf, _T("(%d,%d)-(%d,%d)"), &l, &t, &r, &b) != 4)
+  if (_stscanf_s (buf, _T("(%d,%d)-(%d,%d)"), &l, &t, &r, &b) != 4)
     return 0;
   rr.left = l;
   rr.top = t;
@@ -162,7 +162,7 @@ read_conf (const TCHAR *section, const TCHAR *name, LOGFONT &lf)
     return 0;
   memset (&lf, 0, sizeof lf);
   int h, cs;
-  if (_stscanf (buf, _T("%d,\"%31[^\"]\",%d"), &h, lf.lfFaceName, &cs) != 3)
+  if (_stscanf_s (buf, _T("%d,\"%31[^\"]\",%d"), &h, lf.lfFaceName, _countof (lf.lfFaceName), &cs) != 3)
     return 0;
   lf.lfHeight = h;
   lf.lfCharSet = cs;
@@ -177,8 +177,8 @@ read_conf (const TCHAR *section, const TCHAR *name, PRLOGFONT &lf)
   if (!l || l >= _countof (buf) - 1)
     return 0;
   int point, cs, bold, italic;
-  if (_stscanf (buf, _T("%d,\"%31[^\"]\",%d,%d,%d"),
-                &point, lf.face, &cs, &bold, &italic) != 5)
+  if (_stscanf_s (buf, _T("%d,\"%31[^\"]\",%d,%d,%d"),
+                  &point, lf.face, _countof (lf.face), &cs, &bold, &italic) != 5)
     return 0;
   lf.point = point;
   lf.charset = cs;
@@ -195,7 +195,7 @@ read_conf (const TCHAR *section, const TCHAR *name, WINDOWPLACEMENT &w)
   if (!l || l >= _countof (buf) - 1)
     return 0;
   int t, r, b, s;
-  if (_stscanf (buf, _T("(%d,%d)-(%d,%d),%d"), &l, &t, &r, &b, &s) != 5)
+  if (_stscanf_s (buf, _T("(%d,%d)-(%d,%d),%d"), &l, &t, &r, &b, &s) != 5)
     return 0;
   w.rcNormalPosition.left = l;
   w.rcNormalPosition.top = t;
@@ -249,9 +249,9 @@ conf_load_geometry (HWND hwnd, const TCHAR *section,
   RECT cr (w.rcNormalPosition);
 
   TCHAR b[64];
-  _stprintf (b, _T("%s%dx%d"), prefix ? prefix : _T(""),
-             GetSystemMetrics (SM_CXSCREEN),
-             GetSystemMetrics (SM_CYSCREEN));
+  _stprintf_s (b, _T("%s%dx%d"), prefix ? prefix : _T(""),
+               GetSystemMetrics (SM_CXSCREEN),
+               GetSystemMetrics (SM_CYSCREEN));
   if (!read_conf (section, b, w))
     return 0;
 
@@ -275,9 +275,9 @@ conf_save_geometry (HWND hwnd, const TCHAR *section,
   if (!GetWindowPlacement (hwnd, &w))
     return;
   TCHAR b[64];
-  _stprintf (b, _T("%s%dx%d"), prefix ? prefix : _T(""),
-             GetSystemMetrics (SM_CXSCREEN),
-             GetSystemMetrics (SM_CYSCREEN));
+  _stprintf_s (b, _T("%s%dx%d"), prefix ? prefix : _T(""),
+               GetSystemMetrics (SM_CXSCREEN),
+               GetSystemMetrics (SM_CYSCREEN));
 
   if (!posp || !sizep)
     {
@@ -500,9 +500,9 @@ reg2ini_colors ()
   cf.name = name;
   for (int i = 1; i <= 16; i++)
     {
-      _stprintf (name, _T("%s%d"), cfgFg, i);
+      _stprintf_s (name, _T("%s%d"), cfgFg, i);
       reg2ini_int (cfgColors, r, cf);
-      _stprintf (name, _T("%s%d"), cfgBg, i);
+      _stprintf_s (name, _T("%s%d"), cfgBg, i);
       reg2ini_int (cfgColors, r, cf);
     }
 
@@ -510,7 +510,7 @@ reg2ini_colors ()
   if (r.get (_T("CustColors"), c, sizeof c) == sizeof c)
     for (int i = 0; i < 16; i++)
       {
-        _stprintf (name, _T("%s%d"), cfgCustColor, i);
+        _stprintf_s (name, _T("%s%d"), cfgCustColor, i);
         write_conf (cfgColors, name, long (c[i]), 1);
       }
 }
@@ -562,7 +562,7 @@ reg2ini_geometry ()
         {
           WINDOWPLACEMENT w;
           TCHAR key[256];
-          _stprintf (key, _T("%s\\%s\\%s"), Registry::Settings, cfgGeometry, name);
+          _stprintf_s (key, _T("%s\\%s\\%s"), Registry::Settings, cfgGeometry, name);
           ReadRegistry r (key);
           if (!r.fail ()
               && r.get (cfgShowCmd, (int *)&w.showCmd)

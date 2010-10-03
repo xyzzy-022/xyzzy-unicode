@@ -148,7 +148,7 @@ iset::find_topic (ifile *f)
         buf[i] = GETC ();
       if (help_index >= 0 && help_index < f->if_nfiles)
         {
-          if (nchars == len && !memicmp (buf, topic, len))
+          if (nchars == len && !_memicmp (buf, topic, len))
             {
               is_match = &f->if_headers[help_index];
               f->if_headers[help_index].ih_match = iheader::strict;
@@ -156,7 +156,7 @@ iset::find_topic (ifile *f)
             }
           else if (nchars > len
                    && f->if_headers[help_index].ih_match == iheader::nomatch
-                   && !memicmp (buf, topic, len))
+                   && !_memicmp (buf, topic, len))
             {
               f->if_headers[help_index].ih_match = iheader::ambigous;
               is_nambigous++;

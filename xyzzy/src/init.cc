@@ -141,8 +141,8 @@ init_home_dir ()
         return;
     }
 
-  TCHAR *drive = _tgetenv (_T("HOMEDRIVE"));
-  TCHAR *dir = _tgetenv (_T("HOMEPATH"));
+  const TCHAR *drive = _tgetenv (_T("HOMEDRIVE"));
+  const TCHAR *dir = _tgetenv (_T("HOMEPATH"));
   if (drive && dir && _tcslen (drive) + _tcslen (dir) < _countof (path) - 1)
     {
       _tcscpy (stpcpy (path, drive), dir);

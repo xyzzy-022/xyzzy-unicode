@@ -430,19 +430,19 @@ Fdirectory (lisp dirname, lisp keys)
   if (f != -1 && f & FILE_ATTRIBUTE_DIRECTORY)
     {
       if (p && p[1])
-        _tcscat (path, _T("/"));
+        _tcscat_s (path, _T("/"));
       *pat = 0;
     }
   else
     {
       if (p)
         {
-          _tcscpy (pat, p + 1);
+          _tcscpy_s (pat, p + 1);
           p[1] = 0;
         }
       else
         {
-          _tcscpy (pat, path);
+          _tcscpy_s (pat, path);
           *path = 0;
         }
     }

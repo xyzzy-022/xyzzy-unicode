@@ -34,7 +34,7 @@ main ()
   LOGFONTA lf;
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = HEIGHT;
-  strcpy (lf.lfFaceName, FACE);
+  strcpy_s (lf.lfFaceName, FACE);
   HGDIOBJ of = SelectObject (hdc, CreateFontIndirectA (&lf));
 
   ABC abc[UNICODE_SMLCDM_MAX - UNICODE_SMLCDM_MIN + 1];

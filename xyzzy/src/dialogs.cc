@@ -135,7 +135,7 @@ static void
 store_buffer_size (HWND list, const Buffer *bp, LV_ITEM *lvi)
 {
   TCHAR b[32];
-  _stprintf (b, _T("%d"), bp->b_nchars);
+  _stprintf_s (b, _T("%d"), bp->b_nchars);
   lvi->pszText = b;
   ListView_SetItem (list, lvi);
 }
@@ -796,7 +796,7 @@ Ffile_name_dialog (lisp keys)
       map_sl_to_backsl (buf);
     }
   else if (!filter_size)
-    _tcscpy (buf, _T("*.*"));
+    _tcscpy_s (buf, _T("*.*"));
   else
     *buf = 0;
   ofn.lpstrFile = buf;
@@ -836,7 +836,7 @@ Ffile_name_dialog (lisp keys)
     {
       if (buf[l] == _T('\\'))
         l++;
-      _tcscpy (buf, buf + l);
+      _tcscpy_s (buf, buf + l);
     }
 
   TCHAR *title = 0;
@@ -1009,7 +1009,7 @@ ODN::selch (HWND hwnd, int id)
     }
   else
     {
-      _tcscpy (odn_result, path);
+      _tcscpy_s (odn_result, path);
       store_dirname (hwnd);
     }
 }
@@ -1112,7 +1112,7 @@ Fdirectory_name_dialog (lisp keys)
   odn.hInstance = app.hinst;
 
   TCHAR buf[PATH_MAX];
-  _tcscpy (buf, _T("FOO"));
+  _tcscpy_s (buf, _T("FOO"));
   odn.lpstrFile = buf;
   odn.nMaxFile = _countof (buf);
 
@@ -1131,7 +1131,7 @@ Fdirectory_name_dialog (lisp keys)
       odn.lpstrInitialDir = odn.odn_result;
     }
   else
-    _tcscpy (odn.odn_result, sysdep.curdir);
+    _tcscpy_s (odn.odn_result, sysdep.curdir);
 
   TCHAR *title = 0;
   if (stringp (ltitle))
@@ -1308,7 +1308,7 @@ list_volume_name::thread_main ()
         if (m_drives & (1 << (c - _T('a'))))
           {
             TCHAR name[5];
-            _stprintf (name, _T("%c:\\"), c);
+            _stprintf_s (name, _T("%c:\\"), c);
             int type = GetDriveType (name);
             TCHAR volname[1024];
             if (type != DRIVE_REMOVABLE
@@ -1393,7 +1393,7 @@ DriveDialog::insert_drives (HWND hwnd)
             cur = item;
 
           TCHAR name[5];
-          _stprintf (name, _T("%c:\\"), c);
+          _stprintf_s (name, _T("%c:\\"), c);
           int type = GetDriveType (name);
 
           LV_ITEM lvi;

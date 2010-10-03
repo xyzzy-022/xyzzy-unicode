@@ -2733,7 +2733,7 @@ make_symbol_name (symbols *p, int n, const char *)
   for (int i = 0; i < n; i++, p++)
     if (!p->name)
       {
-        char *s = strdup (p->sym + 1);
+        char *s = _strdup (p->sym + 1);
         for (char *s2 = s; *s2; *s2++)
           if (*s2 == '_')
             *s2 = '-';

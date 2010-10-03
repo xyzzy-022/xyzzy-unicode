@@ -46,7 +46,7 @@ print_settings::init_faces ()
   for (int i = 0; i < FONT_MAX; i++)
     if (!*ps_font[i].face)
       {
-        _tcscpy (ps_font[i].face, FontSet::default_face (i, 1));
+        _tcscpy_s (ps_font[i].face, FontSet::default_face (i, 1));
         ps_font[i].charset = FontSet::default_charset (i);
         ps_font[i].point = 100;
         ps_font[i].bold = 0;
@@ -77,9 +77,9 @@ print_settings::load_conf ()
   if (read_conf (cfgPrint, cfgFoldColumns, x) && x >= 0)
     ps_fold_width = x;
   if (!read_conf (cfgPrint, cfgHeader, ps_header, sizeof ps_header))
-    _tcscpy (ps_header, default_header);
+    _tcscpy_s (ps_header, default_header);
   if (!read_conf (cfgPrint, cfgFooter, ps_footer, sizeof ps_footer))
-    _tcscpy (ps_footer, default_footer);
+    _tcscpy_s (ps_footer, default_footer);
   if (read_conf (cfgPrint, cfgHeaderOn, x))
     ps_header_on = x ? 1 : 0;
   if (read_conf (cfgPrint, cfgFooterOn, x))
@@ -156,7 +156,7 @@ print_settings::make_font (HDC hdc, int charset, int height) const
 
   LOGFONT lf;
   bzero (&lf, sizeof lf);
-  _tcscpy (lf.lfFaceName, ps_font[charset].face);
+  _tcscpy_s (lf.lfFaceName, ps_font[charset].face);
   lf.lfHeight = height;
   lf.lfCharSet = ps_font[charset].charset;
   lf.lfItalic = ps_font[charset].italic;
@@ -982,7 +982,7 @@ print_engine::paint_line (HDC hdc, int x, int y, Point &cur_point, long &linenum
       if (hdc && pe_settings.ps_print_linenum)
         {
           char b[16];
-          sprintf (b, "%*d ", LINENUM_WIDTH, linenum % 1000000);
+          sprintf_s (b, "%*d ", LINENUM_WIDTH, linenum % 1000000);
           if (pe_fixed_pitch)
             for (int i = 0; i < LINENUM_WIDTH + 1; i++)
               paint_ascii (ctx, b[i]);
@@ -1437,7 +1437,7 @@ TCHAR *
 print_engine::fmt (TCHAR *b, TCHAR *be, const TCHAR *f, int v)
 {
   TCHAR s[256];
-  _stprintf (s, f, v);
+  _stprintf_s (s, f, v);
   return stpncpy (b, s, be - b);
 }
 
@@ -1857,7 +1857,7 @@ print_engine::doprint1 (HWND hwnd)
   do
     {
       TCHAR b[32];
-      _stprintf (b, _T("Page %u"), page++);
+      _stprintf_s (b, _T("Page %u"), page++);
       SetDlgItemText (printing, IDC_PAGENUM, b);
 
       if (StartPage (pe_dev) == SP_ERROR)

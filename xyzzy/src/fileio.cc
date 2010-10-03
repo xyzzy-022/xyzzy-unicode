@@ -182,9 +182,9 @@ Buffer::read_file_contents (ReadFileContext &rfc, xread_stream &sin)
       if (int (t - last_tick) >= 300)
         {
           last_tick = t;
-          _stprintf (msg, _T("Reading %d/%d bytes..."),
-                     total_bytes - sin.input_stream ().rest_chars (),
-                     total_bytes);
+          _stprintf_s (msg, _T("Reading %d/%d bytes..."),
+                       total_bytes - sin.input_stream ().rest_chars (),
+                       total_bytes);
           app.status_window.text (msg);
         }
     }
@@ -626,7 +626,7 @@ Buffer::make_auto_save_file_name (TCHAR *name)
 
       lisp x = symbol_value (Vauto_save_to_backup_directory, this);
       if (x == Qunbound || x == Qnil)
-        _tcscpy (orgname, xorgname);
+        _tcscpy_s (orgname, xorgname);
       else if (!backup_dirname (orgname, xorgname, this))
         return 0;
 
@@ -843,7 +843,7 @@ Buffer::make_backup_file_name (TCHAR *backup, const TCHAR *xoriginal)
 
   if (same_file_p (backup, xoriginal))
     {
-      _tcscpy (name,_T( "%BACKUP%~"));
+      _tcscpy (name, _T( "%BACKUP%~"));
       fail = Ecannot_create_backup_file;
       if (same_file_p (backup, xoriginal))
         *backup = 0;

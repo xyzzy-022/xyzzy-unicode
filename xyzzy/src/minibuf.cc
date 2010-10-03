@@ -6,7 +6,7 @@ static Buffer *
 create_minibuffer ()
 {
   TCHAR b[32];
-  _stprintf (b, _T(" *Minibuf%d*"), minibuffer_recursive_level);
+  _stprintf_s (b, _T(" *Minibuf%d*"), minibuffer_recursive_level);
   return Buffer::make_internal_buffer (b);
 }
 
@@ -17,7 +17,7 @@ load_default (const char *fmt, lisp keys, int number)
     return Qnil;
 
   char b[32];
-  sprintf (b, fmt, number);
+  sprintf_s (b, fmt, number);
   int l = strlen (b);
   Char w[32];
   a2w (w, b, l);
@@ -127,9 +127,9 @@ read_minibuffer (const Char *prompt, long prompt_length, lisp def,
       if (xsymbol_value (Vprefix_args) == Vuniversal_argument
           && safe_fixnum_value (xsymbol_value (Vprefix_value), &n)
           && n == 4)
-        _tcscpy (bp->b_prompt_arg, _T("C-u "));
+        _tcscpy_s (bp->b_prompt_arg, _T("C-u "));
       else if (safe_fixnum_value (xsymbol_value (Vprefix_value), &n))
-        _stprintf (bp->b_prompt_arg, _T("%d "), n);
+        _stprintf_s (bp->b_prompt_arg, _T("%d "), n);
     }
   bp->b_prompt_columns += _tcslen (bp->b_prompt_arg);
 
@@ -599,7 +599,7 @@ completion::complete_filename (const TCHAR *path, lisp show_dots, lisp ignores)
       if (show_dots == Qnil && *fd->cFileName == _T('.'))
         continue;
       if (fd->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        _tcscat (fd->cFileName, _T("/"));
+        _tcscat_s (fd->cFileName, _T("/"));
       else if (c_type == Kdirectory_name)
         continue;
 

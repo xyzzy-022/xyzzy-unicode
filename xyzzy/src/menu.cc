@@ -588,7 +588,7 @@ modify_menu_string (HMENU hmenu, int id, int pos, const Char *b, const Char *be)
   TCHAR olds[1024], news[2048];
   if (!GetMenuString (hmenu, pos, olds, _countof (olds), MF_BYPOSITION))
     return;
-  _tcscpy (news, olds);
+  _tcscpy_s (news, olds);
   TCHAR *p = jindex (news, ACC_SEP);
   if (p)
     *p = 0;

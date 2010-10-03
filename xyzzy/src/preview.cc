@@ -762,7 +762,7 @@ preview_dialog::set_scale_combo ()
         return;
       }
   TCHAR b[64];
-  _stprintf (b, _T("%d%%"), p_page.get_scale ());
+  _stprintf_s (b, _T("%d%%"), p_page.get_scale ());
   SetDlgItemText (p_hwnd, IDC_SCALE, b);
 }
 
@@ -929,7 +929,7 @@ preview_dialog::update_page (int page, int total)
 {
   TCHAR b[128];
   //  sprintf (b, "ページ %d/%d", page, total);
-  _stprintf (b, _T("ページ %d"), page);
+  _stprintf_s (b, _T("ページ %d"), page);
   SendMessage (p_hwnd_sw, SB_SETTEXT, 0, LPARAM (b));
 }
 

@@ -220,7 +220,7 @@ create_popup ()
           memset (&cm.lfStatusFont, 0, sizeof cm.lfStatusFont);
           cm.lfStatusFont.lfHeight = MulDiv (9, GetDeviceCaps (hdc, LOGPIXELSY), 72);
           cm.lfStatusFont.lfCharSet = SHIFTJIS_CHARSET;
-          _tcscpy (cm.lfStatusFont.lfFaceName, _T("MS UI Gothic"));
+          _tcscpy_s (cm.lfStatusFont.lfFaceName, _T("MS UI Gothic"));
           ReleaseDC (hwnd_popup, hdc);
         }
       hfont_popup = CreateFontIndirect (&cm.lfStatusFont);

@@ -63,7 +63,7 @@ ChooseFontP::enum_font_size_proc (ENUMLOGFONT *elf, NEWTEXTMETRIC *, int type, L
           if (SendMessage (hwnd, LB_FINDSTRINGEXACT, WPARAM (-1), LPARAM (_T("  6"))) == LB_ERR)
             for (int i = 0; i < _countof (tt); i++)
               {
-                _stprintf (b, _T("%3d"), tt[i]);
+                _stprintf_s (b, _T("%3d"), tt[i]);
                 SendMessage (hwnd, LB_ADDSTRING, 0, LPARAM (b));
               }
         }
@@ -72,15 +72,15 @@ ChooseFontP::enum_font_size_proc (ENUMLOGFONT *elf, NEWTEXTMETRIC *, int type, L
           if (SendMessage (hwnd, LB_FINDSTRINGEXACT, WPARAM (-1), LPARAM (_T("  8"))) == LB_ERR)
             for (int i = 8; i <= 48; i++)
               {
-                _stprintf (b, _T("%3d"), i);
+                _stprintf_s (b, _T("%3d"), i);
                 SendMessage (hwnd, LB_ADDSTRING, 0, LPARAM (b));
               }
         }
     }
   else
     {
-      _stprintf (b, _T("%3d"), (pixel ? elf->elfLogFont.lfHeight
-                          : MulDiv (elf->elfLogFont.lfHeight, 72, dpi)));
+      _stprintf_s (b, _T("%3d"), (pixel ? elf->elfLogFont.lfHeight
+                                  : MulDiv (elf->elfLogFont.lfHeight, 72, dpi)));
       if (SendMessage (hwnd, LB_FINDSTRINGEXACT,
                        WPARAM (-1), LPARAM (b)) == LB_ERR)
         SendMessage (hwnd, LB_ADDSTRING, 0, LPARAM (b));
@@ -224,7 +224,7 @@ ChooseFontP::notify_font_size (HWND hwnd, int code)
   bzero (&lf, sizeof lf);
   lf.lfHeight = cf_param.fs_size_pixel ? _ttoi (b) : MulDiv (_ttoi (b), cf_dpi, 72);
   lf.lfCharSet = charset;
-  _tcscpy (lf.lfFaceName, name);
+  _tcscpy_s (lf.lfFaceName, name);
 
   cf_param.fs_logfont[lang] = lf;
 

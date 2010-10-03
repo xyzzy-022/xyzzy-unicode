@@ -376,20 +376,20 @@ cleanup_exception ()
   if (l >= 4 && !_tcsicmp (path + l - 4, _T(".exe")))
     _tcscpy (path + l - 4, _T(".BUG"));
   else
-    _tcscat (path, _T(".BUG"));
+    _tcscat_s (path, _T(".BUG"));
 
   TCHAR module[1024];
   if (!find_module_name (Win32Exception::r.ExceptionAddress, module))
     *module = 0;
 
-  FILE *fp = _tfopen (path, _T("w"));
-  if (!fp && GetTempPath (_countof (path), path))
+  FILE *fp = NULL;
+  if (_tfopen_s (&fp, path, _T("w")) && GetTempPath (_countof (path), path))
     {
       TCHAR *p = find_last_slash (path);
       if (!p || p[1])
-        _tcscat (path, _T("\\"));
-      _tcscat (path, _T("xyzzy.BUG"));
-      fp = _tfopen (path, _T("w"));
+        _tcscat_s (path, _T("\\"));
+      _tcscat_s (path, _T("xyzzy.BUG"));
+      _tfopen_s (&fp, path, _T("w"));
     }
   if (fp)
     {

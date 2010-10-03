@@ -693,9 +693,9 @@ Window::init_colors (const XCOLORREF *colors, const XCOLORREF *mlcolors,
   for (i = 1; i < _countof (w_textprop_forecolor); i++)
     {
       TCHAR b[32];
-      _stprintf (b, _T("%s%d"), cfgFg, i);
+      _stprintf_s (b, _T("%s%d"), cfgFg, i);
       write_conf (cfgColors, b, w_textprop_xforecolor[i].rgb, 1);
-      _stprintf (b, _T("%s%d"), cfgBg, i);
+      _stprintf_s (b, _T("%s%d"), cfgBg, i);
       write_conf (cfgColors, b, w_textprop_xbackcolor[i].rgb, 1);
     }
   flush_conf ();
@@ -783,10 +783,10 @@ Window::create_default_windows ()
   for (int i = 1; i < GLYPH_TEXTPROP_NCOLORS; i++)
     {
       TCHAR b[32];
-      _stprintf (b, _T("%s%d"), cfgFg, i);
+      _stprintf_s (b, _T("%s%d"), cfgFg, i);
       if (read_conf (cfgColors, b, c))
         fg[i] = c;
-      _stprintf (b, _T("%s%d"), cfgBg, i);
+      _stprintf_s (b, _T("%s%d"), cfgBg, i);
       if (read_conf (cfgColors, b, c))
         bg[i] = c;
     }
@@ -3313,7 +3313,7 @@ Window::paint_ruler (HDC hdc, const RECT &r, int x, int y, int column) const
   if (!(column % 10))
     {
       TCHAR buf[32];
-      int l = _stprintf (buf, _T("%d"), column);
+      int l = _stprintf_s (buf, _T("%d"), column);
       ExtTextOut (hdc, x - l * sysdep.ruler_ext.cx / 2, r.top,
                   ETO_CLIPPED, &r, buf, l, 0);
     }

@@ -393,7 +393,7 @@ filer_data::filer_data (const WIN32_FIND_DATA &fd)
   bytes = (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY
            ? -1.0
            : fd.nFileSizeHigh * 4294967296.0 + fd.nFileSizeLow);
-  _tcscpy (name, fd.cFileName);
+  _tcscpy_s (name, fd.cFileName);
   icon_index = ICON_INVALID;
 }
 

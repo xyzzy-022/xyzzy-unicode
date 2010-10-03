@@ -2061,9 +2061,9 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
             {
               TCHAR buf[32];
               if (plinenum >= 1000000)
-                _stprintf (buf, _T("%06d"), plinenum % 1000000);
+                _stprintf_s (buf, _T("%06d"), plinenum % 1000000);
               else
-                _stprintf (buf, _T("%6d"), plinenum);
+                _stprintf_s (buf, _T("%6d"), plinenum);
               int n = min (6, int (w_ch_max.cx));
               for (int i = 0; i < n; i++)
 #ifdef UNICODE

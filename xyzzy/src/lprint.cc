@@ -1,8 +1,8 @@
 #include "ed.h"
+#include <limits>
 #include "wstream.h"
 #include "sock.h"
 #include <math.h>
-#include <float.h>
 #include <stdarg.h>
 #include "oleconv.h"
 
@@ -13,7 +13,7 @@ static int special_condition_report (wStream &, lisp);
 
 struct fmt_float
 {
-  TCHAR buf[DBL_DIG + 16];
+  TCHAR buf[std::numeric_limits<double>::digits10 + 16];
   TCHAR *b0;
   TCHAR *be;
   int sign;
@@ -31,13 +31,13 @@ fmt_float::fmt_float (lisp lnumber)
   if (double_float_p (lnumber))
     {
       number = xdouble_float_value (lnumber);
-      prec = DBL_DIG + 1;
+      prec = std::numeric_limits<double>::digits10 + 1;
       fmt = NF_FLOAT_D;
     }
   else
     {
       number = coerce_to_double_float (lnumber);
-      prec = FLT_DIG + 1;
+      prec = std::numeric_limits<float>::digits10 + 1;
       fmt = NF_FLOAT_F;
     }
 
@@ -45,7 +45,9 @@ fmt_float::fmt_float (lisp lnumber)
     {
       USES_CONVERSION;
       TCHAR *buf1 = buf + 1;
-      for (be = stpcpy (buf1, A2T (_ecvt (number, prec, &exp, &sign)));
+      char cvt_buf[_CVTBUFSIZE];
+      _ecvt_s (cvt_buf, number, prec, &exp, &sign);
+      for (be = stpcpy (buf1, A2T (cvt_buf));
            be > buf1 && be[-1] == _T('0'); be--)
         ;
       b0 = buf1;
@@ -58,15 +60,15 @@ fmt_float::fmt_float (lisp lnumber)
       switch (_fpclass (number))
         {
         case _FPCLASS_NINF:
-          _tcscpy (buf, _T("#<-Inf>"));
+          _tcscpy_s (buf, _T("#<-Inf>"));
           break;
 
         case _FPCLASS_PINF:
-          _tcscpy (buf, _T("#<+Inf>"));
+          _tcscpy_s (buf, _T("#<+Inf>"));
           break;
 
         default:
-          _tcscpy (buf, _T("#<NaN>"));
+          _tcscpy_s (buf, _T("#<NaN>"));
           break;
         }
       b0 = 0;
@@ -826,7 +828,7 @@ print_flonum (wStream &stream, const print_control &, lisp lnumber)
           else
             stream.add (_T('e'));
           TCHAR b[10];
-          _stprintf (b, _T("%d"), f.exp);
+          _stprintf_s (b, _T("%d"), f.exp);
           stream.add (b);
         }
     }
@@ -1363,7 +1365,11 @@ static void
 print_error (wStream &stream, const print_control &, lisp object)
 {
   if (xerror_type (object) == CRTL_ERROR)
-    stream.add (_tcserror (xerror_number (object)));
+    {
+      TCHAR buf[128];
+      _tcserror_s (buf, xerror_number (object));
+      stream.add (buf);
+    }
   else
     {
       const TCHAR *s = sock::errmsg (xerror_number (object));
@@ -1475,7 +1481,7 @@ print_buffer_name (wStream &stream, const Buffer *bp)
   if (bp->b_version != 1)
     {
       TCHAR b[64];
-      _stprintf (b, _T("<%d>"), bp->b_version);
+      _stprintf_s (b, _T("<%d>"), bp->b_version);
       stream.add (b);
     }
 }
@@ -1513,7 +1519,7 @@ print_marker (wStream &stream, const print_control &, lisp object)
       else
         {
           TCHAR b[64];
-          _stprintf (b, _T(": %u"), xmarker_point (object));
+          _stprintf_s (b, _T(": %u"), xmarker_point (object));
           stream.add (b);
         }
       stream.add (_T('>'));
@@ -4117,7 +4123,7 @@ print_stack_trace (lisp lstream, lisp cc)
         continue;
 
       TCHAR buf[64];
-      _stprintf (buf, _T(">CALL STACK %2d: "), depth--);
+      _stprintf_s (buf, _T(">CALL STACK %2d: "), depth--);
       stream.add (buf);
 
       switch (p->type)
@@ -4282,7 +4288,7 @@ format_message (message_code m, ...)
   va_list ap;
   va_start (ap, m);
   TCHAR buf[2048];
-  _vstprintf (buf, fmt, ap);
+  _vstprintf_s (buf, fmt, ap);
   va_end (ap);
   app.status_window.puts (buf, 1);
 }
@@ -4294,7 +4300,7 @@ format_yes_or_no_p (message_code m, ...)
   va_list ap;
   va_start (ap, m);
   TCHAR buf[2048];
-  _vstprintf (buf, fmt, ap);
+  _vstprintf_s (buf, fmt, ap);
   va_end (ap);
   return MsgBox (get_active_window (), buf, TitleBarString,
                  MB_YESNO | MB_ICONQUESTION, 1) == IDYES;

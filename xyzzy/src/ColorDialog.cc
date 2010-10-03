@@ -89,7 +89,7 @@ SelectColor::SelectColor ()
       for (int i = 0; i < _countof (cust); i++)
         {
           TCHAR name[16];
-          _stprintf (name, _T("%s%d"), cfgCustColor, i);
+          _stprintf_s (name, _T("%s%d"), cfgCustColor, i);
           if (!read_conf (cfgColors, name, cust[i]))
             cust[i] = RGB (255, 255, 255);
         }
@@ -105,7 +105,7 @@ SelectColor::~SelectColor ()
   for (int i = 0; i < _countof (cust); i++)
     {
       TCHAR name[16];
-      _stprintf (name, _T("%s%d"), cfgCustColor, i);
+      _stprintf_s (name, _T("%s%d"), cfgCustColor, i);
       write_conf (cfgColors, name, cust[i], 1);
     }
   flush_conf ();
@@ -509,13 +509,13 @@ ChangeColorsPageP::draw_item (int id, DRAWITEMSTRUCT *dis)
       else if (prop_fg_p (dis->itemData))
         {
           TCHAR b[32];
-          _stprintf (b, _T("•¶Žš%d"), dis->itemData - PROP_FG_OFFSET + 1);
+          _stprintf_s (b, _T("•¶Žš%d"), dis->itemData - PROP_FG_OFFSET + 1);
           paint_color_list (dis, b, ccp_curcc[dis->itemData]);
         }
       else if (prop_bg_p (dis->itemData))
         {
           TCHAR b[32];
-          _stprintf (b, _T("”wŒi%d"), dis->itemData - PROP_BG_OFFSET + 1);
+          _stprintf_s (b, _T("”wŒi%d"), dis->itemData - PROP_BG_OFFSET + 1);
           paint_color_list (dis, b, ccp_curcc[dis->itemData]);
         }
       else if (misc_p (dis->itemData))

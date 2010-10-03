@@ -5,10 +5,19 @@
 //#define RUNTIME_TEST_CNS_TABLE
 //#define RUNTIME_TEST_DIFF_TABLE
 
-static void
+__declspec(noreturn) static void
 invalid (const char *file, int linenum)
 {
   fprintf (stderr, "%s: %d: Invalid format\n", file, linenum);
+  exit (2);
+}
+
+__declspec(noreturn) static void
+file_error (const char *file, errno_t err)
+{
+  char buf[128];
+  strerror_s (buf, err);
+  fprintf (stderr, "%s: %s\n", file, buf);
   exit (2);
 }
 
@@ -95,11 +104,11 @@ makehash (const char *name, const ucs2_t *const wc)
 static void
 read_iso8859 (ucs2_t *wbuf, const char *file, const char *name, const ucs2_t *wincp)
 {
-  FILE *fp = fopen (file, "r");
-  if (!fp)
+  FILE *fp;
+  errno_t err = fopen_s (&fp, file, "r");
+  if (err)
     {
-      fprintf (stderr, "%s: %s\n", file, strerror (errno));
-      exit (2);
+      file_error (file, err);
     }
 
   clear (wbuf, 128);
@@ -138,11 +147,11 @@ read_iso8859 (ucs2_t *wbuf, const char *file, const char *name, const ucs2_t *wi
 static void
 read_wincp (ucs2_t *wbuf, const char *file, const char *name)
 {
-  FILE *fp = fopen (file, "r");
-  if (!fp)
+  FILE *fp;
+  errno_t err = fopen_s (&fp, file, "r");
+  if (err)
     {
-      fprintf (stderr, "%s: %s\n", file, strerror (errno));
-      exit (2);
+      file_error (file, err);
     }
 
   clear (wbuf, 128);
@@ -369,11 +378,11 @@ output_diff (const Char *wc2int, const ucs2_t *int2wc, const char *name)
 static void
 read_94x94 (ucs2_t *wbuf, const char *file, int ignore_errors = 0)
 {
-  FILE *fp = fopen (file, "r");
-  if (!fp)
+  FILE *fp;
+  errno_t err = fopen_s (&fp, file, "r");
+  if (err)
     {
-      fprintf (stderr, "%s: %s\n", file, strerror (errno));
-      exit (2);
+      file_error (file, err);
     }
 
   clear (wbuf, 94 * 94);
@@ -405,11 +414,11 @@ read_jisx0212 (ucs2_t *wbuf)
   read_94x94 (wbuf, "unicode/JIS0212.TXT");
 
   const char *const file = "unicode/eucJP-ibmext.txt";
-  FILE *fp = fopen (file, "r");
-  if (!fp)
+  FILE *fp;
+  errno_t err = fopen_s (&fp, file, "r");
+  if (err)
     {
-      fprintf (stderr, "%s: %s\n", file, strerror (errno));
-      exit (2);
+      file_error (file, err);
     }
 
   char b[1024];
@@ -474,11 +483,11 @@ static void
 read_big5 (ucs2_t *wbuf)
 {
   const char *const file = "unicode/BIG5.TXT";
-  FILE *fp = fopen (file, "r");
-  if (!fp)
+  FILE *fp;
+  errno_t err = fopen_s (&fp, file, "r");
+  if (err)
     {
-      fprintf (stderr, "%s: %s\n", file, strerror (errno));
-      exit (2);
+      file_error (file, err);
     }
 
   clear (wbuf, BIG5_TABSIZE);
@@ -715,11 +724,11 @@ make_cns11643 (const ucs2_t *const big5, const ucs2_t *const gb2312)
   ucs2_t cns2wc1[94 * 94], cns2wc2[94 * 94];
 
   const char *const file = "unicode/CNS11643.TXT";
-  FILE *fp = fopen (file, "r");
-  if (!fp)
+  FILE *fp;
+  errno_t err = fopen_s (&fp, file, "r");
+  if (err)
     {
-      fprintf (stderr, "%s: %s\n", file, strerror (errno));
-      exit (2);
+      file_error (file, err);
     }
 
   clear (cns2wc1, 94 * 94);

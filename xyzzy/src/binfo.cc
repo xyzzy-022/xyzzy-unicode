@@ -160,7 +160,7 @@ buffer_info::position (TCHAR *b, TCHAR *be) const
   else if (b_wp)
     {
       TCHAR tem[64];
-      _stprintf (tem, _T("%d:%d"), b_wp->w_plinenum, b_wp->w_column);
+      _stprintf_s (tem, _T("%d:%d"), b_wp->w_plinenum, b_wp->w_column);
       b = stpncpy (b, tem, be - b);
     }
   return b;

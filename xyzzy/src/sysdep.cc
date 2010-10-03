@@ -45,7 +45,7 @@ Sysdep::Sysdep ()
   LOGFONT lf;
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = 12;
-  _tcscpy (lf.lfFaceName, _T("Arial"));
+  _tcscpy_s (lf.lfFaceName, _T("Arial"));
   hfont_ruler = CreateFontIndirect (&lf);
   HDC hdc = GetDC (0);
   HGDIOBJ of = SelectObject (hdc, hfont_ruler);
@@ -137,7 +137,7 @@ Sysdep::create_ui_font (int e)
   lf.lfHeight = 12;
   lf.lfCharSet = SHIFTJIS_CHARSET;
   lf.lfEscapement = e;
-  _tcscpy (lf.lfFaceName, _T("MS UI Gothic"));
+  _tcscpy_s (lf.lfFaceName, _T("MS UI Gothic"));
   return CreateFontIndirect (&lf);
 }
 

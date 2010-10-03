@@ -525,9 +525,9 @@ FilerView::dispinfo (LV_ITEM *lv)
         FileTimeToLocalFileTime (&d->time, &ft);
         SYSTEMTIME st;
         FileTimeToSystemTime (&ft, &st);
-        _stprintf (fv_buf, _T("%04d/%02d/%02d %02d:%02d:%02d"),
-                   st.wYear, st.wMonth, st.wDay,
-                   st.wHour, st.wMinute, st.wSecond);
+        _stprintf_s (fv_buf, _T("%04d/%02d/%02d %02d:%02d:%02d"),
+                     st.wYear, st.wMonth, st.wDay,
+                     st.wHour, st.wMinute, st.wSecond);
         lv->pszText = fv_buf;
         break;
       }
@@ -765,7 +765,7 @@ FilerView::reload (lisp lmask)
     {
       LV_ITEM lvi;
       if (find_focused (&lvi) >= 0)
-        _tcscpy (last, ((filer_data *)lvi.lParam)->name);
+        _tcscpy_s (last, ((filer_data *)lvi.lParam)->name);
     }
   else
     {
@@ -854,7 +854,7 @@ FilerView::show_marks (int force)
       disk_space (nbytes, nb, (charp (xsymbol_value (Vfiler_mark_file_size_unit))
                                ? xchar_code (xsymbol_value (Vfiler_mark_file_size_unit))
                                : -1));
-      _stprintf (b, _T("Marks: %d dirs, %d files, total: %sytes"), ndirs, nfiles, nb);
+      _stprintf_s (b, _T("Marks: %d dirs, %d files, total: %sytes"), ndirs, nfiles, nb);
       SetWindowText (fv_hwnd_marks, b);
     }
   else
@@ -917,7 +917,7 @@ FilerView::display_disk_info (HWND hwnd, int n) const
   disk_space (double (total_c) * s_per_c * b_per_s, total, -1);
   disk_space (double (free_c) * s_per_c * b_per_s, free, -1);
   TCHAR buf[256];
-  _stprintf (buf, _T("Free: %s, Total: %s"), free, total);
+  _stprintf_s (buf, _T("Free: %s, Total: %s"), free, total);
   SendMessage (hwnd, SB_SETTEXT, n, LPARAM (buf));
 }
 
@@ -1228,7 +1228,7 @@ FilerView::calc_directory_size (int based_on_bytes)
               TCHAR buf[128];
               *buf = _T('[');
               disk_space (d->bytes, buf + 1, -1);
-              _tcscat (buf, _T("]"));
+              _tcscat_s (buf, _T("]"));
               lvi.mask = LVIF_TEXT;
               lvi.iSubItem = 1;
               lvi.pszText = buf;

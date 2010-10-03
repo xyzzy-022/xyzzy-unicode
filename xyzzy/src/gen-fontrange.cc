@@ -67,14 +67,14 @@ main ()
   LOGFONTA lf;
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = 16;
-  strcpy (lf.lfFaceName, "Courier New");
+  strcpy_s (lf.lfFaceName, "Courier New");
   HGDIOBJ of = SelectObject (hdc, CreateFontIndirectA (&lf));
   DWORD r = GetFontUnicodeRanges (hdc, g);
   if (r)
     print (hdc, g, "courier_new_range");
   DeleteObject (SelectObject (hdc, of));
 
-  strcpy (lf.lfFaceName, "ÇlÇr ÉSÉVÉbÉN");
+  strcpy_s (lf.lfFaceName, "ÇlÇr ÉSÉVÉbÉN");
   of = SelectObject (hdc, CreateFontIndirectA (&lf));
   r = GetFontUnicodeRanges (hdc, g);
   if (r)

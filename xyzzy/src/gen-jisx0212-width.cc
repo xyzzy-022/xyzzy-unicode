@@ -26,7 +26,7 @@ main ()
   memset (&lf, 0, sizeof lf);
   lf.lfHeight = 16;
   lf.lfCharSet = SHIFTJIS_CHARSET;
-  strcpy (lf.lfFaceName, "‚l‚r –¾’©");
+  strcpy_s (lf.lfFaceName, "‚l‚r –¾’©");
   HGDIOBJ of = SelectObject (hdc, CreateFontIndirectA (&lf));
 
   SIZE sz0;

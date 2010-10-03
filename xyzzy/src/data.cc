@@ -2719,8 +2719,8 @@ Fdump_xyzzy (lisp filename)
     }
   qsort (addr_orderp, nreps, sizeof *addr_orderp, compare_addr);
 
-  FILE *fp = _tfopen (path, _T("wb"));
-  if (!fp)
+  FILE *fp;
+  if (_tfopen_s (&fp, path, _T("wb")))
     FEsimple_crtl_error (errno, filename);
 
   dump_header head;

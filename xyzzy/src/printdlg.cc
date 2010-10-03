@@ -72,7 +72,7 @@ void
 print_dialog::set_margin_text (UINT edit, LONG value, const TCHAR *unit) const
 {
   TCHAR b[32];
-  _stprintf (b, _T("%d.%d%s"), value / 10, value % 10, unit);
+  _stprintf_s (b, _T("%d.%d%s"), value / 10, value % 10, unit);
   SetDlgItemText (m_hwnd, edit, b);
 }
 
@@ -398,7 +398,7 @@ print_dialog::save_history (UINT id_combo, const TCHAR *section)
           && SendMessage (hwnd_combo, CB_GETLBTEXT, i, LPARAM (buf)) > 0)
         {
           TCHAR key[32];
-          _stprintf (key, _T("%d"), i);
+          _stprintf_s (key, _T("%d"), i);
           conf_write_string (section, key, buf);
         }
     }
@@ -582,14 +582,14 @@ print_dialog::set_font_face (int lang) const
   TCHAR buf[LF_FACESIZE + 32];
   TCHAR point[32];
   if (m_settings.ps_font[lang].point % 10)
-    _stprintf (point, _T("%d.%d"),
-               m_settings.ps_font[lang].point / 10,
-               m_settings.ps_font[lang].point % 10);
+    _stprintf_s (point, _T("%d.%d"),
+                 m_settings.ps_font[lang].point / 10,
+                 m_settings.ps_font[lang].point % 10);
   else
-    _stprintf (point, _T("%d"), m_settings.ps_font[lang].point / 10);
-  _stprintf (buf, _T("%s, %s"),
-             m_settings.ps_font[lang].face,
-             point);
+    _stprintf_s (point, _T("%d"), m_settings.ps_font[lang].point / 10);
+  _stprintf_s (buf, _T("%s, %s"),
+               m_settings.ps_font[lang].face,
+               point);
   SetDlgItemText (m_hwnd, IDC_FACE, buf);
 }
 
@@ -653,7 +653,7 @@ print_dialog::set_font ()
 
   LOGFONT lf;
   bzero (&lf, sizeof lf);
-  _tcscpy (lf.lfFaceName, m_settings.ps_font[lang].face);
+  _tcscpy_s (lf.lfFaceName, m_settings.ps_font[lang].face);
   HDC hdc = GetDC (m_hwnd);
   lf.lfHeight = MulDiv (m_settings.ps_font[lang].point, GetDeviceCaps (hdc, LOGPIXELSY), 720);
   ReleaseDC (m_hwnd, hdc);
@@ -679,7 +679,7 @@ print_dialog::set_font ()
   cf.nSizeMax = 72;
   if (ChooseFont (&cf))
     {
-      _tcscpy (m_settings.ps_font[lang].face, lf.lfFaceName);
+      _tcscpy_s (m_settings.ps_font[lang].face, lf.lfFaceName);
       m_settings.ps_font[lang].charset = lf.lfCharSet;
       m_settings.ps_font[lang].point = cf.iPointSize;
       m_settings.ps_font[lang].italic = lf.lfItalic;

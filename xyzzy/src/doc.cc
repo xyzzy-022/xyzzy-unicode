@@ -38,8 +38,8 @@ Fsi_snarf_documentation (lisp lpath, lisp symlist)
 {
   TCHAR path[MAX_PATH + 1];
   pathname2cstr (lpath, path);
-  FILE *fp = _tfopen (path, _T("wb"));
-  if (!fp)
+  FILE *fp;
+  if (_tfopen_s (&fp, path, _T("wb")))
     FEsimple_crtl_error (errno, lpath);
 
   long magic = MAGIC;

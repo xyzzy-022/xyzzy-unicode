@@ -45,7 +45,7 @@ FontObject::create (const TCHAR *face, int h, int charset)
 {
   LOGFONT lf;
   bzero (&lf, sizeof lf);
-  _tcscpy (lf.lfFaceName, face);
+  _tcscpy_s (lf.lfFaceName, face);
   lf.lfHeight = h;
   lf.lfCharSet = charset;
   lf.lfPitchAndFamily = FIXED_PITCH;
@@ -382,7 +382,7 @@ FontSet::load_params (FontSetParam &param)
     {
       if (!*param.fs_logfont[i].lfFaceName)
         {
-          _tcscpy (param.fs_logfont[i].lfFaceName, default_face (i, 0));
+          _tcscpy_s (param.fs_logfont[i].lfFaceName, default_face (i, 0));
           if (!i)
             {
               LOGFONT lf;

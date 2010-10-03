@@ -798,7 +798,7 @@ Dialog::spin_init (dlgctrl *c, lisp init)
           if (hwnd)
             {
               TCHAR b[32];
-              _stprintf (b, _T("%d"), val);
+              _stprintf_s (b, _T("%d"), val);
               SetWindowText (hwnd, b);
             }
         }
@@ -1342,7 +1342,7 @@ PropSheetFont::find_font (const DLGTEMPLATE *tmpl)
   int l = wcslen ((wchar_t *)w);
   if (l < LF_FACESIZE)
     {
-      wcscpy (face, (wchar_t *)w);
+      wcscpy_s (face, (wchar_t *)w);
       face_len = l;
     }
 }

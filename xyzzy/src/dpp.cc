@@ -211,7 +211,7 @@ parse_args (argments &args)
       if (*ident)
         {
           if (args.nargs < MAXARGS)
-            strcpy (args.name[args.nargs], ident);
+            strcpy_s (args.name[args.nargs], ident);
           args.nargs++;
         }
       else
@@ -303,8 +303,8 @@ output_refbody (int type, const char *rettype, const char *name,
     error ("unexpected EOF");
   int ref = lookup_typechar (ident, args.nargs);
   argments refargs;
-  strcpy (refargs.optargs, args.optargs);
-  strcpy (refargs.optvars, args.optvars);
+  strcpy_s (refargs.optargs, args.optargs);
+  strcpy_s (refargs.optvars, args.optvars);
   parse_args (refargs);
   if (refargs.nargs != args.nargs)
     error ("argments mismatch");
@@ -504,10 +504,10 @@ process_proc ()
   if (!*ident)
     error ("return type expected");
   long proclinenum = linenum;
-  strcpy (rettype, ident);
+  strcpy_s (rettype, ident);
   if (!read_ident () || !*ident)
     error ("function name expected");
-  strcpy (name, ident);
+  strcpy_s (name, ident);
   parse_args (args);
   if (!args.nargs)
     error ("In function %s: no argments", name);
@@ -556,14 +556,12 @@ main (int argc, char **argv)
     }
   input_file = argv[1];
   output_file = argv[2];
-  fi = fopen (input_file, "r");
-  if (!fi)
+  if (fopen_s (&fi, input_file, "r"))
     {
       perror (input_file);
       exit (2);
     }
-  fo = fopen (output_file, "w");
-  if (!fo)
+  if (fopen_s (&fo, output_file, "w"))
     {
       perror (output_file);
       exit (2);

@@ -122,7 +122,7 @@ status_area::position ()
   if (!wp)
     return calc_extent (ST_POS, s_nil);
   TCHAR b[32];
-  _stprintf (b, _T(" %5d:%d "), wp->w_plinenum, wp->w_column + 1);
+  _stprintf_s (b, _T(" %5d:%d "), wp->w_plinenum, wp->w_column + 1);
   return calc_extent (ST_POS, b);
 }
 
@@ -136,7 +136,7 @@ status_area::char_code ()
     return calc_extent (ST_CODE, s_eof);
   TCHAR b[8];
   Char c = wp->w_point.ch ();
-  _stprintf (b, c < 0x100 ? _T(" %02X ") : _T(" %04X "), c);
+  _stprintf_s (b, c < 0x100 ? _T(" %02X ") : _T(" %04X "), c);
   return calc_extent (ST_CODE, b);
 }
 
@@ -152,7 +152,7 @@ status_area::char_unicode ()
   if (wc == ucs2_t (-1))
     return calc_extent (ST_UNICODE, s_nil);
   TCHAR b[16];
-  _stprintf (b, _T(" U+%04X "), wc);
+  _stprintf_s (b, _T(" U+%04X "), wc);
   return calc_extent (ST_UNICODE, b);
 }
 
@@ -168,14 +168,14 @@ status_area::time ()
     };
 
   if (!s_dow)
-    _stprintf (b, _T(" %02d/%02d %02d:%02d "),
-               st.wMonth, st.wDay,
-               st.wHour, st.wMinute);
+    _stprintf_s (b, _T(" %02d/%02d %02d:%02d "),
+                 st.wMonth, st.wDay,
+                 st.wHour, st.wMinute);
   else
-    _stprintf (b, _T(" %02d/%02d(%s) %02d:%02d "),
-               st.wMonth, st.wDay,
-               dow[st.wDayOfWeek % 7],
-               st.wHour, st.wMinute);
+    _stprintf_s (b, _T(" %02d/%02d(%s) %02d:%02d "),
+                 st.wMonth, st.wDay,
+                 dow[st.wDayOfWeek % 7],
+                 st.wHour, st.wMinute);
   return calc_extent (ST_TIME, b);
 }
 
