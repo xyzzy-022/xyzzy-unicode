@@ -1,52 +1,10 @@
 #ifdef __XYZZY__
 #include "ed.h"
-#undef CONCAT
-#undef _CONCAT
-#undef __CONCAT
-#undef TOSTR
-#undef _TOSTR
 #endif
 #include "sock.h"
 #include "resolver.h"
-#include "sockimpl.h"
 
 resolver sock::s_resolver;
-
-#define WSOCKDEF(TYPE, NAME, ARGS, RESULT) TYPE (WINAPI *WINSOCK::NAME) ARGS;
-  WINSOCK_FUNCTIONS
-#undef WSOCKDEF
-
-#define __CONCAT(X, Y) X ## Y
-#define _CONCAT(X, Y) __CONCAT (X, Y)
-#define CONCAT(X, Y) _CONCAT (X, Y)
-#define _TOSTR(X) #X
-#define TOSTR(X) _TOSTR (X)
-
-#define WSOCKDEF(TYPE, NAME, ARGS, RESULT) \
-  static TYPE WINAPI CONCAT (dummy_, NAME) ARGS {return RESULT;}
-  WINSOCK_FUNCTIONS
-#undef WSOCKDEF
-
-static FARPROC
-get_wsock_fn (HINSTANCE h, const char *name, FARPROC dummy)
-{
-  if (!h)
-    return dummy;
-  FARPROC fn = GetProcAddress (h, name);
-  return fn ? fn : dummy;
-}
-
-static void
-init_winsock_functions ()
-{
-  HINSTANCE h = LoadLibrary (_T("WSOCK32.DLL"));
-#define WSOCKDEF(TYPE, NAME, ARGS, RESULT) \
-  WINSOCK::NAME = \
-    (TYPE (WINAPI *) ARGS)get_wsock_fn (h, TOSTR (NAME), \
-                                        FARPROC (CONCAT (dummy_, NAME)));
-  WINSOCK_FUNCTIONS
-#undef WSOCKDEF
-}
 
 #ifdef __XYZZY__
 static int WINAPI
@@ -54,13 +12,13 @@ blocking_hook ()
 {
   Fdo_events ();
   if (QUITP)
-    WS_CALL (WSACancelBlockingCall)();
+    WSACancelBlockingCall ();
   return 0;
 }
 #endif
 
 sock_error::sock_error (const char *ope)
-     : e_error (WS_CALL (WSAGetLastError)()), e_ope (ope)
+     : e_error (WSAGetLastError ()), e_ope (ope)
 {
 }
 
@@ -132,15 +90,13 @@ sock::errmsg (int e)
 int
 sock::init_winsock (HINSTANCE hinst)
 {
-  init_winsock_functions ();
-
   WSADATA data;
-  int e = WS_CALL (WSAStartup)(MAKEWORD (1, 1), &data);
+  int e = WSAStartup (MAKEWORD (1, 1), &data);
   if (e)
     return 0;
 
 #ifdef __XYZZY__
-  WS_CALL (WSASetBlockingHook)(blocking_hook);
+  WSASetBlockingHook (blocking_hook);
 #endif
 
   if (!s_resolver.initialize (hinst)
@@ -152,7 +108,7 @@ sock::init_winsock (HINSTANCE hinst)
 void
 sock::term_winsock ()
 {
-  WS_CALL (WSACleanup)();
+  WSACleanup ();
 }
 
 void
@@ -172,14 +128,14 @@ sock::closesock (int no_throw)
 {
   SOCKET so = s_so;
   initsock (INVALID_SOCKET);
-  if (WS_CALL (closesocket)(so) < 0 && !no_throw)
+  if (::closesocket (so) < 0 && !no_throw)
     throw sock_error ("closesocket");
 }
 
 void
 sock::close_socket (SOCKET s)
 {
-  WS_CALL (closesocket)(s);
+  ::closesocket (s);
 }
 
 sock::sock ()
@@ -205,7 +161,7 @@ sock::~sock ()
 void
 sock::create (int domain, sock_type type, int proto)
 {
-  s_so = WS_CALL (socket)(domain, type, proto);
+  s_so = ::socket (domain, type, proto);
   if (s_so == INVALID_SOCKET)
     throw sock_error ("socket");
 }
@@ -236,9 +192,9 @@ sock::close (int abort)
 void
 sock::shutdown (int how, int no_throw)
 {
-  if (WS_CALL (shutdown)(s_so, how) < 0 && !no_throw)
+  if (::shutdown (s_so, how) < 0 && !no_throw)
     {
-      int e = WS_CALL (WSAGetLastError) ();
+      int e = WSAGetLastError  ();
       if (e != WSAENOTCONN)
         throw sock_error ("shutdown", e);
     }
@@ -247,7 +203,7 @@ sock::shutdown (int how, int no_throw)
 void
 sock::cancel ()
 {
-  WS_CALL (WSACancelBlockingCall)();
+  WSACancelBlockingCall ();
 }
 
 int
@@ -257,10 +213,10 @@ sock::readablep (const timeval &tv) const
   FD_ZERO (&fds);
   FD_SET (s_so, &fds);
 
-  int n = WS_CALL (select)(1, &fds, 0, 0, &tv);
+  int n = ::select (1, &fds, 0, 0, &tv);
   if (n < 0)
     {
-      int e = WS_CALL (WSAGetLastError)();
+      int e = WSAGetLastError ();
       if (!s_eof_error_p && e == WSAECONNRESET)
         return 1;
       throw sock_error ("select", e);
@@ -275,7 +231,7 @@ sock::writablep (const timeval &tv) const
   FD_ZERO (&fds);
   FD_SET (s_so, &fds);
 
-  int n = WS_CALL (select)(1, 0, &fds, 0, &tv);
+  int n = ::select (1, 0, &fds, 0, &tv);
   if (n < 0)
     throw sock_error ("select");
   return n;
@@ -288,9 +244,9 @@ sock::send (const void *buf, int len, int flags) const
     {
       if (s_wtimeo.tv_sec >= 0 && !writablep (s_wtimeo))
         throw sock_error ("sock::send", WSAETIMEDOUT);
-      int n = WS_CALL (send)(s_so, b, min (be - b, 65535), flags);
+      int n = ::send (s_so, b, min (be - b, 65535), flags);
       if (n <= 0)
-        throw sock_error ("send", n ? WS_CALL (WSAGetLastError)() : WSAECONNRESET);
+        throw sock_error ("send", n ? WSAGetLastError () : WSAECONNRESET);
       b += n;
     }
 }
@@ -302,10 +258,10 @@ sock::sendto (const saddr &to, const void *buf, int len, int flags) const
     {
       if (s_wtimeo.tv_sec >= 0 && !writablep (s_wtimeo))
         throw sock_error ("sock::sendto", WSAETIMEDOUT);
-      int n = WS_CALL (sendto)(s_so, b, min (be - b, 65535), flags,
-                               to.addr (), to.length ());
+      int n = ::sendto (s_so, b, min (be - b, 65535), flags,
+                        to.addr (), to.length ());
       if (n <= 0)
-        throw sock_error ("sendto", n ? WS_CALL (WSAGetLastError)() : WSAECONNRESET);
+        throw sock_error ("sendto", n ? WSAGetLastError () : WSAECONNRESET);
       b += n;
     }
 }
@@ -315,10 +271,10 @@ sock::recv (void *buf, int len, int flags) const
 {
   if (s_rtimeo.tv_sec >= 0 && !readablep (s_rtimeo))
     throw sock_error ("sock::recv", WSAETIMEDOUT);
-  int n = WS_CALL (recv)(s_so, (char *)buf, min (len, 65535), flags);
+  int n = ::recv (s_so, (char *)buf, min (len, 65535), flags);
   if (n <= 0)
     {
-      int e = n ? WS_CALL (WSAGetLastError)() : WSAECONNRESET;
+      int e = n ? WSAGetLastError () : WSAECONNRESET;
       if (!s_eof_error_p && e == WSAECONNRESET)
         return 0;
       throw sock_error ("recv", e);
@@ -332,17 +288,17 @@ sock::recvfrom (saddr &from, void *buf, int len, int flags) const
   if (s_rtimeo.tv_sec >= 0 && !readablep (s_rtimeo))
     throw sock_error ("sock::recvfrom", WSAETIMEDOUT);
   int l = from.length ();
-  int n = WS_CALL (recvfrom)(s_so, (char *)buf, min (len, 65535), flags,
-                             from.addr (), &l);
+  int n = ::recvfrom (s_so, (char *)buf, min (len, 65535), flags,
+                      from.addr (), &l);
   if (n <= 0)
-    throw sock_error ("recvfrom", n ? WS_CALL (WSAGetLastError)() : WSAECONNRESET);
+    throw sock_error ("recvfrom", n ? WSAGetLastError () : WSAECONNRESET);
   return n;
 }
 
 void
 sock::listen (int backlog) const
 {
-  if (WS_CALL (listen)(s_so, backlog) < 0)
+  if (::listen (s_so, backlog) < 0)
     throw sock_error ("listen");
 }
 
@@ -350,7 +306,7 @@ SOCKET
 sock::accept (saddr &addr) const
 {
   int l = addr.length ();
-  SOCKET so = WS_CALL (accept)(s_so, addr.addr (), &l);
+  SOCKET so = ::accept (s_so, addr.addr (), &l);
   if (so == INVALID_SOCKET)
     throw sock_error ("accept");
   return so;
@@ -359,7 +315,7 @@ sock::accept (saddr &addr) const
 SOCKET
 sock::accept () const
 {
-  SOCKET so = WS_CALL (accept)(s_so, 0, 0);
+  SOCKET so = ::accept (s_so, 0, 0);
   if (so == INVALID_SOCKET)
     throw sock_error ("accept");
   return so;
@@ -368,14 +324,14 @@ sock::accept () const
 void
 sock::bind (const saddr &addr) const
 {
-  if (WS_CALL (bind)(s_so, addr.addr (), addr.length ()) < 0)
+  if (::bind (s_so, addr.addr (), addr.length ()) < 0)
     throw sock_error ("bind");
 }
 
 void
 sock::connect (const saddr &addr) const
 {
-  if (WS_CALL (connect)(s_so, addr.addr (), addr.length ()) < 0)
+  if (::connect (s_so, addr.addr (), addr.length ()) < 0)
     throw sock_error ("connect");
 }
 
@@ -383,7 +339,7 @@ void
 sock::peeraddr (saddr &addr) const
 {
   int l = addr.length ();
-  if (WS_CALL (getpeername)(s_so, addr.addr (), &l) < 0)
+  if (::getpeername (s_so, addr.addr (), &l) < 0)
     throw sock_error ("getpeername");
 }
 
@@ -391,53 +347,53 @@ void
 sock::localaddr (saddr &addr) const
 {
   int l = addr.length ();
-  if (WS_CALL (getsockname)(s_so, addr.addr (), &l) < 0)
+  if (::getsockname (s_so, addr.addr (), &l) < 0)
     throw sock_error ("getsockname");
 }
 
 void
 sock::getopt (int level, optname opt, void *val, int l) const
 {
-  if (WS_CALL (getsockopt)(s_so, level, opt, (char *)val, &l) < 0)
+  if (::getsockopt (s_so, level, opt, (char *)val, &l) < 0)
     throw sock_error ("getsockopt");
 }
 
 void
 sock::setopt (int level, optname opt, const void *val, int l) const
 {
-  if (WS_CALL (setsockopt)(s_so, level, opt, (const char *)val, l) < 0)
+  if (::setsockopt (s_so, level, opt, (const char *)val, l) < 0)
     throw sock_error ("setsockopt");
 }
 
 void
 sock::ioctl (int cmd, u_long *arg) const
 {
-  if (WS_CALL (ioctlsocket)(s_so, cmd, arg) < 0)
+  if (::ioctlsocket (s_so, cmd, arg) < 0)
     throw sock_error ("ioctl");
 }
 
 u_short
 sock::htons (u_short x)
 {
-  return WS_CALL (htons)(x);
+  return ::htons (x);
 }
 
 u_long
 sock::htonl (u_long x)
 {
-  return WS_CALL (htonl)(x);
+  return ::htonl (x);
 }
 
 u_short
 sock::ntohs (u_short x)
 {
-  return WS_CALL (ntohs)(x);
+  return ::ntohs (x);
 }
 
 u_long
 sock::ntohl (u_long x)
 {
-  return WS_CALL (ntohl)(x);
+  return ::ntohl (x);
 }
 
 void

@@ -2,7 +2,6 @@
 #include "ed.h"
 #endif
 #include "resolver.h"
-#include "sockimpl.h"
 
 static const TCHAR resolver_wndclass[] = _T("resolverClass");
 int resolver::r_initialized;
@@ -140,8 +139,8 @@ resolver::wait (HANDLE h)
   if (!SendMessage (r_hwnd, wm_asyncsockreq,
                     WPARAM (h), GetCurrentThreadId ()))
     {
-      WS_CALL (WSACancelAsyncRequest)(h);
-      WS_CALL (WSASetLastError)(WSAEINPROGRESS);
+      WSACancelAsyncRequest (h);
+      WSASetLastError (WSAEINPROGRESS);
       return 0;
     }
 
@@ -167,8 +166,8 @@ resolver::wait (HANDLE h)
           if (!WSAGETASYNCERROR (r_params.lparam))
             return 1;
           if (!r_params.wparam)
-            WS_CALL (WSACancelAsyncRequest)(h);
-          WS_CALL (WSASetLastError)(WSAGETASYNCERROR (r_params.lparam));
+            WSACancelAsyncRequest (h);
+          WSASetLastError (WSAGETASYNCERROR (r_params.lparam));
           return 0;
         }
     }
@@ -176,33 +175,33 @@ resolver::wait (HANDLE h)
     PostQuitMessage (msg.wParam);
   if (r_hwnd)
     SendMessage (r_hwnd, wm_cancel_asyncsock, WPARAM (h), 0);
-  WS_CALL (WSACancelAsyncRequest)(h);
-  WS_CALL (WSASetLastError)(WSAEINTR);
+  WSACancelAsyncRequest (h);
+  WSASetLastError (WSAEINTR);
   return 0;
 }
 
 hostent *
 resolver::lookup_host (const char *hostname)
 {
-  return (r_hwnd && wait (WS_CALL (WSAAsyncGetHostByName)(r_hwnd, wm_asyncsock,
-                                                          hostname, r_buf, sizeof r_buf))
+  return (r_hwnd && wait (WSAAsyncGetHostByName (r_hwnd, wm_asyncsock,
+                                                 hostname, r_buf, sizeof r_buf))
           ? (hostent *)r_buf : 0);
 }
 
 hostent *
 resolver::lookup_host (const void *addr, int addrlen, int type)
 {
-  return (r_hwnd && wait (WS_CALL (WSAAsyncGetHostByAddr)(r_hwnd, wm_asyncsock,
-                                                          (const char *)addr, addrlen, type,
-                                                          r_buf, sizeof r_buf))
+  return (r_hwnd && wait (WSAAsyncGetHostByAddr (r_hwnd, wm_asyncsock,
+                                                 (const char *)addr, addrlen, type,
+                                                 r_buf, sizeof r_buf))
           ? (hostent *)r_buf : 0);
 }
 
 servent *
 resolver::lookup_serv (const char *service, const char *proto)
 {
-  return (r_hwnd && wait (WS_CALL (WSAAsyncGetServByName)(r_hwnd, wm_asyncsock,
-                                                          service, proto,
-                                                          r_buf, sizeof r_buf))
+  return (r_hwnd && wait (WSAAsyncGetServByName (r_hwnd, wm_asyncsock,
+                                                 service, proto,
+                                                 r_buf, sizeof r_buf))
           ? (servent *)r_buf : 0);
 }

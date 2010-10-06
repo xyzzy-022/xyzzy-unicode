@@ -2,13 +2,12 @@
 #include "ed.h"
 #endif
 #include "sockinet.h"
-#include "sockimpl.h"
 #include "oleconv.h"
 
 const char *
 sockinet::ntoa (in_addr in)
 {
-  const char *a = WS_CALL (inet_ntoa)(in);
+  const char *a = ::inet_ntoa (in);
   if (!a)
     throw sock_error ("inet_ntoa");
   return a;
@@ -17,7 +16,7 @@ sockinet::ntoa (in_addr in)
 sockinet::saddr::saddr ()
 {
   sin_family = af_inet;
-  sin_addr.s_addr = WS_CALL (htonl)(INADDR_ANY);
+  sin_addr.s_addr = ::htonl (INADDR_ANY);
   sin_port = 0;
 }
 
@@ -31,14 +30,14 @@ sockinet::saddr::saddr (const saddr &src)
 sockinet::saddr::saddr (u_long addr, u_short port)
 {
   sin_family = af_inet;
-  sin_addr.s_addr = WS_CALL (htonl)(addr);
-  sin_port = WS_CALL (htons)(port);
+  sin_addr.s_addr = ::htonl (addr);
+  sin_port = ::htons (port);
 }
 
 sockinet::saddr::saddr (u_long addr, const char *service, const char *proto)
 {
   sin_family = af_inet;
-  sin_addr.s_addr = WS_CALL (htonl)(addr);
+  sin_addr.s_addr = ::htonl (addr);
   set_port (service, proto);
 }
 
@@ -46,7 +45,7 @@ sockinet::saddr::saddr (const char *hostname, u_short port)
 {
   sin_family = af_inet;
   set_addr (hostname);
-  sin_port = WS_CALL (htons)(port);
+  sin_port = ::htons (port);
 }
 
 sockinet::saddr::saddr (const char *hostname, const char *service, const char *proto)
@@ -68,13 +67,13 @@ sockinet::saddr::saddr (lisp hostname, lisp port)
 void
 sockinet::saddr::set_addr (u_long addr)
 {
-  sin_addr.s_addr = WS_CALL (htonl)(addr);
+  sin_addr.s_addr = ::htonl (addr);
 }
 
 void
 sockinet::saddr::set_addr (const char *hostname)
 {
-  sin_addr.s_addr = WS_CALL (inet_addr)(hostname);
+  sin_addr.s_addr = ::inet_addr (hostname);
   if (sin_addr.s_addr == INADDR_NONE)
     {
       hostent *e = netdb::host (hostname);
@@ -88,7 +87,7 @@ sockinet::saddr::set_addr (const char *hostname)
 void
 sockinet::saddr::set_port (u_short port)
 {
-  sin_port = WS_CALL (htons)(port);
+  sin_port = ::htons (port);
 }
 
 void
@@ -96,7 +95,7 @@ sockinet::saddr::set_port (const char *service, const char *proto)
 {
   int n = atoi (service);
   if (n)
-    sin_port = WS_CALL (htons)(n);
+    sin_port = ::htons (n);
   else
     {
       servent *sv = netdb::serv (service, proto);
@@ -157,8 +156,8 @@ sockinet::saddr::set_port (lisp lport)
 const char *
 sockinet::saddr::hostname () const
 {
-  if (sin_addr.s_addr == WS_CALL (htonl)(INADDR_NONE)
-      || sin_addr.s_addr == WS_CALL (htonl)(INADDR_ANY))
+  if (sin_addr.s_addr == ::htonl (INADDR_NONE)
+      || sin_addr.s_addr == ::htonl (INADDR_ANY))
     return 0;
   hostent *hp = netdb::host (&sin_addr, sizeof sin_addr, sin_family);
   return hp ? hp->h_name : 0;
