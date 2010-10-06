@@ -4,16 +4,26 @@
 
 # pragma warning (disable: 4201)
 
-# include <stdio.h>
-# include <limits.h>
+# define NOMINMAX
+# define _USE_MATH_DEFINES
+
 # include <windows.h>
 # include <winreg.h>
 # include <commctrl.h>
-# include <stdlib.h>
-# include <stddef.h>
-# include <string.h>
-# include <mbstring.h>
+
+# include <algorithm>
+# include <climits>
+# include <cmath>
+# include <cstdint>
+# include <cstddef>
+# include <cstdio>
+# include <cstdlib>
+# include <cstring>
+# include <limits>
+# include <utility>
+
 # include <malloc.h>
+# include <mbstring.h>
 # include <tchar.h>
 
 # pragma warning (default: 4201)
@@ -36,72 +46,21 @@ typedef unsigned short u_short;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 
-typedef char int8_t;
-typedef short int16_t;
-typedef long int32_t;
-typedef u_char u_int8_t;
-typedef u_short u_int16_t;
-typedef u_long u_int32_t;
+typedef uintptr_t pointer_t;
 
-typedef u_long pointer_t;
-
-typedef u_int16_t Char;
+typedef uint16_t Char;
 # define CHAR_LIMIT 0x10000
 typedef u_long lChar;
 const lChar lChar_EOF = lChar (-1);
 
 typedef wchar_t ucs2_t;
-typedef u_int32_t ucs4_t;
+typedef uint32_t ucs4_t;
 
 typedef long point_t;
 
-# undef min
-# undef max
-# define NOMINMAX
-
-template <class T>
-inline const T &
-min (const T &a, const T &b)
-{
-  return a < b ? a : b;
-}
-
-template <class T>
-inline const T &
-max (const T &a, const T &b)
-{
-  return a > b ? a : b;
-}
-
-inline char min (char a, char b) {return a < b ? a : b;}
-inline char max (char a, char b) {return a > b ? a : b;}
-inline u_char min (u_char a, u_char b) {return a < b ? a : b;}
-inline u_char max (u_char a, u_char b) {return a > b ? a : b;}
-inline short min (short a, short b) {return a < b ? a : b;}
-inline short max (short a, short b) {return a > b ? a : b;}
-inline u_short min (u_short a, u_short b) {return a < b ? a : b;}
-inline u_short max (u_short a, u_short b) {return a > b ? a : b;}
-inline int min (int a, int b) {return a < b ? a : b;}
-inline int max (int a, int b) {return a > b ? a : b;}
-inline u_int min (u_int a, u_int b) {return a < b ? a : b;}
-inline u_int max (u_int a, u_int b) {return a > b ? a : b;}
-inline long min (long a, long b) {return a < b ? a : b;}
-inline long max (long a, long b) {return a > b ? a : b;}
-inline u_long min (u_long a, u_long b) {return a < b ? a : b;}
-inline u_long max (u_long a, u_long b) {return a > b ? a : b;}
-inline float min (float a, float b) {return a < b ? a : b;}
-inline float max (float a, float b) {return a > b ? a : b;}
-inline double min (double a, double b) {return a < b ? a : b;}
-inline double max (double a, double b) {return a > b ? a : b;}
-
-template <class T>
-inline void
-swap (T &a, T &b)
-{
-  T t = a;
-  a = b;
-  b = t;
-}
+using std::min;
+using std::max;
+using std::swap;
 
 inline int
 bcmp (const void *p1, const void *p2, size_t size)

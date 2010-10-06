@@ -54,9 +54,9 @@
  * Hash a single 512-bit block. This is the core of the algorithm.
  */
 static void
-SHA1Transform (u_int32_t state[5], const u_char buffer[64])
+SHA1Transform (uint32_t state[5], const u_char buffer[64])
 {
-    u_int32_t a, b, c, d, e;
+    uint32_t a, b, c, d, e;
     typedef union {
 	u_char c[64];
 	u_int l[16];

@@ -598,7 +598,7 @@ preview_page_window::lbutton_down (int x, int y)
   POINT pt;
   pt.x = x;
   pt.y = y;
-  if (!set_scale (min (scale_value () + 10, MAX_SCALE), 1, &pt))
+  if (!set_scale (min<int> (scale_value () + 10, MAX_SCALE), 1, &pt))
     return;
   PostMessage (GetParent (p_hwnd), WM_PRIVATE_UPDATE_SCALE, 0, 0);
 }
@@ -609,7 +609,7 @@ preview_page_window::rbutton_down (int x, int y)
   POINT pt;
   pt.x = x;
   pt.y = y;
-  if (!set_scale (max (scale_value () - 10, MIN_SCALE), 1, &pt))
+  if (!set_scale (max<int> (scale_value () - 10, MIN_SCALE), 1, &pt))
     return;
   PostMessage (GetParent (p_hwnd), WM_PRIVATE_UPDATE_SCALE, 0, 0);
 }

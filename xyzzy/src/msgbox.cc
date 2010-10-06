@@ -355,7 +355,7 @@ MsgBoxEx (HWND hwnd, const TCHAR *msg, const TCHAR *title,
       break;
     }
 
-  ncaptions = min (ncaptions, XMessageBox::MAX_BUTTONS);
+  ncaptions = min<int> (ncaptions, XMessageBox::MAX_BUTTONS);
   for (int i = 0; i < ncaptions; i++)
     if (captions[i])
       mb.set_button (i, XMessageBox::IDBUTTON1 + i, captions[i]);

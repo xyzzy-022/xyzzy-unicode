@@ -673,7 +673,7 @@ protected:
 public:
   xencode_b64_stream (xinput_stream <u_char> &in, int width)
        : xfilter_stream <u_char, u_char> (in),
-         s_width (width <= 0 ? MAX_WIDTH : min (width, MAX_WIDTH)),
+         s_width (width <= 0 ? MAX_WIDTH : min<int> (width, MAX_WIDTH)),
          s_fold_p (width > 0) {}
 };
 

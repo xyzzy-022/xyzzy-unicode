@@ -1,7 +1,4 @@
 #include "ed.h"
-#define _USE_MATH_DEFINES
-#include <cmath>
-#include <limits>
 #include <new.h>
 #include <io.h>
 #include <eh.h>

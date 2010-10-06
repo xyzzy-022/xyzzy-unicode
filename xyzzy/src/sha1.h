@@ -11,8 +11,8 @@
 
 typedef struct
 {
-  u_int32_t state[5];
-  u_int32_t count[2];
+  uint32_t state[5];
+  uint32_t count[2];
   u_char buffer[64];
 } SHA1_CTX;
 

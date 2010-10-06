@@ -367,7 +367,7 @@ public:
       return 1;
     }
   virtual int horz_width () const {return t_horz_width;}
-  virtual void set_horz_width (int w) {t_horz_width = max (MIN_WIDTH, w);}
+  virtual void set_horz_width (int w) {t_horz_width = max<int> (MIN_WIDTH, w);}
 };
 
 class dock_frame

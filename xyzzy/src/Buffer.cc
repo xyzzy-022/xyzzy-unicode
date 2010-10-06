@@ -1380,7 +1380,7 @@ Fset_buffer_colors (lisp lcolors, lisp lbuffer)
       XCOLORREF cc[USER_DEFINABLE_COLORS];
       check_general_vector (lcolors);
       memcpy (cc, Window::default_xcolors, sizeof cc);
-      int n = min (USER_DEFINABLE_COLORS, xvector_length (lcolors));
+      int n = min<int> (USER_DEFINABLE_COLORS, xvector_length (lcolors));
       for (int i = 0; i < n; i++)
         cc[i] = fixnum_value (xvector_contents (lcolors) [i]);
       Buffer::coerce_to_buffer (lbuffer)->change_colors (cc);

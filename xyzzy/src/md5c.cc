@@ -26,16 +26,16 @@
 #include "cdecl.h"
 #include "md5.h"
 
-static void MD5Transform (u_int32_t [4], const u_char [64]);
+static void MD5Transform (uint32_t [4], const u_char [64]);
 
 #ifndef _WIN32 /* BYTE_ORDER != LITTLE_ENDIAN */
 /*
- * Encodes input (u_int32_t) into output (u_char). Assumes len is
+ * Encodes input (uint32_t) into output (u_char). Assumes len is
  * a multiple of 4.
  */
 
 static void
-Encode (u_char *output, u_int32_t *input, u_int len)
+Encode (u_char *output, uint32_t *input, u_int len)
 {
   u_int i, j;
 
@@ -49,20 +49,20 @@ Encode (u_char *output, u_int32_t *input, u_int len)
 }
 
 /*
- * Decodes input (u_char) into output (u_int32_t). Assumes len is
+ * Decodes input (u_char) into output (uint32_t). Assumes len is
  * a multiple of 4.
  */
 
 static void
-Decode (u_int32_t *output, const u_char *input, u_int len)
+Decode (uint32_t *output, const u_char *input, u_int len)
 {
   u_int i, j;
 
   for (i = 0, j = 0; j < len; i++, j += 4)
-    output[i] = (((u_int32_t)input[j])
-                 | (((u_int32_t)input[j + 1]) << 8)
-                 | (((u_int32_t)input[j + 2]) << 16)
-                 | (((u_int32_t)input[j + 3]) << 24));
+    output[i] = (((uint32_t)input[j])
+                 | (((uint32_t)input[j + 1]) << 8)
+                 | (((uint32_t)input[j + 2]) << 16)
+                 | (((uint32_t)input[j + 3]) << 24));
 }
 
 #else /* _WIN32 */
@@ -91,22 +91,22 @@ static u_char PADDING[64] =
  * Rotation is separate from addition to prevent recomputation.
  */
 #define FF(a, b, c, d, x, s, ac) { \
-  (a) += F ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+  (a) += F ((b), (c), (d)) + (x) + (uint32_t)(ac); \
   (a) = ROTATE_LEFT ((a), (s)); \
   (a) += (b); \
 }
 #define GG(a, b, c, d, x, s, ac) { \
-  (a) += G ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+  (a) += G ((b), (c), (d)) + (x) + (uint32_t)(ac); \
   (a) = ROTATE_LEFT ((a), (s)); \
   (a) += (b); \
 }
 #define HH(a, b, c, d, x, s, ac) { \
-  (a) += H ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+  (a) += H ((b), (c), (d)) + (x) + (uint32_t)(ac); \
   (a) = ROTATE_LEFT ((a), (s)); \
   (a) += (b); \
 }
 #define II(a, b, c, d, x, s, ac) { \
-  (a) += I ((b), (c), (d)) + (x) + (u_int32_t)(ac); \
+  (a) += I ((b), (c), (d)) + (x) + (uint32_t)(ac); \
   (a) = ROTATE_LEFT ((a), (s)); \
   (a) += (b); \
 }
@@ -139,10 +139,10 @@ MD5Update (MD5_CTX *context, const u_char *input, u_int inputLen)
   index = (u_int)((context->count[0] >> 3) & 0x3F);
 
   /* Update number of bits */
-  if ((context->count[0] += ((u_int32_t)inputLen << 3))
-      < ((u_int32_t)inputLen << 3))
+  if ((context->count[0] += ((uint32_t)inputLen << 3))
+      < ((uint32_t)inputLen << 3))
     context->count[1]++;
-  context->count[1] += ((u_int32_t)inputLen >> 29);
+  context->count[1] += ((uint32_t)inputLen >> 29);
 
   partLen = 64 - index;
 
@@ -196,9 +196,9 @@ MD5Final (u_char digest[16], MD5_CTX *context)
 /* MD5 basic transformation. Transforms state based on block. */
 
 static void
-MD5Transform (u_int32_t state[4], const u_char block[64])
+MD5Transform (uint32_t state[4], const u_char block[64])
 {
-  u_int32_t a = state[0], b = state[1], c = state[2], d = state[3], x[16];
+  uint32_t a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
   Decode (x, block, 64);
 
