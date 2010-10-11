@@ -1,5 +1,3 @@
-#include <windows.h>
-#include <stdlib.h>
 #include "cdecl.h"
 
 #ifdef DEBUG

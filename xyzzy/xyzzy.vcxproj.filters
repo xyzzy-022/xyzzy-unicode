@@ -363,9 +363,6 @@
     <ClCompile Include="src\archiver.cc">
       <Filter>ソース ファイル\ed\non-pch</Filter>
     </ClCompile>
-    <ClCompile Include="src\data.cc">
-      <Filter>ソース ファイル\ed\non-pch</Filter>
-    </ClCompile>
     <ClCompile Include="src\hashpjw.cc">
       <Filter>ソース ファイル\ed\non-pch</Filter>
     </ClCompile>
@@ -378,14 +375,17 @@
     <ClCompile Include="src\sockinet.cc">
       <Filter>ソース ファイル\ed\non-pch</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils.cc">
-      <Filter>ソース ファイル\ed\non-pch</Filter>
-    </ClCompile>
     <ClCompile Include="src\xdde.cc">
       <Filter>ソース ファイル\ed\non-pch</Filter>
     </ClCompile>
     <ClCompile Include="src\wheel.cc">
-      <Filter>ソース ファイル\ed\non-pch</Filter>
+      <Filter>ソース ファイル\ed</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils.cc">
+      <Filter>ソース ファイル\ed</Filter>
+    </ClCompile>
+    <ClCompile Include="src\data.cc">
+      <Filter>ソース ファイル\ed</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,4 +1,3 @@
-#include "cdecl.h"
 #include "ed.h"
 #include "utils.h"
 #include "chtype.h"

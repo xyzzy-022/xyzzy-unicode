@@ -1,10 +1,15 @@
+#include "../src/targetver.h"
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <tchar.h>
 #include <commctrl.h>
-#include "privctlimpl.h"
+
 #include <malloc.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <tchar.h>
+
 #include "mousemsg.h"
+#include "privctlimpl.h"
 
 static WNDPROC ListViewProc;
 
@@ -76,6 +81,8 @@ static WNDPROC ListViewProc;
 #define OFFSET_REST 6
 #define ISEARCH_TIMEOUT1 200
 #define ISEARCH_TIMEOUT2 600
+
+typedef unsigned char u_char;
 
 struct listview_item_data: public item_data
 {

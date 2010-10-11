@@ -1,3 +1,4 @@
+#include "targetver.h"
 #include <windows.h>
 #include <malloc.h>
 #include <tchar.h>

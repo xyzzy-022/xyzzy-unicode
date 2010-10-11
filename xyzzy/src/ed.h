@@ -1,7 +1,8 @@
 #ifndef _ed_h_
 # define _ed_h_
 
-# include <tchar.h>
+# include "cdecl.h"
+
 # include "version.h"
 # include "sysdep.h"
 # include "xcolor.h"

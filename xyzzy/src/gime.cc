@@ -1,5 +1,4 @@
-#include <windows.h>
-#include <tchar.h>
+#include "cdecl.h"
 #include "gime.h"
 #ifndef DECLSPEC_UUID
 # define DECLSPEC_UUID(X)

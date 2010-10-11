@@ -1,8 +1,12 @@
+#include "../src/targetver.h"
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <tchar.h>
-#include "privctlimpl.h"
+
 #include <malloc.h>
 #include <stdio.h>
+#include <tchar.h>
+
+#include "privctlimpl.h"
 
 static void
 dopaint (HWND hwnd, HDC hdc)

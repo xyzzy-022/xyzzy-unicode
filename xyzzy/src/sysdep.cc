@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "cdecl.h"
 #include "sysdep.h"
 #include "vfs.h"
 #include "resource.h"

@@ -1,8 +1,7 @@
-#include <stddef.h>
+#include "ed.h"
 #include <share.h>
 #include <io.h>
 #include <setjmp.h>
-#include "ed.h"
 #include "lex.h"
 #include "symtable.h"
 #include "mainframe.h"

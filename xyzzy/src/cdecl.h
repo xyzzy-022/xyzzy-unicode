@@ -2,7 +2,7 @@
 #ifndef _cdecl_h_
 # define _cdecl_h_
 
-# pragma warning (disable: 4201)
+# include "targetver.h"
 
 # define NOMINMAX
 # define _USE_MATH_DEFINES
@@ -14,8 +14,8 @@
 # include <algorithm>
 # include <climits>
 # include <cmath>
-# include <cstdint>
 # include <cstddef>
+# include <cstdint>
 # include <cstdio>
 # include <cstdlib>
 # include <cstring>
@@ -25,8 +25,6 @@
 # include <malloc.h>
 # include <mbstring.h>
 # include <tchar.h>
-
-# pragma warning (default: 4201)
 
 # pragma warning (disable: 4510)
 # pragma warning (disable: 4514)

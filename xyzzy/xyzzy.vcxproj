@@ -231,12 +231,7 @@
     <ClCompile Include="src\colors.cc" />
     <ClCompile Include="src\com.cc" />
     <ClCompile Include="src\conf.cc" />
-    <ClCompile Include="src\data.cc">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="src\data.cc" />
     <ClCompile Include="src\dde.cc" />
     <ClCompile Include="src\dialogs.cc" />
     <ClCompile Include="src\disp.cc" />
@@ -387,12 +382,7 @@
     <ClCompile Include="src\undo.cc" />
     <ClCompile Include="src\usertab.cc" />
     <ClCompile Include="src\usertool.cc" />
-    <ClCompile Include="src\utils.cc">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="src\utils.cc" />
     <ClCompile Include="src\utimer.cc" />
     <ClCompile Include="src\vector.cc" />
     <ClCompile Include="src\version.cc">
@@ -402,12 +392,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\vfs.cc" />
-    <ClCompile Include="src\wheel.cc">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="src\wheel.cc" />
     <ClCompile Include="src\Window.cc" />
     <ClCompile Include="src\winhelp.cc" />
     <ClCompile Include="src\wstream.cc" />

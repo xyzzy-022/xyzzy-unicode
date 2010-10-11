@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "cdecl.h"
 #include "ipc.h"
 
 #define HWND_MAX 253

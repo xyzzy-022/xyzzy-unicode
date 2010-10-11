@@ -1,7 +1,9 @@
-#include "arc-if.h"
-#include "vfs.h"
+#include "cdecl.h"
 
 #ifndef UNICODE
+
+#include "arc-if.h"
+#include "vfs.h"
 
 const char *ArchiverInterface::ai_names[] =
 {

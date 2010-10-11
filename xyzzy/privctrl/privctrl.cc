@@ -1,6 +1,10 @@
+#include "../src/targetver.h"
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <tchar.h>
 #include <commctrl.h>
+
+#include <tchar.h>
+
 #define EXTERN
 #include "privctlimpl.h"
 
