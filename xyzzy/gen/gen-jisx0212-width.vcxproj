@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\cdecl.h" />
     <ClInclude Include="..\src\charset.h" />
+    <ClInclude Include="..\src\targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="gen-ucs2tab.vcxproj">

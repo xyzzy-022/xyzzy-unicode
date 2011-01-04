@@ -150,11 +150,12 @@
     <ClCompile Include="src\xyzzycli.cc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\listen.h" />
-    <ClInclude Include="src\xyzzycli.h" />
+    <ResourceCompile Include="src\xyzzycli.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="src\xyzzycli.rc" />
+    <ClInclude Include="src\listen.h" />
+    <ClInclude Include="src\targetver.h" />
+    <ClInclude Include="src\xyzzycli.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
