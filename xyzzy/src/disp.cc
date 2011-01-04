@@ -1425,7 +1425,7 @@ glyph_unichar (glyph_t *g, Char cc, int f, int flags, const glyph_info &info)
       *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_LEAD  | GLYPH_BM_FULLSPC1);
       *g++ = glyph_of_value ((f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL | GLYPH_TRAIL | GLYPH_BM_FULLSPC2);
     }
-  else if (info.font_index < 0)
+  else if (info.is_defchar ())
     {
       *g++ = glyph_of_value (f | GLYPH_BM_BLANK);
     }

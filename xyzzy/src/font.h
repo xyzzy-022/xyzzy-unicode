@@ -41,35 +41,21 @@ public:
 
 struct glyph_info
 {
-  int font_index;
+  int8_t font_index;
   WORD glyph_index;
   int width;
 
-  glyph_info () : font_index (-1), glyph_index (0xffff), width (-1) { }
-  glyph_info (int fi, WORD gi, int w) : font_index (fi), glyph_index (gi), width (w) { }
+  static const int8_t FONT_INDEX_DEFCHAR = -1;
+  static const int8_t FONT_INDEX_UNBOUND = -2;
 
-  bool operator == (const glyph_info &other) {
-    return (font_index == other.font_index && glyph_index == other.glyph_index && width == other.width);
-  }
-  bool operator != (const glyph_info &other) {
-    return !(*this == other);
-  }
+  glyph_info () : font_index (FONT_INDEX_UNBOUND), glyph_index (0xffff), width (1) { }
+  glyph_info (int8_t fi, WORD gi = 0xffff, uint32_t w = 1) : font_index (fi), glyph_index (gi), width (w) { }
 
-  static glyph_info defchar;
-  static glyph_info unbound;
-};
+  bool is_defchar() const { return font_index == FONT_INDEX_DEFCHAR; }
+  bool is_unbound() const { return font_index == FONT_INDEX_UNBOUND; }
 
-class glyph_info_cache
-{
-protected:
-  glyph_info cache[0x10000];
-
-public:
-  glyph_info_cache () { }
-  virtual ~glyph_info_cache () { }
-
-  void clear ();
-  glyph_info &operator [] (int n) { return cache[n]; }
+  static glyph_info defchar () { return glyph_info (FONT_INDEX_DEFCHAR); }
+  static glyph_info unbound () { return glyph_info (FONT_INDEX_UNBOUND); }
 };
 
 #endif /* UNICODE */
@@ -153,11 +139,11 @@ public:
   int size_pixel_p () const {return fs_size_pixel;}
 
 #ifdef UNICODE
-protected:
-  glyph_info_cache glyph_cache;
+private:
+  std::array<glyph_info, 0x10000> glyph_cache;
 
 public:
-  void clear_glyph_cache () { glyph_cache.clear (); }
+  void clear_glyph_cache () { std::fill(glyph_cache.begin(), glyph_cache.end(), glyph_info::unbound ()); }
   const glyph_info &get_glyph_info (Char);
   int char_width (Char cc) { return get_glyph_info (cc).width; }
 #endif /* UNICODE */

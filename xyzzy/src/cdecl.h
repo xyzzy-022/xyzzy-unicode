@@ -12,6 +12,7 @@
 # include <commctrl.h>
 
 # include <algorithm>
+# include <array>
 # include <climits>
 # include <cmath>
 # include <cstddef>

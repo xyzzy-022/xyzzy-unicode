@@ -411,36 +411,19 @@ FontSet::init ()
 
 #ifdef UNICODE
 
-#include <algorithm>
-
-void
-glyph_info_cache::clear ()
+struct HDC_deleter
 {
-  std::fill (cache, cache + _countof (cache), glyph_info::unbound);
-}
-
-class scoped_dc {
-private:
+  typedef HDC pointer;
+  HDC_deleter(HWND hWnd) : m_hWnd(hWnd) { }
   HWND m_hWnd;
-  HDC m_hDc;
-
-public:
-  scoped_dc (HWND hWnd) : m_hWnd (hWnd), m_hDc (::GetDC (hWnd)) { }
-  virtual ~scoped_dc () { if (m_hDc) ::ReleaseDC (m_hWnd, m_hDc); }
-
-  operator HDC () const { return m_hDc; }
+  void operator () (HDC hDc) { ::ReleaseDC(m_hWnd, hDc); }
 };
 
-class scoped_old_gdiobj {
-private:
+struct HGDIOBJ_deleter {
+  typedef HGDIOBJ pointer;
+  HGDIOBJ_deleter(HDC hDc) : m_hDc(hDc) { }
   HDC m_hDc;
-  HGDIOBJ m_hObj;
-
-public:
-  scoped_old_gdiobj (HDC hDc, HGDIOBJ hObj) : m_hDc (hDc), m_hObj (::SelectObject (hDc, hObj)) { }
-  virtual ~scoped_old_gdiobj () { if (m_hObj) ::SelectObject (m_hDc, m_hObj); }
-
-  operator HGDIOBJ () const { return m_hObj; }
+  void operator () (HGDIOBJ hObj) { ::SelectObject(m_hDc, hObj); }
 };
 
 static glyph_info
@@ -455,27 +438,29 @@ get_glyph_info_impl (FontSet& fs, Char cc)
 
   LONG cell_x = fs.cell ().cx;
   if (!cell_x)
-    return glyph_info::defchar;
+    return glyph_info::defchar ();
 
-  scoped_dc hdc (0);
+  std::unique_ptr<HDC, HDC_deleter&> hdc(::GetDC(0),
+                                         HDC_deleter(0));
   if (!hdc)
-    return glyph_info::defchar;
+    return glyph_info::defchar ();
 
   TCHAR ch (cc);
   for (int i = 0; i < FONT_MAX; ++i)
     {
       const FontObject &f = fs.font (i);
-      scoped_old_gdiobj old (hdc, f);
+      std::unique_ptr<HGDIOBJ, HGDIOBJ_deleter&> old(::SelectObject(hdc.get(), f),
+                                                     HGDIOBJ_deleter(hdc.get()));
       if (!old)
-          return glyph_info::defchar;
+          return glyph_info::defchar ();
 
       WORD index;
-      DWORD ret = GetGlyphIndices (hdc, &ch, 1, &index, GGI_MARK_NONEXISTING_GLYPHS);
+      DWORD ret = GetGlyphIndices (hdc.get(), &ch, 1, &index, GGI_MARK_NONEXISTING_GLYPHS);
 
       if (ret == 1 && index != 0xffff) {
         SIZE size;
-        if (!GetTextExtentPointI (hdc, &index, 1, &size))
-          return glyph_info::defchar;
+        if (!GetTextExtentPointI (hdc.get(), &index, 1, &size))
+          return glyph_info::defchar ();
 
         LONG font_x = size.cx;
         if (!font_x) font_x = 1;
@@ -484,19 +469,16 @@ get_glyph_info_impl (FontSet& fs, Char cc)
       }
     }
 
-  return glyph_info::defchar;
+  return glyph_info::defchar ();
 }
 
 const glyph_info &
 FontSet::get_glyph_info (Char cc)
 {
-  if (glyph_cache[cc] != glyph_info::unbound)
-    return glyph_cache[cc];
-
-  return glyph_cache[cc] = get_glyph_info_impl (*this, cc);
+  glyph_info &i = glyph_cache[cc];
+  if (i.is_unbound ())
+    i = get_glyph_info_impl (*this, cc);
+  return i;
 }
-
-glyph_info glyph_info::defchar (-1, 0xffff,  1);
-glyph_info glyph_info::unbound (-1, 0xffff, -1);
 
 #endif /* UNICODE */
