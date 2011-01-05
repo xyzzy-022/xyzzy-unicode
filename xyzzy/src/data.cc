@@ -2842,25 +2842,25 @@ Fxyzzy_dumped_p ()
 
 #ifdef DEBUG_GC
 static void
-output_funcall_mark (FILE *fp, lfns *p, const char *pkg = "")
+output_funcall_mark (FILE *fp, lfns *p, const TCHAR *pkg = _T(""))
 {
   for (; p->name; p++)
     if (p->called)
       {
         for (int f = 1; f <= 0x20; f <<= 1)
-          putc (p->called & f ? 'o' : ' ', fp);
-        putc (p->called & 0x7f ? '*' : ' ', fp);
-        putc (p->called & 0x80 ? '@' : ' ', fp);
-        fprintf (fp, ": %s%.*s\n", pkg, p->size, p->name);
+          _puttc (p->called & f ? _T('o') : _T(' '), fp);
+        _puttc (p->called & 0x7f ? _T('*') : _T(' '), fp);
+        _puttc (p->called & 0x80 ? _T('@') : _T(' '), fp);
+        _ftprintf (fp, _T(": %s%.*s\n"), pkg, p->size, p->name);
       }
 }
 
 void
 output_funcall_mark (FILE *fp)
 {
-  fprintf (fp, "Funcall list:\n");
+  _ftprintf (fp, _T("Funcall list:\n"));
   output_funcall_mark (fp, lsp_fns);
-  output_funcall_mark (fp, sys_fns, "si:");
+  output_funcall_mark (fp, sys_fns, _T("si:"));
   output_funcall_mark (fp, ed_fns);
 }
 #endif /* DEBUG_GC */
