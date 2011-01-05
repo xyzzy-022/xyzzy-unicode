@@ -419,7 +419,8 @@ struct HDC_deleter
   void operator () (HDC hDc) { ::ReleaseDC(m_hWnd, hDc); }
 };
 
-struct HGDIOBJ_deleter {
+struct HGDIOBJ_deleter
+{
   typedef HGDIOBJ pointer;
   HGDIOBJ_deleter(HDC hDc) : m_hDc(hDc) { }
   HDC m_hDc;
