@@ -441,17 +441,19 @@ get_glyph_info_impl (FontSet& fs, Char cc)
   if (!cell_x)
     return glyph_info::defchar ();
 
+  HDC_deleter hdc_deleter(0);
   std::unique_ptr<HDC, HDC_deleter&> hdc(::GetDC(0),
-                                         HDC_deleter(0));
+                                         hdc_deleter);
   if (!hdc)
     return glyph_info::defchar ();
 
   TCHAR ch (cc);
+  HGDIOBJ_deleter hgdiobj_deleter(hdc.get());
   for (int i = 0; i < FONT_MAX; ++i)
     {
       const FontObject &f = fs.font (i);
       std::unique_ptr<HGDIOBJ, HGDIOBJ_deleter&> old(::SelectObject(hdc.get(), f),
-                                                     HGDIOBJ_deleter(hdc.get()));
+                                                     hgdiobj_deleter);
       if (!old)
           return glyph_info::defchar ();
 
