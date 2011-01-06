@@ -2552,8 +2552,8 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                   Char c1 = _T('^'), c2 = (_T('@') + cc) & 0x7f;
                   const glyph_info &i1 = glyph_info_of_unichar (c1);
                   const glyph_info &i2 = glyph_info_of_unichar (c2);
-                  g = glyph_unichar (g, c1, GLYPH_CTRL, 0, i1);
-                  g = glyph_unichar (g, c2, GLYPH_CTRL, 0, i2);
+                  g = glyph_unichar (g, c1, (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 0, i1);
+                  g = glyph_unichar (g, c2, (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 0, i2);
                 }
               else
                 {
