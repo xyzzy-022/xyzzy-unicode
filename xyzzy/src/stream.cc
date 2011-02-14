@@ -68,6 +68,9 @@ make_file_stream (stream_type type)
   xfile_stream_pathname (stream) = Qnil;
   xfile_stream_input (stream) = 0;
   xfile_stream_output (stream) = 0;
+#ifdef UNICODE
+  xfile_stream_start (stream) = lstream::BOM_UNKNOWN;
+#endif
   return stream;
 }
 
@@ -1338,6 +1341,90 @@ readc_stream (lisp stream)
         case st_file_io:
         case st_file_input:
           {
+#ifdef UNICODE
+            if (xfile_stream_encoding (stream) == lstream::ENCODE_BINARY) {
+              int c = getc (xfile_stream_input (stream));
+              if (c == EOF)
+                return lChar_EOF;
+              if (c == '\n')
+                xstream_linenum (stream)++;
+              return c;
+
+            } else {
+
+              int b1;
+              bool have_b1 = false;
+
+              if (xfile_stream_start (stream) == lstream::BOM_UNKNOWN)
+                {
+                  int b2;
+
+                  b1 = getc (xfile_stream_input (stream));
+                  if (b1 == EOF) return lChar_EOF;
+
+                  b2 = getc (xfile_stream_input (stream));
+                  if (b2 == EOF) return b1;
+
+                  if (b1 == 0xff && b2 == 0xfe)
+                    {
+                      xfile_stream_start (stream) = lstream::BOM_UTF16LE;
+                    }
+                  else
+                    {
+                      xfile_stream_start (stream) = lstream::BOM_NONE;
+                      have_b1 = true;
+                      ungetc (b2, xfile_stream_input (stream));
+                    }
+                }
+
+              if (xfile_stream_start (stream) == lstream::BOM_NONE)
+                {
+                  int c = have_b1 ? b1 : getc (xfile_stream_input (stream));
+                  if (c == EOF) return lChar_EOF;
+                  if (IsDBCSLeadByteEx (CP_ACP, c))
+                    {
+                      char mb[2];
+                      WCHAR wc;
+                      int c2 = getc (xfile_stream_input (stream));
+                      if (c2 == EOF) return c;
+
+                      mb[0] = char (c);
+                      mb[1] = char (c2);
+
+                      if (MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, mb, sizeof (mb), &wc, 1) == 1)
+                        return wc;
+                      else
+                        return '?';
+                    }
+                  else if (xfile_stream_encoding (stream) == lstream::ENCODE_CANON && c == '\r')
+                    {
+                      int c2 = getc (xfile_stream_input (stream));
+                      if (c2 == '\n')
+                        c = c2;
+                      else
+                        ungetc (c2, xfile_stream_input (stream));
+                    }
+                  if (c == '\n')
+                    xstream_linenum (stream)++;
+                  return c;
+                }
+              else if (xfile_stream_start (stream) == lstream::BOM_UTF16LE)
+                {
+                  wint_t wc = getwc (xfile_stream_input (stream));
+                  if (wc == WEOF) return lChar_EOF;
+                  if (xfile_stream_encoding (stream) == lstream::ENCODE_CANON && wc == L'\r') {
+                    wint_t wc2 = getwc (xfile_stream_input (stream));
+                    if (wc2 == L'\n')
+                      wc = wc2;
+                    else
+                      ungetwc (wc2, xfile_stream_input (stream));
+                  }
+                  if (wc == L'\n')
+                    xstream_linenum (stream)++;
+                  return wc;
+                }
+            }
+#else
             int c = getc (xfile_stream_input (stream));
             if (c == EOF)
               return lChar_EOF;
@@ -1358,9 +1445,10 @@ readc_stream (lisp stream)
                       ungetc (c2, xfile_stream_input (stream));
                   }
               }
-            if (c == '\n')
+            if (c == _T('\n'))
               xstream_linenum (stream)++;
             return c;
+#endif
           }
 
         case st_file_output:
@@ -1685,12 +1773,23 @@ stream_linenum (lisp stream)
 static void
 putc_file_stream (lisp stream, Char cc)
 {
+#ifdef UNICODE
+  if (xfile_stream_start (stream) == lstream::BOM_UNKNOWN)
+    {
+      putwc (0xfeff, xfile_stream_output (stream));
+      xfile_stream_start (stream) = lstream::BOM_UTF16LE;
+    }
+  if (xfile_stream_encoding (stream) == lstream::ENCODE_CANON && cc == L'\n')
+    putwc (L'\r', xfile_stream_output (stream));
+  putwc (wchar_t (cc), xfile_stream_output (stream));
+#else
   if (DBCP (cc))
     putc (cc >> 8, xfile_stream_output (stream));
   else if (xfile_stream_encoding (stream) == lstream::ENCODE_CANON
            && cc == '\n')
     putc ('\r', xfile_stream_output (stream));
   putc (cc, xfile_stream_output (stream));
+#endif
 }
 
 static void

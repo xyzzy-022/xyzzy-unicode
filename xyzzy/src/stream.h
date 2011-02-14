@@ -66,6 +66,12 @@ public:
       ENCODE_RAW,     // text(行末変換しない)
       ENCODE_BINARY   // binary
     };
+  enum
+    {
+      BOM_UNKNOWN,
+      BOM_NONE,
+      BOM_UTF16LE,
+    };
 
   ~lstream ();
 };
@@ -78,7 +84,7 @@ public:
     output       : (FILE *) 出力ファイルのストリーム
     pathname     : (lisp)   ファイル名
     alt_pathname : (char *) テンポラリファイルのファイル名
-    start        : -
+    start        : (int)    BOM種別(UNICODE)
     end          : -
 
   STRING STREAM:
@@ -224,6 +230,16 @@ xfile_stream_encoding (lisp x)
   assert (file_stream_p (x));
   return ((lstream *)x)->encoding;
 }
+
+#ifdef UNICODE
+inline int &
+xfile_stream_start (lisp x)
+{
+  assert (streamp (x));
+  assert (file_stream_p (x));
+  return ((lstream *)x)->start;
+}
+#endif
 
 inline lisp &
 xstring_stream_input (lisp x)
