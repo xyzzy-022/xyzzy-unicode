@@ -10,3 +10,4 @@ ReleaseANSI
 *.vcxproj.user
 unicode
 zlib
+*.lc
