@@ -692,7 +692,7 @@ OFN::wndproc (UINT msg, WPARAM wparam, LPARAM lparam)
                 {
                   hwnd = GetParent (ofn_hwnd);
                   if (ofn_ok_button)
-                    CommDlg_OpenSave_SetControlText (hwnd, IDOK, "OK");
+                    CommDlg_OpenSave_SetControlText (hwnd, IDOK, _T("OK"));
                 }
               else
                 hwnd = ofn_hwnd;
