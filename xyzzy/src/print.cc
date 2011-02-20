@@ -76,9 +76,9 @@ print_settings::load_conf ()
     ps_multi_column = x;
   if (read_conf (cfgPrint, cfgFoldColumns, x) && x >= 0)
     ps_fold_width = x;
-  if (!read_conf (cfgPrint, cfgHeader, ps_header, sizeof ps_header))
+  if (!read_conf (cfgPrint, cfgHeader, ps_header, _countof (ps_header)))
     _tcscpy_s (ps_header, default_header);
-  if (!read_conf (cfgPrint, cfgFooter, ps_footer, sizeof ps_footer))
+  if (!read_conf (cfgPrint, cfgFooter, ps_footer, _countof (ps_footer)))
     _tcscpy_s (ps_footer, default_footer);
   if (read_conf (cfgPrint, cfgHeaderOn, x))
     ps_header_on = x ? 1 : 0;
