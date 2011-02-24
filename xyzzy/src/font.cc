@@ -455,7 +455,7 @@ glyph_info_array::get_impl (Char cc) const
 
   std::unique_ptr<HGDIOBJ, HGDIOBJ_deleter> old (::SelectObject (hdc.get (), fonts[0]), HGDIOBJ_deleter(hdc.get ()));
   if (!old)
-      return glyph_info::defchar ();
+    return glyph_info::defchar ();
 
   TCHAR ch (cc);
   int i = 0;
@@ -463,8 +463,10 @@ glyph_info_array::get_impl (Char cc) const
     {
       WORD index;
       DWORD ret = GetGlyphIndices (hdc.get (), &ch, 1, &index, GGI_MARK_NONEXISTING_GLYPHS);
+      if (ret == GDI_ERROR)
+        return glyph_info::defchar ();
 
-      if (ret != GDI_ERROR && index != 0xffff) {
+      if (ret == 1 && index != 0xffff) {
         SIZE size;
         if (0 == GetTextExtentPointI (hdc.get (), &index, 1, &size))
           return glyph_info::defchar ();
@@ -474,8 +476,10 @@ glyph_info_array::get_impl (Char cc) const
       }
 
       if (i < FONT_MAX - 1)
-        if (NULL == SelectObject (hdc.get (), fonts[++i]))
-          return glyph_info::defchar ();
+        {
+          if (NULL == SelectObject (hdc.get (), fonts[++i]))
+            return glyph_info::defchar ();
+        }
       else
         break;
     }
