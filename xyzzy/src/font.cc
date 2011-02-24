@@ -331,7 +331,7 @@ FontSet::create (const FontSetParam &param)
     }
 
 #ifdef UNICODE
-  clear_glyph_cache ();
+  reset_glyph_cache ();
 #endif
   create_bitmap ();
   save_params (param);
@@ -427,61 +427,88 @@ struct HGDIOBJ_deleter
   void operator () (HGDIOBJ hObj) { ::SelectObject(m_hDc, hObj); }
 };
 
-static glyph_info
-get_glyph_info_impl (FontSet& fs, Char cc)
+glyph_info_array::glyph_info_array ()
+{
+  cell_size.cx = 0L;
+  cell_size.cy = 0L;
+  std::fill (fonts.begin(), fonts.end(), HFONT (0));
+  std::fill (cache.begin(), cache.end(), glyph_info::unbound ());
+}
+
+glyph_info
+glyph_info_array::get_impl (Char cc) const
 {
   if ((0 <= cc && cc < 0x20) || cc == 0x7f)
     {
-      const glyph_info &gi1 = fs.get_glyph_info (_T('^'));
-      const glyph_info &gi2 = fs.get_glyph_info ((_T('@') + cc) & 0x7f);
+      const glyph_info &gi1 = get (_T('^'));
+      const glyph_info &gi2 = get ((_T('@') + cc) & 0x7f);
       return glyph_info (0, 0, gi1.width + gi2.width);
     }
 
-  LONG cell_x = fs.cell ().cx;
+  LONG cell_x = cell_size.cx;
   if (!cell_x)
     return glyph_info::defchar ();
 
-  HDC_deleter hdc_deleter(0);
-  std::unique_ptr<HDC, HDC_deleter&> hdc(::GetDC(0),
-                                         hdc_deleter);
+  std::unique_ptr<HDC, HDC_deleter> hdc (::GetDC (0), HDC_deleter (0));
   if (!hdc)
     return glyph_info::defchar ();
 
+  std::unique_ptr<HGDIOBJ, HGDIOBJ_deleter> old (::SelectObject (hdc.get (), fonts[0]), HGDIOBJ_deleter(hdc.get ()));
+  if (!old)
+      return glyph_info::defchar ();
+
   TCHAR ch (cc);
-  HGDIOBJ_deleter hgdiobj_deleter(hdc.get());
-  for (int i = 0; i < FONT_MAX; ++i)
+  int i = 0;
+  while (true)
     {
-      const FontObject &f = fs.font (i);
-      std::unique_ptr<HGDIOBJ, HGDIOBJ_deleter&> old(::SelectObject(hdc.get(), f),
-                                                     hgdiobj_deleter);
-      if (!old)
-          return glyph_info::defchar ();
-
       WORD index;
-      DWORD ret = GetGlyphIndices (hdc.get(), &ch, 1, &index, GGI_MARK_NONEXISTING_GLYPHS);
+      DWORD ret = GetGlyphIndices (hdc.get (), &ch, 1, &index, GGI_MARK_NONEXISTING_GLYPHS);
 
-      if (ret == 1 && index != 0xffff) {
+      if (ret != GDI_ERROR && index != 0xffff) {
         SIZE size;
-        if (!GetTextExtentPointI (hdc.get(), &index, 1, &size))
+        if (0 == GetTextExtentPointI (hdc.get (), &index, 1, &size))
           return glyph_info::defchar ();
 
-        LONG font_x = size.cx;
-        if (!font_x) font_x = 1;
-
+        LONG font_x = std::max (1L, size.cx);
         return glyph_info (i, index, (font_x + cell_x - 1) / cell_x);
       }
+
+      if (i < FONT_MAX - 1)
+        if (NULL == SelectObject (hdc.get (), fonts[++i]))
+          return glyph_info::defchar ();
+      else
+        break;
     }
 
   return glyph_info::defchar ();
 }
 
 const glyph_info &
-FontSet::get_glyph_info (Char cc)
+glyph_info_array::get (Char cc) const
 {
-  glyph_info &i = glyph_cache[cc];
-  if (i.is_unbound ())
-    i = get_glyph_info_impl (*this, cc);
-  return i;
+  glyph_info &gi = cache[cc];
+  if (gi.is_unbound ())
+    gi = get_impl (cc);
+
+  return gi;
+}
+
+void
+glyph_info_array::reset (const std::array<HFONT, FONT_MAX> &fonts, const SIZE &cell_size)
+{
+  this->fonts = fonts;
+  this->cell_size = cell_size;
+  std::fill (cache.begin (), cache.end (), glyph_info::unbound ());
+}
+
+void
+FontSet::reset_glyph_cache ()
+{
+  std::array<HFONT, FONT_MAX> fonts;
+  for (int i = 0; i < FONT_MAX; ++i)
+    fonts[i] = font (i);
+
+  glyph_cache.reset (fonts, cell ());
 }
 
 #endif /* UNICODE */

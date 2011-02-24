@@ -58,6 +58,21 @@ struct glyph_info
   static glyph_info unbound () { return glyph_info (FONT_INDEX_UNBOUND); }
 };
 
+class glyph_info_array
+{
+private:
+  mutable std::array<glyph_info, 0x10000> cache;
+
+  std::array<HFONT, FONT_MAX> fonts;
+  SIZE cell_size;
+  glyph_info get_impl (Char) const;
+
+public:
+  glyph_info_array ();
+  void reset (const std::array<HFONT, FONT_MAX> &fontsconst, const SIZE &cell_size);
+  const glyph_info &get (Char cc) const;
+};
+
 #endif /* UNICODE */
 
 struct FontSetParam
@@ -140,11 +155,11 @@ public:
 
 #ifdef UNICODE
 private:
-  std::array<glyph_info, 0x10000> glyph_cache;
+  glyph_info_array glyph_cache;
 
 public:
-  void clear_glyph_cache () { std::fill(glyph_cache.begin(), glyph_cache.end(), glyph_info::unbound ()); }
-  const glyph_info &get_glyph_info (Char);
+  void reset_glyph_cache ();
+  const glyph_info &get_glyph_info (Char cc) { return glyph_cache.get (cc); }
   int char_width (Char cc) { return get_glyph_info (cc).width; }
 #endif /* UNICODE */
 
