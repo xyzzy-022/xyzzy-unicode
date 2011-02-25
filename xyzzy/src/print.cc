@@ -839,9 +839,8 @@ print_engine::paint_unichar (PaintCtx &ctx, Char cc) const
   const glyph_info &gi = pe_glyph_info_array.get (cc);
   if (!gi.is_defchar ())
     {
-      TCHAR c (cc);
       SelectObject (ctx.hdc, pe_hfonts[gi.font_index]);
-      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, &c, 1, 0);
+      ExtTextOut (ctx.hdc, ctx.x, ctx.y, ETO_GLYPH_INDEX, 0, reinterpret_cast<LPCTSTR> (&gi.glyph_index), 1, 0);
       ctx.x += (pe_fixed_pitch
                 ? pe_print_cell.cx * gi.cell_width
                 : gi.pixel_width);
