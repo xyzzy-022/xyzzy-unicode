@@ -52,7 +52,11 @@ void format_message (message_code, ...);
 int format_yes_or_no_p (message_code, ...);
 TCHAR *print_key_sequence (TCHAR *, TCHAR *, Char);
 void ding (int);
+#ifdef UNICODE
+int get_glyph_width (Char, const class glyph_info_array &);
+#else
 int get_glyph_width (Char, const struct glyph_width &);
+#endif
 
 /* environ.cc */
 void init_environ ();

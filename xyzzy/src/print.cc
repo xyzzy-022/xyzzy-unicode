@@ -471,9 +471,9 @@ printer_device::get_dev_copies (print_settings &ps)
 ///////////////////////////////////////////////
 
 
-
+#ifndef UNICODE
 #include "lucida-width.h"
-
+#endif
 
 #define LINENUM_WIDTH 6
 
@@ -537,6 +537,20 @@ print_engine::init_font (HDC hdc)
         pe_fixed_pitch = 0;
     }
 
+#ifdef UNICODE
+  {
+    for (int i = 0; i < FONT_MAX; ++i)
+      pe_offset[i].x = pe_offset2x[i] = 0;
+
+    HDC cdc;
+    std::array<HFONT, FONT_MAX> fonts;
+
+    cdc = CreateCompatibleDC (hdc);
+    std::copy (pe_hfonts, pe_hfonts + FONT_MAX, fonts.begin());
+
+    pe_glyph_info_array.reset (cdc, fonts, pe_print_cell);
+  }
+#else
   if (!pe_fixed_pitch)
     {
       int i;
@@ -556,6 +570,7 @@ print_engine::init_font (HDC hdc)
       pe_glyph_width.pixel[CC_DEL] = (get_glyph_width ('^', pe_glyph_width)
                                       + get_glyph_width ('?' + i, pe_glyph_width));
     }
+#endif
 
   SelectObject (hdc, of);
 }
@@ -616,9 +631,17 @@ print_engine::init_area (HDC hdc)
       if (pe_settings.ps_print_linenum)
         {
           for (int i = '0'; i <= '9'; i++)
+#ifdef UNICODE
+            pe_digit_width = max (pe_digit_width, get_glyph_width (i, pe_glyph_info_array));
+#else
             pe_digit_width = max (pe_digit_width, (int)pe_glyph_width.pixel[i]);
+#endif
           pe_linenum_width = pe_digit_width * LINENUM_WIDTH;
+#ifdef UNICODE
+          pe_start_pixel = pe_linenum_width + get_glyph_width ('m', pe_glyph_info_array);
+#else
           pe_start_pixel = pe_linenum_width + pe_glyph_width.pixel['m'];
+#endif
           pe_copying_width -= pe_start_pixel;
         }
       if (pe_copying_width / pe_print_cell.cx < 4)
@@ -747,7 +770,11 @@ print_engine::next_line (Point &point) const
   if (pe_fixed_pitch)
     pe_bp->parse_fold_line (point, pe_fold_columns, pe_fold_param);
   else
+#ifdef UNICODE
+    pe_bp->parse_fold_line (point, pe_copying_width, pe_glyph_info_array, pe_fold_param);
+#else
     pe_bp->parse_fold_line (point, pe_copying_width, pe_glyph_width, pe_fold_param);
+#endif
   if (!point.p_chunk)
     {
       while (1)
@@ -797,6 +824,39 @@ struct PaintCtx
 
 /* めっちゃてけとーな実装だが、プリンタ相手だから
    こんなもんで勘弁しといたる。*/
+
+#ifdef UNICODE
+
+void
+print_engine::paint_ascii (PaintCtx &ctx, Char cc) const
+{
+  paint_unichar (ctx, cc & 0xff);
+}
+
+void
+print_engine::paint_unichar (PaintCtx &ctx, Char cc) const
+{
+  const glyph_info &gi = pe_glyph_info_array.get (cc);
+  if (!gi.is_defchar ())
+    {
+      TCHAR c (cc);
+      SelectObject (ctx.hdc, pe_hfonts[gi.font_index]);
+      ExtTextOut (ctx.hdc, ctx.x, ctx.y, 0, 0, &c, 1, 0);
+      ctx.x += (pe_fixed_pitch
+                ? pe_print_cell.cx * gi.cell_width
+                : gi.pixel_width);
+    }
+  else
+    {
+      const glyph_info &di = pe_glyph_info_array.get (' ');
+      ctx.x += (pe_fixed_pitch
+                ? pe_print_cell.cx * di.cell_width
+                : di.pixel_width);
+    }
+  ctx.column++;
+}
+
+#else
 
 void
 print_engine::paint_ascii (PaintCtx &ctx, Char cc) const
@@ -961,6 +1021,8 @@ print_engine::paint_lucida (PaintCtx &ctx, Char cc) const
             : get_glyph_width (cc, pe_glyph_width));
 }
 
+#endif
+
 int
 print_engine::paint_line (HDC hdc, int x, int y, Point &cur_point, long &linenum) const
 {
@@ -1021,6 +1083,36 @@ print_engine::paint_line (HDC hdc, int x, int y, Point &cur_point, long &linenum
   for (; point.p_point < cur_point.p_point && !pe_bp->eobp (point); pe_bp->next_char (point))
     {
       Char cc = point.ch ();
+#ifdef UNICODE
+      if (cc < ' ')
+        {
+          if (cc == CC_LFD)
+            ;
+          else
+            {
+              if (cc == CC_TAB)
+                {
+                  int goal = ((ctx.column + pe_bp->b_tab_columns) / pe_bp->b_tab_columns
+                              * pe_bp->b_tab_columns);
+                  int n = goal - ctx.column;
+                  while (n-- > 0)
+                    paint_unichar (ctx, ' ');
+                }
+              else
+                {
+                  paint_unichar (ctx, '^');
+                  paint_unichar (ctx, cc + '@');
+                }
+            }
+        }
+      else if (cc == CC_DEL)
+        {
+          paint_unichar (ctx, '^');
+          paint_unichar (ctx, '?');
+        }
+      else
+        paint_unichar (ctx, cc);
+#else
       switch (code_charset (cc))
         {
         case ccs_usascii:
@@ -1111,6 +1203,7 @@ print_engine::paint_line (HDC hdc, int x, int y, Point &cur_point, long &linenum
           paint_kanji (ctx, cc);
           break;
         }
+#endif
     }
 
   return pe_bp->eobp (cur_point);
@@ -1145,12 +1238,14 @@ print_engine::get_extent (const TCHAR *s, int l) const
   for (const _TUCHAR *p = (const _TUCHAR *)s, *pe = p + l; p < pe;)
     {
       int c = *p++;
-#ifndef UNICODE
+#ifdef UNICODE
+      cx += get_glyph_width (c, pe_glyph_info_array);
+#else
       if (SJISP (c) && p != pe)
         cx += get_glyph_width ((c << 8) | *p++, pe_glyph_width);
       else
-#endif
         cx += get_glyph_width (c, pe_glyph_width);
+#endif
     }
   return cx;
 }
@@ -1215,7 +1310,11 @@ print_engine::paint (HDC hdc_print, int save)
 
   int omode = SetBkMode (hdc, TRANSPARENT);
   HGDIOBJ of = SelectObject (hdc, pe_hfonts[FONT_JP]);
+#ifdef UNICODE
+  pe_glyph_info_array.reset_dc (CreateCompatibleDC (hdc)); // ???
+#else
   pe_glyph_width.hdc = hdc;
+#endif
 
   paint_header (hdc);
   paint_footer (hdc);
@@ -1277,7 +1376,11 @@ int
 print_engine::skip_page (HDC hdc, Point &point, long &linenum)
 {
   HGDIOBJ of = SelectObject (hdc, pe_hfonts[FONT_JP]);
+#ifdef UNICODE
+  pe_glyph_info_array.reset_dc (CreateCompatibleDC (hdc)); // ???
+#else
   pe_glyph_width.hdc = hdc;
+#endif
   for (int col = 0; col < pe_settings.ps_multi_column; col++)
     for (int line = 0; line < pe_ech.cy; line++)
       if (paint_line (0, 0, 0, point, linenum))
@@ -2063,6 +2166,18 @@ print_engine::page_cache::save (const Point &point, int linenum, int page)
   return 1;
 }
 
+#ifdef UNICODE
+
+int get_glyph_width (Char cc, const glyph_info_array &gia)
+{
+  const glyph_info &gi = gia.get (cc);
+  if (gi.is_defchar ())
+    return gia.get (' ').pixel_width;
+  return gi.pixel_width;
+}
+
+#else
+
 int
 get_glyph_width (Char cc, const glyph_width &gw)
 {
@@ -2204,3 +2319,5 @@ get_glyph_width (Char cc, const glyph_width &gw)
   const_cast <short *> (gw.pixel)[cc] = (short)sz.cx;
   return sz.cx;
 }
+
+#endif

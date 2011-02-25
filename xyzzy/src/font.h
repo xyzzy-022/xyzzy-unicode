@@ -41,15 +41,21 @@ public:
 
 struct glyph_info
 {
-  int8_t font_index;
-  WORD glyph_index;
-  int width;
+  int8_t   font_index;
+  uint8_t  cell_width;
+  uint16_t pixel_width;
+  WORD     glyph_index;
 
   static const int8_t FONT_INDEX_DEFCHAR = -1;
   static const int8_t FONT_INDEX_UNBOUND = -2;
 
-  glyph_info () : font_index (FONT_INDEX_UNBOUND), glyph_index (0xffff), width (1) { }
-  glyph_info (int8_t fi, WORD gi = 0xffff, uint32_t w = 1) : font_index (fi), glyph_index (gi), width (w) { }
+  glyph_info (int8_t fi = FONT_INDEX_UNBOUND,
+              uint8_t cw = 1,
+              int16_t pw = 1,
+              WORD gi = 0xffff) : font_index (fi),
+                                  cell_width (cw),
+                                  pixel_width (pw),
+                                  glyph_index (gi) { }
 
   bool is_defchar() const { return font_index == FONT_INDEX_DEFCHAR; }
   bool is_unbound() const { return font_index == FONT_INDEX_UNBOUND; }
@@ -61,16 +67,23 @@ struct glyph_info
 class glyph_info_array
 {
 private:
+  struct HDC_deleter {
+    typedef HDC pointer;
+    void operator () (HDC hDc) { ::DeleteDC(hDc); }
+  };
+
   mutable std::array<glyph_info, 0x10000> cache;
 
+  std::unique_ptr<HDC, HDC_deleter> hdc;
   std::array<HFONT, FONT_MAX> fonts;
   SIZE cell_size;
-  glyph_info get_impl (Char) const;
+  glyph_info get_impl (WCHAR) const;
 
 public:
   glyph_info_array ();
-  void reset (const std::array<HFONT, FONT_MAX> &fontsconst, const SIZE &cell_size);
-  const glyph_info &get (Char cc) const;
+  void reset (HDC, const std::array<HFONT, FONT_MAX> &, const SIZE &);
+  void reset_dc (HDC);
+  const glyph_info &get (WCHAR) const;
 };
 
 #endif /* UNICODE */
@@ -155,12 +168,12 @@ public:
 
 #ifdef UNICODE
 private:
-  glyph_info_array glyph_cache;
+  glyph_info_array fs_glyph_info_array;
 
 public:
-  void reset_glyph_cache ();
-  const glyph_info &get_glyph_info (Char cc) { return glyph_cache.get (cc); }
-  int char_width (Char cc) { return get_glyph_info (cc).width; }
+  void reset_glyph_info_cache ();
+  const glyph_info &get_glyph_info (Char cc) const { return fs_glyph_info_array.get (cc); }
+  int char_width (Char cc) const { return get_glyph_info (cc).cell_width; }
 #endif /* UNICODE */
 
   static const TCHAR *regent (int n) {return fs_regent[n];}

@@ -343,7 +343,11 @@ struct write_region_param
   int error_open;
 };
 
+#ifdef UNICODE
+class glyph_info_array;
+#else
 struct glyph_width;
+#endif
 
 struct Buffer
 {
@@ -801,8 +805,13 @@ struct Buffer
   int parse_fold_line (Point &point, const fold_parameter &param) const
     {return parse_fold_line (point, b_fold_columns, param);}
   void parse_fold_chunk (Chunk *) const;
+#ifdef UNICODE
+  int parse_fold_line (Point &, long, const glyph_info_array &,
+                       const fold_parameter &) const;
+#else
   int parse_fold_line (Point &, long, const glyph_width &,
                        const fold_parameter &) const;
+#endif
 
   struct update_fold_info
     {

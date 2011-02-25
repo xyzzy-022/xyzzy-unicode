@@ -1432,14 +1432,14 @@ glyph_unichar (glyph_t *g, Char cc, int f, int flags, const glyph_info &info)
   else
     {
       int nf = f | (info.font_index << GLYPH_CHARSET_SHIFT_BIT);
-      if (info.width == 1)
+      if (info.cell_width == 1)
         {
           *g++ = glyph_of (nf, info.glyph_index);
         }
       else
         {
           *g++ = glyph_of (nf | GLYPH_LEAD, info.glyph_index);
-          for (int i = 1; i < info.width; ++i)
+          for (int i = 1; i < info.cell_width; ++i)
             *g++ = glyph_of (nf | GLYPH_TRAIL, info.glyph_index);
         }
     }
@@ -2107,7 +2107,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
               Char cc = *s++;
 #ifdef UNICODE
               const glyph_info &info = glyph_info_of_unichar (cc);
-              if (ge < g + info.width)
+              if (ge < g + info.cell_width)
                 break;
               if (cc < _T(' ') || cc == CC_DEL)
                 {
@@ -2478,12 +2478,12 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
           else
             {
               const glyph_info &info = glyph_info_of_unichar (cc);
-              if (ge < g + info.width)
+              if (ge < g + info.cell_width)
                 {
                   exceed = 1;
                   break;
                 }
-              for (int i = 0; i < info.width; ++i)
+              for (int i = 0; i < info.cell_width; ++i)
                 *g++ = spc;
             }
 #else
@@ -2542,7 +2542,7 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
           else
             {
               const glyph_info &info = glyph_info_of_unichar (cc);
-              if (ge < g + info.width)
+              if (ge < g + info.cell_width)
                 {
                   exceed = 1;
                   break;
@@ -3495,7 +3495,7 @@ Window::paint_minibuffer_message (lisp string)
       Char cc = *p++;
 #ifdef UNICODE
       const glyph_info &info = glyph_info_of_unichar (cc);
-      if (ge < g + info.width)
+      if (ge < g + info.cell_width)
         break;
       if (cc < _T(' ') || cc == CC_DEL)
         {

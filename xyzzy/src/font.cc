@@ -331,7 +331,7 @@ FontSet::create (const FontSetParam &param)
     }
 
 #ifdef UNICODE
-  reset_glyph_cache ();
+  reset_glyph_info_cache ();
 #endif
   create_bitmap ();
   save_params (param);
@@ -411,20 +411,12 @@ FontSet::init ()
 
 #ifdef UNICODE
 
-struct HDC_deleter
-{
-  typedef HDC pointer;
-  HDC_deleter(HWND hWnd) : m_hWnd(hWnd) { }
-  HWND m_hWnd;
-  void operator () (HDC hDc) { ::ReleaseDC(m_hWnd, hDc); }
-};
-
-struct HGDIOBJ_deleter
+struct HGDIOBJ_resetter
 {
   typedef HGDIOBJ pointer;
-  HGDIOBJ_deleter(HDC hDc) : m_hDc(hDc) { }
+  HGDIOBJ_resetter (HDC hDc) : m_hDc (hDc) { }
   HDC m_hDc;
-  void operator () (HGDIOBJ hObj) { ::SelectObject(m_hDc, hObj); }
+  void operator () (HGDIOBJ hObj) { ::SelectObject (m_hDc, hObj); }
 };
 
 glyph_info_array::glyph_info_array ()
@@ -436,33 +428,31 @@ glyph_info_array::glyph_info_array ()
 }
 
 glyph_info
-glyph_info_array::get_impl (Char cc) const
+glyph_info_array::get_impl (WCHAR wc) const
 {
-  if ((0 <= cc && cc < 0x20) || cc == 0x7f)
+  if ((0 <= wc && wc < 0x20) || wc == 0x7f)
     {
       const glyph_info &gi1 = get (_T('^'));
-      const glyph_info &gi2 = get ((_T('@') + cc) & 0x7f);
-      return glyph_info (0, 0, gi1.width + gi2.width);
+      const glyph_info &gi2 = get ((_T('@') + wc) & 0x7f);
+      return glyph_info (0, gi1.cell_width + gi2.cell_width, gi1.pixel_width + gi2.pixel_width);
     }
+
+  if (!hdc)
+    return glyph_info::defchar ();
 
   LONG cell_x = cell_size.cx;
   if (!cell_x)
     return glyph_info::defchar ();
 
-  std::unique_ptr<HDC, HDC_deleter> hdc (::GetDC (0), HDC_deleter (0));
-  if (!hdc)
-    return glyph_info::defchar ();
-
-  std::unique_ptr<HGDIOBJ, HGDIOBJ_deleter> old (::SelectObject (hdc.get (), fonts[0]), HGDIOBJ_deleter(hdc.get ()));
+  std::unique_ptr<HGDIOBJ, HGDIOBJ_resetter> old (::SelectObject (hdc.get (), fonts[0]), HGDIOBJ_resetter(hdc.get ()));
   if (!old)
     return glyph_info::defchar ();
 
-  TCHAR ch (cc);
   int i = 0;
   while (true)
     {
       WORD index;
-      DWORD ret = GetGlyphIndices (hdc.get (), &ch, 1, &index, GGI_MARK_NONEXISTING_GLYPHS);
+      DWORD ret = GetGlyphIndices (hdc.get (), &wc, 1, &index, GGI_MARK_NONEXISTING_GLYPHS);
       if (ret == GDI_ERROR)
         return glyph_info::defchar ();
 
@@ -472,7 +462,7 @@ glyph_info_array::get_impl (Char cc) const
           return glyph_info::defchar ();
 
         LONG font_x = std::max (1L, size.cx);
-        return glyph_info (i, index, (font_x + cell_x - 1) / cell_x);
+        return glyph_info (i, uint8_t ((font_x + cell_x - 1) / cell_x), uint16_t (font_x), index);
       }
 
       if (i < FONT_MAX - 1)
@@ -488,31 +478,50 @@ glyph_info_array::get_impl (Char cc) const
 }
 
 const glyph_info &
-glyph_info_array::get (Char cc) const
+glyph_info_array::get (WCHAR wc) const
 {
-  glyph_info &gi = cache[cc];
+  glyph_info &gi = cache[wc];
   if (gi.is_unbound ())
-    gi = get_impl (cc);
+    gi = get_impl (wc);
 
   return gi;
 }
 
 void
-glyph_info_array::reset (const std::array<HFONT, FONT_MAX> &fonts, const SIZE &cell_size)
+glyph_info_array::reset (HDC hdc, const std::array<HFONT, FONT_MAX> &fonts, const SIZE &cell_size)
 {
+  this->hdc.reset (hdc);
   this->fonts = fonts;
   this->cell_size = cell_size;
   std::fill (cache.begin (), cache.end (), glyph_info::unbound ());
+
 }
 
 void
-FontSet::reset_glyph_cache ()
+glyph_info_array::reset_dc (HDC hdc)
 {
+  this->hdc.reset (hdc);
+}
+
+void
+FontSet::reset_glyph_info_cache ()
+{
+  HDC dispDc, hdc;
   std::array<HFONT, FONT_MAX> fonts;
+
+  dispDc = GetDC (0);
+  if (dispDc)
+    {
+      hdc = CreateCompatibleDC (dispDc);
+      ReleaseDC (0, dispDc);
+    }
+  else
+    hdc = NULL;
+
   for (int i = 0; i < FONT_MAX; ++i)
     fonts[i] = font (i);
 
-  glyph_cache.reset (fonts, cell ());
+  fs_glyph_info_array.reset (hdc, fonts, fs_cell);
 }
 
 #endif /* UNICODE */

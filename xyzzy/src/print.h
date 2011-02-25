@@ -129,6 +129,7 @@ public:
     {return make_font (hdc, charset, -dev.pt2ypxl (ps_font[charset].point));}
 };
 
+#ifndef UNICODE
 struct glyph_width
 {
   HDC hdc;
@@ -136,6 +137,7 @@ struct glyph_width
   int height;
   short pixel[CHAR_LIMIT];
 };
+#endif
 
 struct PaintCtx;
 
@@ -159,7 +161,11 @@ class print_engine
   HFONT pe_hfonts[FONT_MAX];
   POINT pe_offset[FONT_MAX];
   int pe_offset2x[FONT_MAX];
+#ifdef UNICODE
+  glyph_info_array pe_glyph_info_array;
+#else
   glyph_width pe_glyph_width;
+#endif
 
   RECT pe_area;
   int pe_sep_pxl;
@@ -232,12 +238,16 @@ private:
   int form_feed_p (const Point &) const;
 
   void paint_ascii (PaintCtx &, Char) const;
+#ifdef UNICODE
+  void paint_unichar (PaintCtx &, Char) const;
+#else
   void paint_kana (PaintCtx &, Char) const;
   void paint_kanji (PaintCtx &, Char) const;
   void paint_latin (PaintCtx &, Char, int) const;
   void paint_jisx0212 (PaintCtx &, Char) const;
   void paint_full_width (PaintCtx &, Char, int) const;
   void paint_lucida (PaintCtx &, Char) const;
+#endif
   int paint_line (HDC, int, int, Point &, long &) const;
   void paint_header (HDC);
   void paint_footer (HDC);

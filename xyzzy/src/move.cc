@@ -1147,9 +1147,15 @@ Buffer::parse_fold_line (Point &point, long fold_columns,
   return 1;
 }
 
+#ifdef UNICODE
+int
+Buffer::parse_fold_line (Point &point, long max_width, const glyph_info_array &gw,
+                         const fold_parameter &param) const
+#else
 int
 Buffer::parse_fold_line (Point &point, long max_width, const glyph_width &gw,
                          const fold_parameter &param) const
+#endif
 {
   if (point.p_offset == point.p_chunk->c_used && point.p_chunk->c_next)
     {
