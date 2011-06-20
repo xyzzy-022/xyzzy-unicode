@@ -889,7 +889,7 @@ init_app (HINSTANCE hinst, int passed_cmdshow, int &ole_initialized)
 }
 
 int PASCAL
-WinMain (HINSTANCE hinst, HINSTANCE, LPSTR, int cmdshow)
+_tWinMain (HINSTANCE hinst, HINSTANCE, LPTSTR, int cmdshow)
 {
   int ole_initialized = 0;
   if (init_app (hinst, cmdshow, ole_initialized))
