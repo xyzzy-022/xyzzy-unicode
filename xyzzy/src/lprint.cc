@@ -1381,7 +1381,7 @@ print_error (wStream &stream, const print_control &, lisp object)
           static DWORD_PTR args[] = {(DWORD_PTR)_T(""), (DWORD_PTR)_T(""), (DWORD_PTR)_T(""), (DWORD_PTR)_T(""), 0,};
           if (!FormatMessage ((FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY
                                | FORMAT_MESSAGE_MAX_WIDTH_MASK),
-                              0, xerror_number (object), GetUserDefaultLangID (),
+                              0, xerror_number (object), 0,
                               buf, _countof (buf), (va_list *)&args))
             *buf = 0;
           if (!*buf)
