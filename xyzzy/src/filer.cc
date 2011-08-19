@@ -269,9 +269,15 @@ FilerView::add_list_view (const TCHAR *last)
     {
       int l = xstring_length (fv_ldir);
       if (xstring_length (fv_llastdir) >= l
+#ifdef UNICODE
           && !_tcsnicmp ((TCHAR *)xstring_contents (fv_llastdir),
                          (TCHAR *)xstring_contents (fv_ldir),
-                         l * sizeof (Char)))
+                         l))
+#else
+          && !_memicmp (xstring_contents (fv_llastdir),
+                        xstring_contents (fv_ldir),
+                        l * sizeof (Char)))
+#endif
         {
           if (l && xstring_contents (fv_llastdir) [l - 1] == _T('/'))
             ;
