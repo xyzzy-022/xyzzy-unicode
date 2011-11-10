@@ -7,9 +7,9 @@ static LONG double_fault = -1;
 int
 assert_failed (const char *file, int line)
 {
-  char msg[MAX_PATH * 2];
+  TCHAR msg[MAX_PATH * 2];
 
-  wsprintf (msg, "Assertion failed: %s: %d\n", file, line);
+  wsprintf (msg, _T("Assertion failed: %hs: %d\n"), file, line);
   OutputDebugString (msg);
 
   if (InterlockedIncrement (&double_fault) > 0)
