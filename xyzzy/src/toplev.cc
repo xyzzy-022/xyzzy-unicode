@@ -653,13 +653,16 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 
         fill_rect (hdc, ps.rcPaint, sysdep.btn_face);
 
-        RECT r;
-        GetClientRect (hwnd, &r);
-        draw_hline (hdc, 0, r.right, 0, sysdep.btn_shadow);
+        if (!sysdep.Win6p ())
+          {
+            RECT r;
+            GetClientRect (hwnd, &r);
+            draw_hline (hdc, 0, r.right, 0, sysdep.btn_shadow);
 
-        GetWindowRect (app.active_frame.hwnd, &r);
-        MapWindowPoints (HWND_DESKTOP, hwnd, (POINT *)&r, 1);
-        draw_hline (hdc, r.left, r.right, r.top - 1, sysdep.btn_shadow);
+            GetWindowRect (app.active_frame.hwnd, &r);
+            MapWindowPoints (HWND_DESKTOP, hwnd, (POINT *)&r, 1);
+            draw_hline (hdc, r.left, r.right, r.top - 1, sysdep.btn_shadow);
+          }
 
         EndPaint (hwnd, &ps);
         SetWindowLong (hwnd, GWL_STYLE, ostyle);

@@ -18,7 +18,7 @@ public:
   void resize (RECT &r, HWND hwnd_before)
     {
       dock_frame::calc_layout (r, hwnd_before);
-      if (!r.top)
+      if (!r.top && !sysdep.Win6p ())
         r.top++;
       m_splitter.resize (r);
     }

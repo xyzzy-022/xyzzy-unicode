@@ -191,7 +191,7 @@ Sysdep::load_settings ()
   vscroll = GetSystemMetrics (SM_CXVSCROLL);
   hscroll = GetSystemMetrics (SM_CYHSCROLL);
 
-  if (Win4p ())
+  if (Win4p () && !Win6p ())
     {
       edge.cx = GetSystemMetrics (SM_CXEDGE) * 2;
       edge.cy = GetSystemMetrics (SM_CYEDGE) * 2;

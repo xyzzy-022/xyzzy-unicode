@@ -3,7 +3,16 @@
 #include "ipc.h"
 #include "wheel.h"
 
-#define RULER_HEIGHT 13
+#define RULER_BOX_HEIGHT 10
+#define LEGACY_RULER_HEIGHT 13
+#define WIN6_RULER_HEIGHT   14
+
+static inline int ruler_height ()
+{
+  return sysdep.Win6p () ? WIN6_RULER_HEIGHT : LEGACY_RULER_HEIGHT;
+}
+
+#define RULER_HEIGHT (ruler_height ())
 #define FRAME_WIDTH 2
 
 int Window::w_hjump_columns = 8;
@@ -436,7 +445,7 @@ Window::init (int minibufp, int temporary)
 
   lwp = make_window ();
 
-  if (!CreateWindowEx (sysdep.Win4p () ? WS_EX_CLIENTEDGE : 0,
+  if (!CreateWindowEx ((sysdep.Win4p () && !sysdep.Win6p ()) ? WS_EX_CLIENTEDGE : 0,
                        Application::ClientClassName, _T(""),
                        (WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE
                         | WS_VSCROLL | WS_HSCROLL),
@@ -934,7 +943,7 @@ Window::compute_geometry (const SIZE &old_size, int lcell)
   int h = max (int ((wp->w_rect.bottom - wp->w_rect.top)
                     * app.text_font.cell ().cy / lcell),
                lcell);
-  h = max (h, int (app.text_font.cell ().cy + 4));
+  h = max (h, int (app.text_font.cell ().cy + sysdep.edge.cy));
 
   wp->w_rect.bottom = new_size.cy;
   wp->w_rect.top = new_size.cy - h;
@@ -3268,9 +3277,17 @@ Window::calc_ruler_rect (RECT &r) const
   r.left = p.x + app.text_font.cell ().cx / 2;
   if (flags () & WF_LINE_NUMBER)
     r.left += (LINENUM_COLUMNS + 1) * app.text_font.cell ().cx;
-  r.top = p.y - RULER_HEIGHT;
   r.right = p.x + w_clsize.cx + RIGHT_PADDING - 1;
-  r.bottom = p.y - 3;
+  if (sysdep.Win6p ())
+    {
+      r.bottom = p.y - (RULER_HEIGHT - RULER_BOX_HEIGHT) / 2;
+      r.top = r.bottom - RULER_BOX_HEIGHT;
+    }
+  else
+    {
+      r.top = p.y - RULER_HEIGHT;
+      r.bottom = p.y - 3;
+    }
 }
 
 inline void
@@ -3339,6 +3356,8 @@ Window::paint_ruler (HDC hdc) const
   draw_vline (hdc, r.top, r.bottom, r.left, sysdep.btn_highlight);
 //  draw_hline (hdc, r.left, r.right, r.bottom, sysdep.btn_shadow);
   draw_vline (hdc, r.top, r.bottom, r.right - 1, sysdep.btn_shadow);
+  if (sysdep.Win6p ())
+    draw_hline (hdc, r.left, r.right, r.bottom - 1, sysdep.btn_shadow);
 
   calc_ruler_rect (r);
 

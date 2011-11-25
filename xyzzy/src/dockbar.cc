@@ -1700,9 +1700,9 @@ dock_frame::dock_edge (dock_bar *bar, int edge, int cx)
 {
   bar->dock_edge ();
   int border = dock_bar::BORDER_TOP | dock_bar::BORDER_BOTTOM;
-  if (bar->rect ().left)
+  if (bar->rect ().left || (sysdep.Win6p () && edge == EDGE_RIGHT))
     border |= dock_bar::BORDER_LEFT;
-  if (bar->rect ().right != cx)
+  if (bar->rect ().right != cx || (sysdep.Win6p () && edge == EDGE_LEFT))
     border |= dock_bar::BORDER_RIGHT;
   bar->modify_border (dock_bar::BORDER_LEFT | dock_bar::BORDER_RIGHT, border);
 }
@@ -1758,6 +1758,8 @@ set_rect (RECT &rc, LONG l, LONG t, LONG r, LONG b)
 void
 dock_frame::calc_layout (RECT &r, HWND hwnd_before)
 {
+  int pad = sysdep.Win6p () ? 0 : 1;
+
   LONG cx = r.right - r.left;
   LONG top = (f_arrange & (1 << EDGE_TOP)
               ? arrange_horz (f_bars[EDGE_TOP], cx)
@@ -1778,18 +1780,18 @@ dock_frame::calc_layout (RECT &r, HWND hwnd_before)
     nwindows += f_bars[i].length ();
 
   set_rect (f_edge_rect[EDGE_TOP],
-            r.left, r.top + 1, r.right, r.top + top + 1);
+            r.left, r.top + pad, r.right, r.top + top + pad);
   set_rect (f_edge_rect[EDGE_BOTTOM],
             r.left, r.bottom - bottom, r.right, r.bottom);
   set_rect (f_edge_rect[EDGE_LEFT],
-            r.left, r.top + top + 1, r.left + left, r.bottom - bottom);
+            r.left, r.top + top + pad, r.left + left, r.bottom - bottom);
   set_rect (f_edge_rect[EDGE_RIGHT],
-            r.right - right, r.top + top + 1, r.right, r.bottom - bottom);
+            r.right - right, r.top + top + pad, r.right, r.bottom - bottom);
 
   if (top)
-    r.top += 1 + top;
+    r.top += pad + top;
   if (bottom)
-    r.bottom -= 1 + bottom;
+    r.bottom -= pad + bottom;
   r.left += left;
   r.right -= right;
   r.bottom = max (r.top, r.bottom);

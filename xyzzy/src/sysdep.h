@@ -97,6 +97,8 @@ public:
     {return os_ver.dwMajorVersion >= 4;}
   int Win5p () const
     {return os_ver.dwMajorVersion >= 5;}
+  int Win6p () const
+    {return os_ver.dwMajorVersion >= 6;}
   int Win95p () const
     {return wintype == WINTYPE_WINDOWS_95;}
   int Win98p () const
