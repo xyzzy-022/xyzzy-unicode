@@ -19,14 +19,6 @@
 # include <crtdbg.h>
 #endif
 
-#pragma comment(linker,                                     \
-                "/manifestdependency:\"type='win32' "       \
-                "name='Microsoft.Windows.Common-Controls' " \
-                "version='6.0.0.0' "                        \
-                "processorArchitecture='*' "                \
-                "publicKeyToken='6595b64144ccf1df' "        \
-                "language='*'\"")
-
 const TCHAR Application::ToplevelClassName[] = _T("Å@");
 const TCHAR Application::FrameClassName[] = _T("  ");
 const TCHAR Application::ClientClassName[] = _T("   ");
