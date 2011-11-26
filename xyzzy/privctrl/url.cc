@@ -191,6 +191,4 @@ init_url_class ()
 void
 cleanup_url_class ()
 {
-  if (hcur_harrow)
-    DestroyCursor (hcur_harrow);
 }
