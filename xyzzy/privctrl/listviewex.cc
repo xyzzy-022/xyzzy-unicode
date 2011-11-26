@@ -576,7 +576,11 @@ insert_column (HWND hwnd, listview_item_data *data,
     {
       HD_ITEM hi;
       hi.mask = HDI_FORMAT;
+#ifdef UNICODE
+      hi.fmt = HDF_STRING;
+#else
       hi.fmt = HDF_OWNERDRAW;
+#endif
       if (lc->mask & LVCF_FMT)
         hi.fmt |= lc->fmt & LVCFMT_JUSTIFYMASK;
       Header_SetItem (data->hwnd_header, r, &hi);
@@ -584,6 +588,7 @@ insert_column (HWND hwnd, listview_item_data *data,
   return r;
 }
 
+#ifndef UNICODE
 static void
 paint_up (HDC hdc, int x, const RECT &r, int on)
 {
@@ -677,6 +682,28 @@ draw_header (HWND hwnd, listview_item_data *data, const DRAWITEMSTRUCT *dis)
         }
     }
 }
+#endif
+
+#ifdef UNICODE
+static void
+update_header_sort_mark(HWND hwnd_header, int index, int dir)
+{
+  int count = Header_GetItemCount (hwnd_header);
+  for (int i = 0; i < count; ++i)
+    {
+      HDITEM item;
+      item.mask = HDI_FORMAT;
+      if (Header_GetItem (hwnd_header, i, &item))
+        {
+          item.mask = HDI_FORMAT;
+          item.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
+          if (i == index)
+            item.fmt |= (dir == LVSM_DOWN ? HDF_SORTDOWN : HDF_SORTUP);
+          Header_SetItem (hwnd_header, i, &item);
+        }
+    }
+}
+#endif
 
 static void
 set_header_sort_mark (HWND hwnd, listview_item_data *data, int index, int dir)
@@ -690,7 +717,11 @@ set_header_sort_mark (HWND hwnd, listview_item_data *data, int index, int dir)
       data->sort_mark_dir = dir;
       if ((data->style & LVS_TYPEMASKEX) >= LVS_EXREPORT
           && data->hwnd_header)
+#ifdef UNICODE
+        update_header_sort_mark (data->hwnd_header, index, dir);
+#else
         InvalidateRect (data->hwnd_header, 0, 1);
+#endif
     }
 }
 
@@ -1150,6 +1181,7 @@ ListViewExProc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         break;
       }
 
+#ifndef UNICODE
     case WM_DRAWITEM:
       {
         listview_item_data *data = get_listview_item_data (hwnd);
@@ -1163,13 +1195,20 @@ ListViewExProc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
           }
         break;
       }
+#endif
 
     case LVM_INSERTCOLUMN:
       {
         listview_item_data *data = get_listview_item_data (hwnd);
         if ((data->style & LVS_TYPEMASKEX) >= LVS_EXREPORT
             && data->hwnd_header)
-          return insert_column (hwnd, data, wparam, (LV_COLUMN *)lparam);
+          {
+            int ret = insert_column (hwnd, data, wparam, (LV_COLUMN *)lparam);
+#ifdef UNICODE
+            update_header_sort_mark (data->hwnd_header, data->sort_mark_id, data->sort_mark_dir);
+#endif
+            return ret;
+          }
         break;
       }
 
