@@ -1626,6 +1626,35 @@ glyph_sbchar (glyph_t *g, Char cc, int f, int flags)
 
 #endif /* UNICODE */
 
+#ifdef UNICODE
+
+static inline glyph_t *
+glyph_pseudo_bmchar (glyph_t *g, TCHAR c, lisp ch, int f, int n)
+{
+  ch = xsymbol_value (ch);
+  if (ch == Qnil)
+    {
+      glyph_t spc = glyph_of_attr_unichar (f, _T(' '));
+      for (int i = 0; i < n; i++)
+        *g++ = spc;
+    }
+  else if (charp (ch) && char_width (xchar_code (ch)) == 1)
+    {
+      const glyph_info &info = glyph_info_of_unichar (xchar_code (ch));
+      for (int i = 0; i < n; i++)
+        g = glyph_unichar (g, xchar_code (ch), f, 0, info);
+    }
+  else
+    {
+      glyph_t gc = glyph_of_attr_unichar (f, c);
+      for (int i = 0; i < n; i++)
+        *g++ = gc;
+    }
+  return g;
+}
+
+#endif /* UNICODE */
+
 static inline glyph_t *
 glyph_bmchar (glyph_t *g, Char bm, lisp ch, int f, int n)
 {
@@ -2529,8 +2558,8 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                   g = glyph_bmchar (g, GLYPH_BM_HTAB, Vdisplay_first_tab_char,
                                     (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 1);
                   if (--n > 0)
-                    g = glyph_bmchar (g, _T('.'), Vdisplay_rest_tab_char,
-                                      (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, n);
+                    g = glyph_pseudo_bmchar (g, _T('.'), Vdisplay_rest_tab_char,
+                                             (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, n);
                 }
               else
                 {
@@ -2586,8 +2615,8 @@ Window::redraw_line (glyph_data *gd, Point &point, long vlinenum, long plinenum,
                       g = glyph_bmchar (g, GLYPH_BM_HTAB, Vdisplay_first_tab_char,
                                         (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, 1);
                       if (--n > 0)
-                        g = glyph_bmchar (g, _T('.'), Vdisplay_rest_tab_char,
-                                          (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, n);
+                        g = glyph_pseudo_bmchar (g, _T('.'), Vdisplay_rest_tab_char,
+                                                 (f & ~GLYPH_TEXT_MASK) | GLYPH_CTRL, n);
                     }
                   else
                     while (n-- > 0)
