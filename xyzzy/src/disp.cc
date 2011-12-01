@@ -1626,61 +1626,69 @@ glyph_sbchar (glyph_t *g, Char cc, int f, int flags)
 
 #endif /* UNICODE */
 
-#ifdef UNICODE
-
 static inline glyph_t *
 glyph_pseudo_bmchar (glyph_t *g, TCHAR c, lisp ch, int f, int n)
 {
   ch = xsymbol_value (ch);
   if (ch == Qnil)
     {
+#ifdef UNICODE
       glyph_t spc = glyph_of_attr_unichar (f, _T(' '));
+#else
+      glyph_t spc = glyph_of (f, _T(' '));
+#endif
       for (int i = 0; i < n; i++)
         *g++ = spc;
     }
   else if (charp (ch) && char_width (xchar_code (ch)) == 1)
     {
+#ifdef UNICODE
       const glyph_info &info = glyph_info_of_unichar (xchar_code (ch));
       for (int i = 0; i < n; i++)
         g = glyph_unichar (g, xchar_code (ch), f, 0, info);
+#else
+      for (int i = 0; i < n; i++)
+        g = glyph_sbchar (g, xchar_code (ch), f, 0);
+#endif
     }
   else
     {
+#ifdef UNICODE
       glyph_t gc = glyph_of_attr_unichar (f, c);
+#else
+      glyph_t gc = glyph_of_value (f | c);
+#endif
       for (int i = 0; i < n; i++)
         *g++ = gc;
     }
   return g;
 }
 
-#endif /* UNICODE */
-
 static inline glyph_t *
 glyph_bmchar (glyph_t *g, Char bm, lisp ch, int f, int n)
 {
   ch = xsymbol_value (ch);
   if (ch == Qnil)
-#ifdef UNICODE
     {
+#ifdef UNICODE
       glyph_t spc = glyph_of_attr_unichar (f, _T(' '));
+#else
+      glyph_t spc = glyph_of (f, _T(' '));
+#endif
       for (int i = 0; i < n; i++)
         *g++ = spc;
     }
-#else
-    for (int i = 0; i < n; i++)
-      *g++ = glyph_of (f, _T(' '));
-#endif
   else if (charp (ch) && char_width (xchar_code (ch)) == 1)
-#ifdef UNICODE
     {
+#ifdef UNICODE
       const glyph_info &info = glyph_info_of_unichar (xchar_code (ch));
       for (int i = 0; i < n; i++)
         g = glyph_unichar (g, xchar_code (ch), f, 0, info);
-    }
 #else
-    for (int i = 0; i < n; i++)
-      g = glyph_sbchar (g, xchar_code (ch), f, 0);
+      for (int i = 0; i < n; i++)
+        g = glyph_sbchar (g, xchar_code (ch), f, 0);
 #endif
+    }
   else
     for (int i = 0; i < n; i++)
       *g++ = glyph_of_value (f | bm);
