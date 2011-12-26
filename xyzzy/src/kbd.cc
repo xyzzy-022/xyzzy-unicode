@@ -57,6 +57,9 @@ kbd_queue::putraw (lChar c)
 int
 kbd_queue::putc (lChar c)
 {
+#ifdef UNICODE
+  return putraw (c);
+#else
   if (c >= 256)
     return putraw (c);
 
@@ -80,17 +83,22 @@ kbd_queue::putc (lChar c)
 
   char cc = char (c);
   return puts (&cc, 1);
+#endif
 }
 
 int
 kbd_queue::putw (int w)
 {
+#ifdef UNICODE
+  return putc (w);
+#else
   if (w < 256)
     return putc (w);
   char b[2];
   b[0] = w >> 8;
   b[1] = w;
   return puts (b, 2);
+#endif
 }
 
 int

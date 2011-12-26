@@ -888,8 +888,10 @@ toplevel_wndproc (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
       }
 
     case WM_IME_CHAR:
+#ifndef UNICODE
       if (xsymbol_value (Vno_input_language_change_notification) != Qnil)
         app.kbdq.init_kbd_encoding ();
+#endif
       app.kbdq.putw (wparam);
       return 0;
 
