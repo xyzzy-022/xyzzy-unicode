@@ -2,6 +2,17 @@
 #include "charset.h"
 #include "jisx0212-width.h"
 
+#ifdef UNICODE
+
+int
+main ()
+{
+  puts ("// char_width_table");
+  return 0;
+}
+
+#else
+
 static void
 print (const u_char *width)
 {
@@ -65,3 +76,5 @@ main ()
 
   return 0;
 }
+
+#endif /* UNICODE */

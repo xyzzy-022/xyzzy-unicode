@@ -1,6 +1,17 @@
 #include "cdecl.h"
 #include "charset.h"
 
+#ifdef UNICODE
+
+int
+main ()
+{
+  puts ("// lucida_spacing_table");
+  return 0;
+}
+
+#else
+
 #define HEIGHT 128
 #define FACE "Lucida Sans Unicode"
 
@@ -72,3 +83,5 @@ main ()
 
   return 0;
 }
+
+#endif /* UNICODE */

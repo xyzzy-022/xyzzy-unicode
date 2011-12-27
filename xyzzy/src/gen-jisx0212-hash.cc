@@ -2,6 +2,17 @@
 #include "charset.h"
 #include "jisx0212-width.h"
 
+#ifdef UNICODE
+
+int
+main ()
+{
+  puts ("// jisx0212_half_width_table, jisx0212_half_width_hash");
+  return 0;
+}
+
+#else
+
 int
 main ()
 {
@@ -56,3 +67,5 @@ main ()
 
   return 0;
 }
+
+#endif /* UNICODE */

@@ -2,6 +2,17 @@
 #include "charset.h"
 #include "ucs2tab.h"
 
+#ifdef UNICODE
+
+int
+main ()
+{
+  puts ("// jisx0212_width_table");
+  return 0;
+}
+
+#else
+
 #define SZ 0x500
 
 static void
@@ -52,3 +63,5 @@ main ()
 
   return 0;
 }
+
+#endif /* UNICODE */

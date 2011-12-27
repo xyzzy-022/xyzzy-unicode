@@ -570,7 +570,7 @@ print_engine::init_font (HDC hdc)
       pe_glyph_width.pixel[CC_DEL] = (get_glyph_width ('^', pe_glyph_width)
                                       + get_glyph_width ('?' + i, pe_glyph_width));
     }
-#endif
+#endif /* UNICODE */
 
   SelectObject (hdc, of);
 }
@@ -1020,7 +1020,7 @@ print_engine::paint_lucida (PaintCtx &ctx, Char cc) const
             : get_glyph_width (cc, pe_glyph_width));
 }
 
-#endif
+#endif /* UNICODE */
 
 int
 print_engine::paint_line (HDC hdc, int x, int y, Point &cur_point, long &linenum) const
@@ -1202,7 +1202,7 @@ print_engine::paint_line (HDC hdc, int x, int y, Point &cur_point, long &linenum
           paint_kanji (ctx, cc);
           break;
         }
-#endif
+#endif /* UNICODE */
     }
 
   return pe_bp->eobp (cur_point);
@@ -2319,4 +2319,4 @@ get_glyph_width (Char cc, const glyph_width &gw)
   return sz.cx;
 }
 
-#endif
+#endif /* UNICODE */
