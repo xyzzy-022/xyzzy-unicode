@@ -1,5 +1,16 @@
 #include "cdecl.h"
 
+#ifdef UNICODE
+
+int
+main ()
+{
+  puts ("// utf_internal2shiftjis_hash, utf_shiftjis2internal_hash");
+  return 0;
+}
+
+#else
+
 static const int internal[] =
   {0x005c, 0x007e, 0x815f, 0x8160, 0x8161, 0x817c, 0x8191, 0x8192, 0x81ca,};
 static const int shiftjis[] =
@@ -43,13 +54,11 @@ buildhash (const int *from, const int *to, int len, const char *name)
 int
 main ()
 {
-#ifdef UNICODE
-  printf ("/* utf2sjis.h */\n");
-#else
   buildhash (internal, shiftjis, _countof (internal),
              "static const struct {Char cc; ucs2_t wc;} utf_internal2shiftjis_hash");
   buildhash (shiftjis, internal, _countof (internal),
              "static const struct {ucs2_t wc; Char cc;} utf_shiftjis2internal_hash");
-#endif
   return 0;
 }
+
+#endif /* UNICODE */
