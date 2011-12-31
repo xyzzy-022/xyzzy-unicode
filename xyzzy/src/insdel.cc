@@ -8,8 +8,7 @@ void
 Buffer::check_valid () const
 {
   long nchars = 0;
-  const Chunk *cp;
-  for (cp = b_chunkb; cp; cp = cp->c_next)
+  for (const Chunk *cp = b_chunkb; cp; cp = cp->c_next)
     {
       nchars += cp->c_used;
       if (!cp->c_next)
@@ -18,7 +17,7 @@ Buffer::check_valid () const
   assert (nchars == b_nchars);
 
   nchars = 0;
-  for (cp = b_chunke; cp; cp = cp->c_prev)
+  for (const Chunk *cp = b_chunke; cp; cp = cp->c_prev)
     {
       nchars += cp->c_used;
       if (!cp->c_prev)
