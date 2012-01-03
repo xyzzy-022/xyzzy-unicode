@@ -189,6 +189,38 @@ code_charset_bit (Char cc)
   return 1 << u_int (code_charset (cc));
 }
 
+#ifdef UNICODE
+
+static inline ucs2_t
+i2w (Char cc)
+{
+  return ucs2_t (cc);
+}
+
+static inline Char
+w2i (ucs2_t wc)
+{
+  return Char (wc);
+}
+
+#else
+
+static inline const ucs2_t &
+i2w (Char cc)
+{
+  extern ucs2_t internal2wc_table[];
+  return internal2wc_table[cc];
+}
+
+static inline const Char &
+w2i (ucs2_t wc)
+{
+  extern Char wc2internal_table[];
+  return wc2internal_table[wc];
+}
+
+#endif
+
 static inline int
 j2sh (int c1, int /*c2*/)
 {
@@ -221,11 +253,23 @@ ccs_check_range (Char c, Char min, Char max)
   return c >= min && c <= max;
 }
 
+#ifdef UNICODE
+
+static inline Char
+ccs_94x94_to_int (int c1, int c2, ucs2_t (&table)[94 * 94])
+{
+  return w2i (table[c1 * 94 + c2 - (0x21 * 94 + 0x21)]);
+}
+
+#else
+
 static inline Char
 ccs_94x94_to_int (int c1, int c2, int min)
 {
   return Char (c1 * 94 + c2 + (min - 0x21 * 94 - 0x21));
 }
+
+#endif
 
 static inline void
 ccs_int_to_94x94 (Char c, int &c1, int &c2, int min)
@@ -253,6 +297,17 @@ int_to_iso8859 (Char c)
   return 128 | (c & 127);
 }
 
+#ifdef UNICODE
+
+static inline Char
+jisx0212_to_int (int c1, int c2)
+{
+  extern ucs2_t jisx0212_to_ucs2_table[94 * 94];
+  return ccs_94x94_to_int (c1, c2, jisx0212_to_ucs2_table);
+}
+
+#else
+
 static inline int
 ccs_jisx0212_p (Char c)
 {
@@ -265,11 +320,24 @@ jisx0212_to_int (int c1, int c2)
   return ccs_94x94_to_int (c1, c2, CCS_JISX0212_MIN);
 }
 
+#endif
+
 static inline void
 int_to_jisx0212 (Char c, int &c1, int &c2)
 {
   ccs_int_to_94x94 (c, c1, c2, CCS_JISX0212_MIN);
 }
+
+#ifdef UNICODE
+
+static inline Char
+ksc5601_to_int (int c1, int c2)
+{
+  extern ucs2_t ksc5601_to_ucs2_table[94 * 94];
+  return ccs_94x94_to_int (c1, c2, ksc5601_to_ucs2_table);
+}
+
+#else
 
 static inline int
 ccs_ksc5601_p (Char c)
@@ -283,11 +351,24 @@ ksc5601_to_int (int c1, int c2)
   return ccs_94x94_to_int (c1, c2, CCS_KSC5601_MIN);
 }
 
+#endif
+
 static inline void
 int_to_ksc5601 (Char c, int &c1, int &c2)
 {
   ccs_int_to_94x94 (c, c1, c2, CCS_KSC5601_MIN);
 }
+
+#ifdef UNICODE
+
+static inline Char
+gb2312_to_int (int c1, int c2)
+{
+  extern ucs2_t gb2312_to_ucs2_table[94 * 94];
+  return ccs_94x94_to_int (c1, c2, gb2312_to_ucs2_table);
+}
+
+#else
 
 static inline int
 ccs_gb2312_p (Char c)
@@ -301,6 +382,8 @@ gb2312_to_int (int c1, int c2)
   return ccs_94x94_to_int (c1, c2, CCS_GB2312_MIN);
 }
 
+#endif
+
 static inline void
 int_to_gb2312 (Char c, int &c1, int &c2)
 {
@@ -310,11 +393,13 @@ int_to_gb2312 (Char c, int &c1, int &c2)
 /* Big5 charset range:
    High: A1-C7 C9-F9
    Low:  40-7E A1-FE */
+#ifndef UNICODE
 static inline int
 ccs_big5_p (Char c)
 {
   return ccs_check_range (c, CCS_BIG5_MIN, CCS_BIG5_MAX);
 }
+#endif
 
 static inline int
 big5_lead_p (int c)
@@ -328,13 +413,32 @@ big5_trail_p (int c)
   return c >= 0x40 && c <= 0x7e || c >= 0xa1 && c <= 0xfe;
 }
 
-static inline Char
-big5_to_int (int c1, int c2)
+static inline int
+big5_code_index (int c1, int c2)
 {
   c1 -= c1 >= 0xc9 ? 0xa2 : 0xa1;
   c2 -= c2 >= 0xa1 ? 0x62 : 0x40;
-  return CCS_BIG5_MIN + c1 * 157 + c2;
+  return c1 * 157 + c2;
 }
+
+#ifdef UNICODE
+
+static inline Char
+big5_to_int (int c1, int c2)
+{
+  extern ucs2_t big5_to_ucs2_table[];
+  return w2i (big5_to_ucs2_table[big5_code_index (c1, c2)]);
+}
+
+#else
+
+static inline Char
+big5_to_int (int c1, int c2)
+{
+  return CCS_BIG5_MIN + big5_code_index (c1, c2);
+}
+
+#endif
 
 static inline void
 int_to_big5 (Char c, int &c1, int &c2)
@@ -384,43 +488,11 @@ char_width (Char cc)
 #endif
 
 #ifdef UNICODE
-
-static inline const ucs2_t
-i2w (Char cc)
-{
-  return ucs2_t (cc);
-}
-
-static inline const Char
-w2i (ucs2_t wc)
-{
-  return Char (wc);
-}
-
-#else
-
 static inline const ucs2_t &
-i2w (Char cc)
-{
-  extern ucs2_t internal2wc_table[];
-  return internal2wc_table[cc];
-}
-
-static inline const Char &
-w2i (ucs2_t wc)
-{
-  extern Char wc2internal_table[];
-  return wc2internal_table[wc];
-}
-
-#endif
-
-#ifdef UNICODE
-static inline const ucs2_t &
-cp932_to_ucs2 (Char cc)
+cp932_to_ucs2 (int c)
 {
   extern ucs2_t cp932_to_ucs2_table[];
-  return cp932_to_ucs2_table[cc];
+  return cp932_to_ucs2_table[c];
 }
 #endif
 

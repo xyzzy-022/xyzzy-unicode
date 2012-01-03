@@ -107,7 +107,11 @@ jisx0212_to_internal (int c1, int c2, int vender)
   if (vender == ENCODING_ISO_VENDER_OSFJVC && c1 >= 0x75)
     {
       c1 += 20;
+#ifdef UNICODE
+      return cp932_to_ucs2 ((j2sh (c1, c2) << 8) | j2sl (c1, c2));
+#else
       return (j2sh (c1, c2) << 8) | j2sl (c1, c2);
+#endif
     }
 
   if (vender != ENCODING_ISO_VENDER_OSFJVC
@@ -115,9 +119,17 @@ jisx0212_to_internal (int c1, int c2, int vender)
     return jisx0212_to_int (c1, c2);
 
   if (c1 == 0x74)
+#ifdef UNICODE
+    return cp932_to_ucs2 (ibmext_eucjp2sjis_table[c2 - (0x21 - (0x7f - 0x73))]);
+#else
     return ibmext_eucjp2sjis_table[c2 - (0x21 - (0x7f - 0x73))];
+#endif
   if (c1 == 0x73 && c2 >= 0x73)
+#ifdef UNICODE
+    return cp932_to_ucs2 (ibmext_eucjp2sjis_table[c2 - 0x73]);
+#else
     return ibmext_eucjp2sjis_table[c2 - 0x73];
+#endif
   Char cc = jisx0212_to_int (c1, c2);
   Char t = w2i (i2w (cc));
   if (t != Char (-1))
@@ -166,7 +178,11 @@ iso2022_noesc_to_internal_stream::to_internal (u_char ccs, int c1, int oc1)
               case ccs_jisx0208:
                 if (s_vender == ENCODING_ISO_VENDER_OSFJVC && c1 >= 0x75)
                   c1 += 10;
+#ifdef UNICODE
+                put (cp932_to_ucs2 ((j2sh (c1, c2) << 8) | j2sl (c1, c2)));
+#else
                 put ((j2sh (c1, c2) << 8) | j2sl (c1, c2));
+#endif
                 break;
 
               case ccs_jisx0212:

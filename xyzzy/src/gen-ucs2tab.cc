@@ -466,7 +466,11 @@ make_wc2cp950 (ucs2_t *const wc2cp950)
                    || c1 >= 0xc9 && c1 <= 0xf9)
                   && (c2 >= 0x40 && c2 <= 0x7e
                       || c2 >= 0xa1 && c2 <= 0xfe))
+#ifdef UNICODE
+                wc2cp950[i] = (c1 << 8) + c2;
+#else
                 wc2cp950[i] = big5_to_int (c1, c2);
+#endif
               else
                 wc2cp950[i] = ucs2_t (-1);
               break;
@@ -503,27 +507,43 @@ read_big5 (ucs2_t *wbuf)
           int c2 = mb % 256;
           if (!big5_lead_p (c1) || !big5_trail_p (c2))
             invalid (file, linenum);
-          Char cc = big5_to_int (c1, c2);
-          wbuf[cc - CCS_BIG5_MIN] = wc;
+          wbuf[big5_code_index (c1, c2)] = wc;
         }
     }
 
   fclose (fp);
 
-  wbuf[big5_to_int (0xa1, 0x5a) - CCS_BIG5_MIN] = wbuf[big5_to_int (0xa1, 0xc4) - CCS_BIG5_MIN];
-  wbuf[big5_to_int (0xa1, 0xfe) - CCS_BIG5_MIN] = wbuf[big5_to_int (0xa2, 0xac) - CCS_BIG5_MIN];
-  wbuf[big5_to_int (0xa2, 0x40) - CCS_BIG5_MIN] = wbuf[big5_to_int (0xa2, 0xad) - CCS_BIG5_MIN];
-  wbuf[big5_to_int (0xa2, 0xcc) - CCS_BIG5_MIN] = wbuf[big5_to_int (0xa4, 0x51) - CCS_BIG5_MIN];
-  wbuf[big5_to_int (0xa2, 0xce) - CCS_BIG5_MIN] = wbuf[big5_to_int (0xa4, 0xca) - CCS_BIG5_MIN];
-  wbuf[big5_to_int (0xa1, 0xc3) - CCS_BIG5_MIN] = 0xffe3;
-  wbuf[big5_to_int (0xa1, 0xc5) - CCS_BIG5_MIN] = 0x02cd;
+  wbuf[big5_code_index (0xa1, 0x5a)] = wbuf[big5_code_index (0xa1, 0xc4)];
+  wbuf[big5_code_index (0xa1, 0xfe)] = wbuf[big5_code_index (0xa2, 0xac)];
+  wbuf[big5_code_index (0xa2, 0x40)] = wbuf[big5_code_index (0xa2, 0xad)];
+  wbuf[big5_code_index (0xa2, 0xcc)] = wbuf[big5_code_index (0xa4, 0x51)];
+  wbuf[big5_code_index (0xa2, 0xce)] = wbuf[big5_code_index (0xa4, 0xca)];
+  wbuf[big5_code_index (0xa1, 0xc3)] = 0xffe3;
+  wbuf[big5_code_index (0xa1, 0xc5)] = 0x02cd;
 
   ucs2_t wc2cp950[65536];
   make_wc2cp950 (wc2cp950);
   ucs2_t wbuf2[65536];
   clear (wbuf2, 65536);
+#ifdef UNICODE
+  for (int c1 = 0xa1; c1 <= 0xc7; c1++)
+    {
+      for (int c2 = 0x40; c2 <= 0x7e; c2++)
+        wbuf2[(c1 <<8) + c2] = wbuf[big5_code_index (c1, c2)];
+      for (int c2 = 0xa1; c2 <= 0xfe; c2++)
+        wbuf2[(c1 <<8) + c2] = wbuf[big5_code_index (c1, c2)];
+    }
+  for (int c1 = 0xc9; c1 <= 0xf9; c1++)
+    {
+      for (int c2 = 0x40; c2 <= 0x7e; c2++)
+        wbuf2[(c1 <<8) + c2] = wbuf[big5_code_index (c1, c2)];
+      for (int c2 = 0xa1; c2 <= 0xfe; c2++)
+        wbuf2[(c1 <<8) + c2] = wbuf[big5_code_index (c1, c2)];
+    }
+#else
   for (int i = 0; i < BIG5_TABSIZE; i++)
     wbuf2[i + CCS_BIG5_MIN] = wbuf[i];
+#endif
   for (int i = 0; i < 0x80; i++)
     wbuf2[i] = i;
   output_diff (wc2cp950, wbuf2, "wc2big5");
@@ -552,7 +572,11 @@ make_wc2cp949 (ucs2_t *const wc2cp949)
               int c1 = mb[0] & 255, c2 = mb[1] & 255;
               if (c1 >= 0xa1 && c1 <= 0xfe
                   && c2 >= 0xa1 && c2 <= 0xfe)
+#ifdef UNICODE
+                wc2cp949[i] = (c1 << 8) + c2;
+#else
                 wc2cp949[i] = ksc5601_to_int (c1 & 127, c2 & 127);
+#endif
               else
                 wc2cp949[i] = ucs2_t (-1);
               break;
@@ -573,8 +597,14 @@ read_ksc5601 (ucs2_t *wbuf)
   clear (wbuf2, 65536);
   read_94x94 (wbuf, "unicode/KSC5601.TXT", 1);
   make_wc2cp949 (wc2cp949);
+#ifdef UNICODE
+  for (int c1 = 0; c1 < 94; c1++)
+    for (int c2 = 0; c2 < 94; c2++)
+      wbuf2[(c1 <<8) + c2 + 0xa1a1] = wbuf[c1 * 94 + c2];
+#else
   for (int i = 0; i < 94 * 94; i++)
     wbuf2[i + CCS_KSC5601_MIN] = wbuf[i];
+#endif
   for (int i = 0; i < 0x80; i++)
     wbuf2[i] = i;
   output_diff (wc2cp949, wbuf2, "wc2ksc5601");
@@ -603,7 +633,11 @@ make_wc2cp936 (ucs2_t *const wc2cp936)
               int c1 = mb[0] & 255, c2 = mb[1] & 255;
               if (c1 >= 0xa1 && c1 <= 0xfe
                   && c2 >= 0xa1 && c2 <= 0xfe)
+#ifdef UNICODE
+                wc2cp936[i] = (c1 << 8) + c2;
+#else
                 wc2cp936[i] = gb2312_to_int (c1 & 127, c2 & 127);
+#endif
               else
                 wc2cp936[i] = ucs2_t (-1);
               break;
@@ -624,8 +658,14 @@ read_gb2312 (ucs2_t *wbuf)
   clear (wbuf2, 65536);
   read_94x94 (wbuf, "unicode/GB2312.TXT");
   make_wc2cp936 (wc2cp936);
+#ifdef UNICODE
+  for (int c1 = 0; c1 < 94; c1++)
+    for (int c2 = 0; c2 < 94; c2++)
+      wbuf2[(c1 <<8) + c2 + 0xa1a1] = wbuf[c1 * 94 + c2];
+#else
   for (int i = 0; i < 94 * 94; i++)
     wbuf2[i + CCS_GB2312_MIN] = wbuf[i];
+#endif
   for (int i = 0; i < 0x80; i++)
     wbuf2[i] = i;
   output_diff (wc2cp936, wbuf2, "wc2gb2312");
@@ -1047,6 +1087,24 @@ init_ujp (ucs2_t *int2wc)
 }
 #endif /* CCS_UJP_MIN */
 
+#ifdef UNICODE
+static void
+output_94x94 (const ucs2_t (&wbuf)[94 * 94], const char *type, const char *name)
+{
+  printf ("%s %s[] =\n{\n", type, name);
+  print (wbuf, _countof (wbuf));
+  printf ("};\n\n");
+}
+
+static void
+output_big5 (const ucs2_t (&wbuf)[BIG5_TABSIZE], const char *type, const char *name)
+{
+  printf ("%s %s[] =\n{\n", type, name);
+  print (wbuf, _countof (wbuf));
+  printf ("};\n\n");
+}
+#endif
+
 static void
 output_simple (const ucs2_t *wbuf, const char *type, const char *name)
 {
@@ -1155,8 +1213,16 @@ main ()
   read_jisx0212 (jisx0212);
   read_ksc5601 (ksc5601);
   read_gb2312 (gb2312);
+#ifdef UNICODE
+  output_94x94 (jisx0212, "ucs2_t", "jisx0212_to_ucs2_table");
+  output_94x94 (ksc5601,  "ucs2_t", "ksc5601_to_ucs2_table");
+  output_94x94 (gb2312,   "ucs2_t", "gb2312_to_ucs2_table");
+#endif
 
   read_big5 (big5);
+#ifdef UNICODE
+  output_big5 (big5, "ucs2_t", "big5_to_ucs2_table");
+#endif
 
   make_cns11643 (big5, gb2312);
 
