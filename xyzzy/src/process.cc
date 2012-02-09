@@ -102,8 +102,8 @@ EnvStrings::setup (lisp lenv)
 #endif
     ;
 
-  l = (l * sizeof TCHAR + sizeof (TCHAR **) - 1) / sizeof (TCHAR **) * sizeof (TCHAR **);
-  e_buf = (TCHAR *)xmalloc (l + sizeof (TCHAR **) * n);
+  int al = (l * sizeof TCHAR + sizeof (TCHAR **) - 1) / sizeof (TCHAR **) * sizeof (TCHAR **);
+  e_buf = (TCHAR *)xmalloc (al + sizeof (TCHAR **) * n);
   TCHAR **nb = (TCHAR **)(e_buf + l);
   TCHAR **ne = nb;
 #ifdef UNICODE
