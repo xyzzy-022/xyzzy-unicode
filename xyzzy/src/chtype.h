@@ -22,20 +22,28 @@
 #define CC_SS2 142
 #define CC_SS3 143
 
+#ifdef UNICODE
+
+#define CCF_SHIFT_BIT 0x0040
+#define CCF_CTRL_BIT  0x0080
+#define CC_META       0xf800
+
+#define CCF_FUNCTION_MASK 0xf700
+#define CCF_META          0xf600
+
+#else /* UNICODE */
+
 #define CCF_SHIFT_BIT 0x0040
 #define CCF_CTRL_BIT  0x0080
 #define CC_META_BIT   0x8000
 
+#define CCF_FUNCTION_MASK 0xff00
+#define CCF_META          0xfe00
+
+#endif /* UNICODE */
+
 #define LCHAR_MOUSE 0x10000
 #define LCHAR_MENU  0x20000
-
-#ifdef UNICODE
-#define CCF_FUNCTION_MASK 0xf700
-#define CCF_META 0xf600
-#else
-#define CCF_FUNCTION_MASK 0xff00
-#define CCF_META 0xfe00
-#endif
 
 #define CCF_CHAR_MIN CCF_PRIOR
 // See WINUSER.H
@@ -285,20 +293,33 @@ extern TCHAR downcase_digit_char[];
 inline int
 meta_char_p (Char c)
 {
+#ifdef UNICODE
+  return ((c & CC_META) == CC_META && c <= CC_META + 127
+          && ascii_char_p (c & ~CC_META));
+#else
   return (c & CC_META_BIT && c <= CC_META_BIT + 127
           && ascii_char_p (c & ~CC_META_BIT));
+#endif
 }
 
 inline Char
 char_to_meta_char (Char c)
 {
+#ifdef UNICODE
+  return Char (c | CC_META);
+#else
   return Char (c | CC_META_BIT);
+#endif
 }
 
 inline Char
 meta_char_to_char (Char c)
 {
+#ifdef UNICODE
+  return Char (c & ~CC_META);
+#else
   return Char (c & ~CC_META_BIT);
+#endif
 }
 
 inline Char

@@ -669,7 +669,11 @@ decode_syschars (WPARAM wparam)
   if (GetKeyState (VK_MENU) < 0)
     {
       if (ascii_char_p (cc))
+#ifdef UNICODE
+        cc |= CC_META;
+#else
         cc |= CC_META_BIT;
+#endif
       else if (function_char_p (Char (cc)))
         cc = function_to_meta_function (Char (cc));
     }
@@ -761,7 +765,11 @@ decode_keys (WPARAM wparam, LPARAM lparam)
           if (GetKeyState (VK_MENU) < 0)
             {
               if (ascii_char_p (c))
+#ifdef UNICODE
+                c |= CC_META;
+#else
                 c |= CC_META_BIT;
+#endif
               else if (function_char_p (Char (c)))
                 c = function_to_meta_function (Char (c));
             }
