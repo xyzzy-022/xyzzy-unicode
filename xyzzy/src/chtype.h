@@ -155,6 +155,17 @@
 
 #define NFUNCTION_KEYS (CCF_CHAR_MAX - CCF_CHAR_MIN + 1)
 
+#ifdef UNICODE
+# define UC_UPPER   0x01
+# define UC_LOWER   0x02
+# define UC_SPACE   0x04
+# define UC_PUNCT   0x08
+# define UC_CNTRL   0x10
+# define UC_BLANK   0x20
+# define UC_ALPHA   0x40
+# define UC_DEFINED 0x80
+#endif
+
 #define _CTN 1
 #define _CTU 2
 #define _CTL 4
@@ -171,6 +182,16 @@
 #define UTF7_IMAP4_SHIFT_CHAR 64
 
 #ifndef NOT_COMPILE_TIME
+
+#ifdef UNICODE
+inline int
+_unichar_type (int c)
+{
+  extern unsigned char unichar_type_table[];
+  if (c < 0 || 0xffff < c) return 0;
+  return unichar_type_table[c];
+}
+#endif
 
 inline int
 _char_type (int c)

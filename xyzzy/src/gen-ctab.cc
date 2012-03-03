@@ -19,6 +19,50 @@ dump (const char *b, int size, int hex = 1)
     }
 }
 
+#ifdef UNICODE
+
+#include <winnls.h>
+
+static void
+uctype ()
+{
+  printf ("unsigned char unichar_type_table[] = \n");
+  printf ("{\n");
+
+  for (int i = 0; i < 256; ++i)
+    {
+      WCHAR src[256];
+      WORD typ[256];
+      unsigned char buf[256];
+
+      for (int j = 0; j < 256; ++j)
+        src[j] = i * 256 + j;
+
+      GetStringTypeW (CT_CTYPE1, src, _countof (src), typ);
+
+      for (int j = 0; j < 256; ++j)
+        {
+          WORD t = typ[j];
+          unsigned char v = 0;
+          if (t & C1_UPPER)   v |= UC_UPPER;
+          if (t & C1_LOWER)   v |= UC_LOWER;
+          if (t & C1_SPACE)   v |= UC_SPACE;
+          if (t & C1_PUNCT)   v |= UC_PUNCT;
+          if (t & C1_CNTRL)   v |= UC_CNTRL;
+          if (t & C1_BLANK)   v |= UC_BLANK;
+          if (t & C1_ALPHA)   v |= UC_ALPHA;
+          if (t & C1_DEFINED) v |= UC_DEFINED;
+          buf[j] = v;
+        }
+
+      dump (reinterpret_cast<const char *> (buf), _countof (buf));
+    }
+
+  printf ("};\n\n");
+}
+
+#endif
+
 static void
 ctype ()
 {
@@ -246,6 +290,9 @@ hqxtab ()
 void
 main ()
 {
+#ifdef UNICODE
+  uctype ();
+#endif
   ctype ();
   translate ();
   numeric ();

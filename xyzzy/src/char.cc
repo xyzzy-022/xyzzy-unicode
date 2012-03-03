@@ -13,6 +13,12 @@ Fgraphic_char_p (lisp cc)
 {
   check_char (cc);
   Char c = xchar_code (cc);
+#ifdef UNICODE
+  if (0xd800 <= c && c <= 0xdfff) return Qnil;
+  if (0xe000 <= c && c <= 0xf8ff) return Qnil;
+
+  return boole ((_unichar_type (c) & (UC_DEFINED | UC_CNTRL)) == UC_DEFINED);
+#else
 #if 0
   return boole ((c >= ' ' && c < CC_DEL)
                 || kana_char_p (c)
@@ -28,6 +34,7 @@ Fgraphic_char_p (lisp cc)
   if (code_charset_bit (c) & (ccsf_utf16_undef_char | ccsf_utf16_surrogate))
     return Qnil;
   return boole (i2w (c) != ucs2_t (-1));
+#endif
 #endif
 }
 
