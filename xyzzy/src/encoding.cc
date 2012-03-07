@@ -55,6 +55,31 @@ sjis_to_internal_stream::refill_internal ()
 {
   while (room () > 0)
     {
+#ifdef UNICODE
+      int c1, c2;
+
+      c1 = s_in.get ();
+      if (c1 == eof)
+        break;
+
+      if (SJISP (c1) && (c2 = s_in.get()) != eof)
+        {
+          Char c = w2i (cp932_to_ucs2 ((c1 << 8) + c2));
+          if (c == Char (-1))
+            {
+              s_in.putback (c2);
+              c = DEFCHAR;
+            }
+          put (c);
+        }
+      else
+        {
+          Char c = w2i (cp932_to_ucs2 (c1));
+          if (c == Char (-1))
+            c = DEFCHAR;
+          put (c);
+        }
+#else
       int c1 = s_in.get ();
       if (c1 == eof)
         break;
@@ -64,11 +89,6 @@ sjis_to_internal_stream::refill_internal ()
           if (c2 != eof)
             c1 = (c1 << 8) + c2;
         }
-#ifdef UNICODE
-      Char c = w2i (cp932_to_ucs2 (c1));
-      if (c == Char (-1)) c = DEFCHAR;
-      put (c);
-#else
       put (c1);
 #endif
     }
@@ -86,14 +106,29 @@ fast_sjis_to_internal_stream::refill_internal ()
   Char *d = rd, *const de = rde;
   for (; d < de && s < se; d++)
     {
+#ifdef UNICODE
+      int c1 = *s++;
+      if (SJISP (c1) && s < se)
+        {
+          Char c = w2i (cp932_to_ucs2 ((c1 << 8) + *s++));
+          if (c == Char (-1))
+            {
+              --s;
+              c = DEFCHAR;
+            }
+          *d = c;
+        }
+      else
+        {
+          Char c = w2i (cp932_to_ucs2 (c1));
+          if (c == Char (-1))
+            c = DEFCHAR;
+          *d = c;
+        }
+#else
       int c1 = *s++;
       if (SJISP (c1) && s < se)
         c1 = (c1 << 8) + *s++;
-#ifdef UNICODE
-      Char c = w2i (cp932_to_ucs2 (c1));
-      if (c == Char (-1)) c = DEFCHAR;
-      *d = c;
-#else
       *d = c1;
 #endif
     }
