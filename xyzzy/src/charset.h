@@ -537,13 +537,21 @@ utf16_ucs4_to_pair_low (ucs4_t c)
 static inline int
 utf16_undef_char_high_p (ucs2_t c)
 {
+#ifdef UNICODE
+  return 0;
+#else
   return (c & 0xff00) == CCS_UTF16_UNDEF_CHAR_HIGH;
+#endif
 }
 
 static inline int
 utf16_undef_char_low_p (ucs2_t c)
 {
+#ifdef UNICODE
+  return 0;
+#else
   return (c & 0xff00) == CCS_UTF16_UNDEF_CHAR_LOW;
+#endif
 }
 
 static inline ucs2_t
