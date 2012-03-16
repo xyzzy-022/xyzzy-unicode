@@ -27,7 +27,7 @@ const TCHAR *const FontSet::fs_regent[] =
   _T("Georgian"),
 };
 
-const FontSet::fontface FontSet::fs_default_face[] =
+const FontSet::fontface FontSet::fs_default_face_legacy[] =
 {
   {_T("FixedSys"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},
   {_T("FixedSys"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},
@@ -38,6 +38,19 @@ const FontSet::fontface FontSet::fs_default_face[] =
   {_T("MingLiu"), 0, CHINESEBIG5_CHARSET},
   {_T("GulimChe"), 0, HANGEUL_CHARSET},
   {_T("BPG Courier New U")},
+};
+
+const FontSet::fontface FontSet::fs_default_face_win6[] =
+{
+  {_T("Consolas"), _T("Consolas"), SHIFTJIS_CHARSET},
+  {_T("ÇlÇr ÉSÉVÉbÉN"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},
+  {_T("Courier New")},
+  {_T("Courier New")},
+  {_T("Courier New")},
+  {_T("NSimSun"), 0, GB2312_CHARSET},
+  {_T("MingLiu"), 0, CHINESEBIG5_CHARSET},
+  {_T("GulimChe"), 0, HANGEUL_CHARSET},
+  {_T("Courier New")},
 };
 
 int

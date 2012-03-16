@@ -115,7 +115,8 @@ protected:
   static const UINT fs_lang_id[];
   static const TCHAR *const fs_regent[];
   struct fontface {const TCHAR *disp, *print; int charset;};
-  static const fontface fs_default_face[];
+  static const fontface fs_default_face_legacy[];
+  static const fontface fs_default_face_win6[];
 public:
   enum
     {
@@ -177,10 +178,22 @@ public:
 #endif /* UNICODE */
 
   static const TCHAR *regent (int n) {return fs_regent[n];}
+
+  static const fontface *default_face ()
+    {
+      return sysdep.Win6p() ? fs_default_face_win6 : fs_default_face_legacy;
+    }
   static const TCHAR *default_face (int n, int print)
-    {return (!print || !fs_default_face[n].print
-             ? fs_default_face[n].disp : fs_default_face[n].print);}
-  static int default_charset (int n) {return fs_default_face[n].charset;}
+    {
+      const fontface *fs_default_face = default_face ();
+      return (!print || !fs_default_face[n].print
+              ? fs_default_face[n].disp : fs_default_face[n].print);
+    }
+  static int default_charset (int n)
+    {
+      const fontface *fs_default_face = default_face ();
+      return fs_default_face[n].charset;
+    }
   static UINT lang_id (int n) {return fs_lang_id[n];}
 };
 
