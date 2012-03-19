@@ -26,12 +26,12 @@ BEGIN
     BLOCK "041104b0"
     BEGIN
       VALUE "CompanyName", " \0"
-      VALUE "FileDescription", "xyzzy client\0"
+      VALUE "FileDescription", "xyzzy+ client\0"
       VALUE "FileVersion", "0, 1, 0, 1021\0"
-      VALUE "InternalName", "xyzzy client\0"
-      VALUE "LegalCopyright", "Copyright (C) 1996-2005 T.Kamei\0"
+      VALUE "InternalName", "xyzzy+ client\0"
+      VALUE "LegalCopyright", "Copyright (C) 2010-2012 xyzzy+ project\0"
       VALUE "OriginalFilename", "xyzzycli.exe\0"
-      VALUE "ProductName", "xyzzy-client\0"
+      VALUE "ProductName", "xyzzy+-client\0"
       VALUE "ProductVersion", "0, 1, 0, 1021\0"
     END
   END

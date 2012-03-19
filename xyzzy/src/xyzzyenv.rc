@@ -15,12 +15,12 @@ BEGIN
     BLOCK "041104b0"
     BEGIN
       VALUE "CompanyName", " \0"
-      VALUE "FileDescription", "xyzzy env\0"
+      VALUE "FileDescription", "xyzzy+ env\0"
       VALUE "FileVersion", "1, 0, 0, 0\0"
-      VALUE "InternalName", "xyzzy env\0"
-      VALUE "LegalCopyright", "Copyright (C) 1996-2005 T.Kamei\0"
+      VALUE "InternalName", "xyzzy+ env\0"
+      VALUE "LegalCopyright", "Copyright (C) 2010-2012 xyzzy+ project\0"
       VALUE "OriginalFilename", "xyzzyenv.exe\0"
-      VALUE "ProductName", "xyzzyenv\0"
+      VALUE "ProductName", "xyzzy+env\0"
       VALUE "ProductVersion", "1, 0, 0, 0\0"
     END
   END

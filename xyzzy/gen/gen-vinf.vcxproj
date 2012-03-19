@@ -99,7 +99,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.h"</Command>
+      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.rc"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -119,7 +119,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.h"</Command>
+      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.rc"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugANSI|Win32'">
@@ -135,7 +135,7 @@
       <SubSystem>Console</SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.h"</Command>
+      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.rc"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseANSI|Win32'">
@@ -155,7 +155,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.h"</Command>
+      <Command>"$(TargetPath)" &gt; "$(TargetDir)verinfo.rc"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
