@@ -112,11 +112,12 @@ protected:
   void save_params (const FontSetParam &);
   void load_params (FontSetParam &);
 
-  static const UINT fs_lang_id[];
-  static const TCHAR *const fs_regent[];
+  static const UINT fs_lang_id[FONT_MAX];
+  static const TCHAR *const fs_regent[FONT_MAX];
   struct fontface {const TCHAR *disp, *print; int charset;};
-  static const fontface fs_default_face_legacy[];
-  static const fontface fs_default_face_win6[];
+  static const fontface fs_default_face_legacy[FONT_MAX];
+  static const fontface fs_default_face_win6[FONT_MAX];
+  typedef const fontface (&fs_default_face_ref)[FONT_MAX];
 public:
   enum
     {
@@ -179,19 +180,19 @@ public:
 
   static const TCHAR *regent (int n) {return fs_regent[n];}
 
-  static const fontface *default_face ()
+  static fs_default_face_ref default_face ()
     {
       return sysdep.Win6p() ? fs_default_face_win6 : fs_default_face_legacy;
     }
   static const TCHAR *default_face (int n, int print)
     {
-      const fontface *fs_default_face = default_face ();
+      fs_default_face_ref fs_default_face = default_face ();
       return (!print || !fs_default_face[n].print
               ? fs_default_face[n].disp : fs_default_face[n].print);
     }
   static int default_charset (int n)
     {
-      const fontface *fs_default_face = default_face ();
+      fs_default_face_ref fs_default_face = default_face ();
       return fs_default_face[n].charset;
     }
   static UINT lang_id (int n) {return fs_lang_id[n];}

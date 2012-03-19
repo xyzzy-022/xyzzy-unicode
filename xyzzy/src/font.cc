@@ -1,7 +1,7 @@
 #include "ed.h"
 #include "conf.h"
 
-const UINT FontSet::fs_lang_id[] =
+const UINT FontSet::fs_lang_id[FONT_MAX] =
 {
   IDS_LANG_ASCII,
   IDS_LANG_JAPANESE,
@@ -14,20 +14,20 @@ const UINT FontSet::fs_lang_id[] =
   IDS_LANG_GEORGIAN,
 };
 
-const TCHAR *const FontSet::fs_regent[] =
+const TCHAR *const FontSet::fs_regent[FONT_MAX] =
 {
-  _T("Ascii"),
-  _T("Japanese"),
-  _T("Latin"),
-  _T("Cyrillic"),
-  _T("Greek"),
-  _T("GB2312"),
-  _T("BIG5"),
-  _T("KSC5601"),
-  _T("Georgian"),
+  _T("font0"),
+  _T("font1"),
+  _T("font2"),
+  _T("font3"),
+  _T("font4"),
+  _T("font5"),
+  _T("font6"),
+  _T("font7"),
+  _T("font8"),
 };
 
-const FontSet::fontface FontSet::fs_default_face_legacy[] =
+const FontSet::fontface FontSet::fs_default_face_legacy[FONT_MAX] =
 {
   {_T("FixedSys"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},
   {_T("FixedSys"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},
@@ -40,7 +40,7 @@ const FontSet::fontface FontSet::fs_default_face_legacy[] =
   {_T("BPG Courier New U")},
 };
 
-const FontSet::fontface FontSet::fs_default_face_win6[] =
+const FontSet::fontface FontSet::fs_default_face_win6[FONT_MAX] =
 {
   {_T("Consolas"), _T("Consolas"), SHIFTJIS_CHARSET},
   {_T("ÇlÇr ÉSÉVÉbÉN"), _T("ÇlÇr ÉSÉVÉbÉN"), SHIFTJIS_CHARSET},

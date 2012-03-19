@@ -2,7 +2,7 @@
 #include <tchar.h>
 #include "version.h"
 
-#define COPYRIGHT "Copyright (C) 1996-2005 T.Kamei"
+#define COPYRIGHT "Copyright (C) 2010-2012 xyzzy+ project"
 
 static const char inf[] = "\
 VS_VERSION_INFO VERSIONINFO\n\
@@ -23,7 +23,7 @@ BEGIN\n\
     BLOCK \"041104b0\"\n\
     BEGIN\n\
       VALUE \"CompanyName\", \" \\0\"\n\
-      VALUE \"FileDescription\", \"%s\\0\"\n\
+      VALUE \"FileDescription\", \"%s %d.%d.%d.%d+%d\\0\"\n\
       VALUE \"FileVersion\", \"%d, %d, %d, %d\\0\"\n\
       VALUE \"InternalName\", \"%s\\0\"\n\
       VALUE \"LegalCopyright\", \"%s\\0\"\n\
@@ -48,6 +48,9 @@ main ()
           PROGRAM_MAJOR_VERSION, PROGRAM_MINOR_VERSION,
           PROGRAM_MAJOR_REVISION, PROGRAM_MINOR_REVISION,
           PROGRAM_NAME,
+          PROGRAM_MAJOR_VERSION, PROGRAM_MINOR_VERSION,
+          PROGRAM_MAJOR_REVISION, PROGRAM_MINOR_REVISION,
+          PROGRAM_PLUS_VERSION,
           PROGRAM_MAJOR_VERSION, PROGRAM_MINOR_VERSION,
           PROGRAM_MAJOR_REVISION, PROGRAM_MINOR_REVISION,
           PROGRAM_NAME,
